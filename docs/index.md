@@ -20,6 +20,13 @@ Welcome to the Plex-o-matic documentation! This documentation provides comprehen
   - Backup and Maintenance
   - Usage Examples
 
+### API Integration
+- [API Clients](api/README.md)
+  - TVDB API Client
+  - TMDB API Client
+  - Local LLM Client (Ollama with Deepseek R1)
+  - Usage Examples and Configuration
+
 ## Quick Start
 
 1. Install the package:

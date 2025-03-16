@@ -19,6 +19,13 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Pattern-based filename parsing
   - Standardized output format
 
+- **API Integration**:
+  - TVDB API client for TV show metadata
+  - TMDB API client for movie and TV metadata
+  - Local LLM integration with Ollama and Deepseek
+  - Metadata-enhanced filename analysis
+  - AI-powered filename suggestions
+
 - **Robust Backup System**:
   - SQLite database integration for operation tracking
   - File checksum verification
@@ -76,7 +83,20 @@ Key configuration options:
     "allowed_extensions": [".mp4", ".mkv", ".avi", ".mov", ".m4v"],
     "ignore_patterns": ["sample", "trailer", "extra"],
     "recursive_scan": true,
-    "backup_enabled": true
+    "backup_enabled": true,
+    "api": {
+        "tvdb": {
+            "api_key": "",
+            "auto_retry": true
+        },
+        "tmdb": {
+            "api_key": ""
+        },
+        "llm": {
+            "model_name": "deepseek-r1:8b",
+            "base_url": "http://localhost:11434"
+        }
+    }
 }
 ```
 
@@ -153,6 +173,10 @@ mypy .
 ### Project Structure
 
 - `plexomatic/`: Main package
+  - `api/`: API integrations
+    - `tvdb_client.py`: TVDB API client
+    - `tmdb_client.py`: TMDB API client
+    - `llm_client.py`: Local LLM client
   - `core/`: Core functionality
     - `file_scanner.py`: Media file detection
     - `backup_system.py`: Backup and rollback functionality
@@ -172,6 +196,7 @@ Comprehensive documentation is available in the [docs](docs/) directory:
 - [File Utilities](docs/file-utils/README.md)
 - [Backend Architecture](docs/backend/README.md)
 - [Database Schema](docs/database/README.md)
+- [API Integration](docs/api/README.md)
 
 ## Contributing
 

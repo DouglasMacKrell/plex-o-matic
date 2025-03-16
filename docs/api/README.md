@@ -1,0 +1,151 @@
+# API Integration
+
+Plex-o-matic integrates with external APIs to fetch metadata for media files and leverage local AI for enhanced file analysis.
+
+## Available API Clients
+
+### TVDB Client
+
+The TVDB client provides access to TV show metadata from thetvdb.com API.
+
+```python
+from plexomatic.api.tvdb_client import TVDBClient
+
+# Initialize the client with your API key
+client = TVDBClient(api_key="your_tvdb_api_key")
+
+# Authenticate with the API
+client.authenticate()
+
+# Search for a TV series by name
+results = client.get_series_by_name("Breaking Bad")
+
+# Get detailed information about a specific series
+series = client.get_series_by_id(series_id=12345)
+
+# Get episodes for a series
+episodes = client.get_episodes_by_series_id(series_id=12345)
+```
+
+Features:
+- Authentication and token management
+- Automatic token renewal when expired
+- Request caching for better performance
+- Rate limiting protection and automatic retries
+- Comprehensive error handling
+
+### TMDB Client
+
+The TMDB client provides access to movie and TV show metadata from themoviedb.org API.
+
+```python
+from plexomatic.api.tmdb_client import TMDBClient
+
+# Initialize the client with your API key
+client = TMDBClient(api_key="your_tmdb_api_key")
+
+# Get API configuration (image URLs and sizes)
+config = client.get_configuration()
+
+# Search for movies
+movie_results = client.search_movie("The Matrix", year=1999)
+
+# Search for TV shows
+tv_results = client.search_tv("Stranger Things")
+
+# Get movie details
+movie = client.get_movie_details(movie_id=603)  # The Matrix
+
+# Get TV show details
+show = client.get_tv_details(tv_id=66732)  # Stranger Things
+
+# Get TV season details
+season = client.get_tv_season(tv_id=66732, season_number=1)
+
+# Get a full poster URL
+poster_url = client.get_poster_url(poster_path="/poster.jpg", size="w500")
+```
+
+Features:
+- Configuration retrieval for image URLs
+- Movie and TV show searching
+- Detailed metadata for movies, TV shows, and seasons
+- Request caching for better performance
+- Image URL helper functions
+- Rate limiting protection
+
+### Local LLM Client
+
+The Local LLM client provides integration with Ollama for local AI inferencing, specifically with the Deepseek R1 8b model.
+
+```python
+from plexomatic.api.llm_client import LLMClient
+
+# Initialize the client
+client = LLMClient(
+    model_name="deepseek-r1:8b",
+    base_url="http://localhost:11434"
+)
+
+# Check if the model is available
+if client.check_model_available():
+    # Generate text with the LLM
+    response = client.generate_text(
+        prompt="What is the plot of Breaking Bad?",
+        temperature=0.7,
+        max_tokens=512
+    )
+    
+    # Analyze a filename to extract metadata
+    metadata = client.analyze_filename("BreakingBad.S01E01.720p.HDTV.x264.mp4")
+    # Returns: {"title": "Breaking Bad", "season": 1, "episode": 1, ...}
+    
+    # Get a standardized filename suggestion
+    new_filename = client.suggest_filename(
+        original_filename="BreakingBad.S01E01.720p.HDTV.x264.mp4",
+        title="Breaking Bad",
+        episode_title="Pilot"
+    )
+    # Returns: "Breaking Bad - S01E01 - Pilot [720p-HDTV-x264].mp4"
+```
+
+Features:
+- Local model availability checking
+- Text generation with customizable parameters
+- Media filename analysis for metadata extraction
+- Standardized filename suggestions
+- Error handling with JSON parsing recovery
+
+## Usage in the Application
+
+These API clients are used in Plex-o-matic to:
+
+1. Fetch accurate metadata for TV shows and movies
+2. Extract information from filenames when standard patterns don't match
+3. Generate standardized filenames based on metadata
+4. Enhance the quality of file organization
+
+## Configuration
+
+API keys and settings are managed through the application's configuration system:
+
+```json
+{
+    "api": {
+        "tvdb": {
+            "api_key": "your_tvdb_api_key",
+            "cache_size": 100,
+            "auto_retry": true
+        },
+        "tmdb": {
+            "api_key": "your_tmdb_api_key",
+            "cache_size": 100
+        },
+        "llm": {
+            "model_name": "deepseek-r1:8b",
+            "base_url": "http://localhost:11434",
+            "temperature": 0.7
+        }
+    }
+}
+``` 
