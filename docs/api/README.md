@@ -74,6 +74,43 @@ Features:
 - Image URL helper functions
 - Rate limiting protection
 
+### AniDB Client
+
+The AniDB client provides access to anime metadata from the AniDB database through both its UDP and HTTP APIs.
+
+```python
+from plexomatic.api.anidb_client import AniDBClient
+
+# Initialize the client with your AniDB credentials
+client = AniDBClient(
+    username="your_anidb_username",
+    password="your_anidb_password",
+    client_name="plexomatic",  # Registered client name
+    client_version=1
+)
+
+# Search for anime by name
+anime = client.get_anime_by_name("Cowboy Bebop")
+
+# Get anime by ID
+anime_details = client.get_anime_details(anime_id=1)  # Cowboy Bebop
+
+# Get episodes for anime
+episodes = client.get_episodes_with_titles(anime_id=1)
+
+# Map a title to the most likely anime series
+matched_anime = client.map_title_to_series("Cowboy Bebop")
+```
+
+Features:
+- Combined access to both UDP and HTTP AniDB APIs
+- Authentication and session management
+- Anime searching by name or ID
+- Comprehensive episode information retrieval
+- Title matching with fuzzy search
+- Automatic rate limiting protection
+- Error handling for common AniDB API issues
+
 ### Local LLM Client
 
 The Local LLM client provides integration with Ollama for local AI inferencing, specifically with the Deepseek R1 8b model.
@@ -140,6 +177,13 @@ API keys and settings are managed through the application's configuration system
         "tmdb": {
             "api_key": "your_tmdb_api_key",
             "cache_size": 100
+        },
+        "anidb": {
+            "username": "your_anidb_username",
+            "password": "your_anidb_password",
+            "client_name": "plexomatic",
+            "client_version": 1,
+            "rate_limit_wait": 2.5
         },
         "llm": {
             "model_name": "deepseek-r1:8b",
