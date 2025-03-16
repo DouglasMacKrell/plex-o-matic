@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- None
+- API Integration Package
+  - TVDB API client with authentication, caching, and rate limiting
+  - TMDB API client with configuration, search, and details functionality
+  - Local LLM client using Ollama with Deepseek R1 8b
+  - Media metadata analysis and filename suggestions
+  - Comprehensive test suite for all API clients
 
 ### Changed
 - None
