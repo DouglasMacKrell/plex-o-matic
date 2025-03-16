@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Comprehensive documentation
+  - Backend architecture documentation
+  - Database schema documentation
+  - Main documentation index
+  - Quick start guide
+  - Usage examples and code snippets
+- Backup system implementation
+  - SQLite database integration with SQLAlchemy
+  - File operation tracking and history
+  - Operation status management (pending, completed, rolled back)
+  - Checksum verification for safe rollbacks
+  - Comprehensive test suite for backup functionality
 - Core file scanner module
   - Basic file scanning functionality
   - Media file detection and analysis
