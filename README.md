@@ -1,5 +1,8 @@
 # Plex-o-matic
 
+[![Test & Quality Check](https://github.com/DouglasMacKrell/plex-o-matic/actions/workflows/test.yml/badge.svg)](https://github.com/DouglasMacKrell/plex-o-matic/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/DouglasMacKrell/plex-o-matic/branch/main/graph/badge.svg)](https://codecov.io/gh/DouglasMacKrell/plex-o-matic)
+
 An intelligent media file organization tool for Plex that helps automate the process of renaming and structuring media files for optimal Plex compatibility.
 
 ## Features
