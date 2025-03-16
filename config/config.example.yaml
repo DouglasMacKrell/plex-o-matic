@@ -1,0 +1,60 @@
+# API Configuration
+apis:
+  tvdb:
+    api_key: "your_tvdb_api_key"
+    cache_ttl: 86400  # 24 hours in seconds
+  
+  tmdb:
+    api_key: "your_tmdb_api_key"
+    cache_ttl: 86400
+
+# Local LLM Configuration
+llm:
+  endpoint: "http://localhost:11434"  # Default Ollama endpoint
+  model: "llama2"
+  temperature: 0.7
+  max_tokens: 500
+
+# Media Directories
+directories:
+  tv_shows: "/path/to/tv/shows"
+  movies: "/path/to/movies"
+  music: "/path/to/music"
+  
+# File Organization
+organization:
+  tv_shows:
+    pattern: "{show_name}/Season {season:02d}/{show_name} - S{season:02d}E{episode:02d} - {episode_name}"
+    allowed_extensions: [".mp4", ".mkv", ".avi"]
+    
+  movies:
+    pattern: "{movie_name} ({year})/{movie_name} ({year})"
+    allowed_extensions: [".mp4", ".mkv", ".avi"]
+    
+  music:
+    pattern: "{artist}/{album} ({year})/{track:02d} - {title}"
+    allowed_extensions: [".mp3", ".flac", ".m4a"]
+
+# Backup Settings
+backup:
+  enabled: true
+  location: "~/.plexomatic/backups"
+  max_backups: 10  # Number of backup sets to keep
+
+# Logging
+logging:
+  level: "INFO"
+  file: "~/.plexomatic/logs/plexomatic.log"
+  max_size: 10485760  # 10MB
+  backup_count: 5
+
+# Preview Settings
+preview:
+  show_diff: true
+  color_output: true
+  max_items: 50  # Maximum number of items to show in preview
+
+# Performance
+performance:
+  max_workers: 4  # Number of parallel workers
+  chunk_size: 100  # Number of files to process in one batch 
