@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- None
+
+### Changed
+- None
+
+### Deprecated
+- None
+
+### Removed
+- None
+
+### Fixed
+- None
+
+### Security
+- None
+
+## [0.2.0] - 2024-03-21
+
+### Added
 - GitHub Actions workflows for CI/CD
   - Automated testing on Python 3.8-3.11
   - Code quality checks (black, ruff, mypy)
@@ -17,9 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command Line Interface (CLI) implementation
   - Main CLI entry point with version display
   - Scan command for finding media files
-  - Preview command placeholder
-  - Apply command placeholder with confirmation
-  - Rollback command placeholder with confirmation
+  - Preview command for showing proposed changes
+  - Apply command for making changes with confirmation
+  - Rollback command for reverting changes
   - Verbose output option for detailed logging
 - Configuration system for managing application settings
   - Default configuration with customizable options
@@ -33,6 +53,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Safe file renaming with checksum verification
   - Operation tracking in database
   - Rollback capability for all operations
+- Comprehensive documentation
+  - CLI usage and options
+  - Configuration system
+  - File utilities
+  - Core architecture
 
 ### Changed
 - Enhanced FileScanner with recursive option to control directory traversal depth
