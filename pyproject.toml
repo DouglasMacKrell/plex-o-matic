@@ -1,6 +1,6 @@
 [project]
 name = "plex-o-matic"
-version = "0.1.0"
+version = "0.2.0"
 description = "An intelligent media file organization tool for Plex"
 authors = [
     { name = "Douglas MacKrell", email = "your.email@example.com" }
@@ -17,6 +17,9 @@ dependencies = [
 requires-python = ">=3.8"
 readme = "README.md"
 license = { file = "LICENSE" }
+
+[project.scripts]
+plexomatic = "plexomatic.cli:cli"
 
 [project.optional-dependencies]
 test = [
