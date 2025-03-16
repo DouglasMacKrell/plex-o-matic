@@ -18,6 +18,18 @@ requires-python = ">=3.8"
 readme = "README.md"
 license = { file = "LICENSE" }
 
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+]
+dev = [
+    "black>=23.7.0",
+    "ruff>=0.0.284",
+    "mypy>=1.5.1",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

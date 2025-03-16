@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Core file scanner module
+  - Basic file scanning functionality
+  - Media file detection and analysis
+  - Multi-episode file detection
+  - System file ignoring
+- Test infrastructure
+  - Added pytest configuration
+  - Created initial test suite for file scanner
+  - Added test dependencies
 - Initial project setup
   - Created project structure with core modules
   - Added pyproject.toml with initial dependencies
@@ -21,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set up Git workflow with main and develop branches
 
 ### Changed
-- None
+- Updated pyproject.toml with test and development dependencies
 
 ### Deprecated
 - None
