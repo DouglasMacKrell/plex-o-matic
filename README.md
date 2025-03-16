@@ -22,6 +22,7 @@ An intelligent media file organization tool for Plex that helps automate the pro
 - **API Integration**:
   - TVDB API client for TV show metadata
   - TMDB API client for movie and TV metadata
+  - AniDB API client for anime metadata
   - Local LLM integration with Ollama and Deepseek
   - Metadata-enhanced filename analysis
   - AI-powered filename suggestions
