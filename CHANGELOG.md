@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- None
+- GitHub Actions workflows for CI/CD
+  - Automated testing on Python 3.8-3.11
+  - Code quality checks (black, ruff, mypy)
+  - Code coverage reporting with Codecov
+  - Automated releases to GitHub and PyPI
+- Mypy configuration for strict type checking
 
 ### Changed
 - None
