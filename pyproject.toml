@@ -18,6 +18,9 @@ requires-python = ">=3.8"
 readme = "README.md"
 license = { file = "LICENSE" }
 
+[project.scripts]
+plexomatic = "plexomatic.cli:cli"
+
 [project.optional-dependencies]
 test = [
     "pytest>=7.4.0",

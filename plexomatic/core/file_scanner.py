@@ -29,7 +29,8 @@ class FileScanner:
         self,
         base_path: str,
         allowed_extensions: Optional[List[str]] = None,
-        ignore_patterns: Optional[List[str]] = None
+        ignore_patterns: Optional[List[str]] = None,
+        recursive: bool = True
     ):
         """Initialize a FileScanner instance.
         
@@ -37,10 +38,12 @@ class FileScanner:
             base_path: Root directory to scan for media files
             allowed_extensions: List of allowed file extensions (e.g., ['.mp4', '.mkv'])
             ignore_patterns: List of regex patterns for files to ignore
+            recursive: Whether to scan directories recursively
         """
         self.base_path = Path(base_path)
         self.allowed_extensions = set(ext.lower() for ext in (allowed_extensions or []))
         self.ignore_patterns = ignore_patterns or []
+        self.recursive = recursive
     
     def _should_ignore(self, file_path: Path) -> bool:
         """Check if a file should be ignored based on ignore patterns.
@@ -80,9 +83,16 @@ class FileScanner:
         Yields:
             MediaFile: Found media files
         """
-        for root, _, files in os.walk(self.base_path):
-            for file_name in files:
-                file_path = Path(root) / file_name
-                
+        if self.recursive:
+            # Recursive scan using os.walk
+            for root, _, files in os.walk(self.base_path):
+                for file_name in files:
+                    file_path = Path(root) / file_name
+                    
+                    if self._is_valid_media_file(file_path):
+                        yield MediaFile(file_path)
+        else:
+            # Non-recursive scan, only check files in the base directory
+            for file_path in self.base_path.iterdir():
                 if self._is_valid_media_file(file_path):
                     yield MediaFile(file_path) 
