@@ -24,7 +24,17 @@ pip install plex-o-matic
 Once installed, you can use Plex-o-matic via the command line interface:
 
 ```bash
+# Scan your media directory
 plexomatic scan --path /path/to/your/media
+
+# Preview changes that would be made
+plexomatic preview
+
+# Apply the changes if they look good
+plexomatic apply
+
+# If something goes wrong, rollback
+plexomatic rollback
 ```
 
 For more detailed usage instructions, please refer to the [CLI Documentation](cli/README.md).
@@ -32,15 +42,72 @@ For more detailed usage instructions, please refer to the [CLI Documentation](cl
 ## Documentation Sections
 
 - [CLI Documentation](cli/README.md): Detailed information on using the command line interface.
+- [Configuration System](configuration/README.md): Information about configuring Plex-o-matic.
+- [File Utilities](file-utils/README.md): Documentation on filename standardization and file operations.
 - [Backend Architecture](backend/README.md): Information about the backend design and components.
 - [Database Schema](database/README.md): Documentation on the database structure and schema.
+
+## Features
+
+Plex-o-matic provides several powerful features:
+
+### Media File Scanning
+- Recursive directory scanning
+- Configurable file extensions
+- Ignore patterns for samples and extras
+
+### Filename Standardization
+- TV show filename detection and standardization
+- Movie filename detection and standardization
+- Multi-episode detection
+- Proper Plex-compatible naming
+
+### Safe File Operations
+- Backup system with SQLite integration
+- Checksum verification
+- Operation rollback capability
+
+### Configuration System
+- JSON-based configuration
+- Environment variable support
+- Extensible options
 
 ## FAQs
 
 ### How does Plex-o-matic handle existing files?
 
-Plex-o-matic uses a backup system to keep track of all file operations. This ensures that any changes made can be rolled back if needed.
+Plex-o-matic uses a backup system to keep track of all file operations. This ensures that any changes made can be rolled back if needed. Each operation is recorded in a SQLite database with checksums for verification.
 
 ### Can I use Plex-o-matic with existing Plex installations?
 
-Yes, Plex-o-matic is designed to work with existing Plex installations and follows Plex's naming conventions. 
+Yes, Plex-o-matic is designed to work with existing Plex installations and follows Plex's naming conventions. It doesn't modify your Plex database, only the files themselves.
+
+### How do I customize the file extensions that are processed?
+
+You can configure the allowed file extensions in the configuration file (`~/.plexomatic/config.json`) or by using the `--extensions` option in the CLI:
+
+```bash
+plexomatic scan --path /media --extensions .mp4,.mkv
+```
+
+### Can I preview changes before applying them?
+
+Yes, you can use the `preview` command to see what changes would be made without actually making any changes:
+
+```bash
+plexomatic preview --path /media
+```
+
+### How do I rollback changes if something goes wrong?
+
+You can use the `rollback` command to undo the last operation:
+
+```bash
+plexomatic rollback
+```
+
+Or specify a specific operation ID:
+
+```bash
+plexomatic rollback --operation-id 42
+``` 

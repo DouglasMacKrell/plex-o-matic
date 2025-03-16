@@ -36,13 +36,22 @@ plexomatic scan [OPTIONS]
 **Options:**
 - `--path, -p PATH`: Path to directory containing media files (required).
 - `--recursive/--no-recursive`: Scan directories recursively (default: recursive).
-- `--extensions, -e TEXT`: Comma-separated list of file extensions to scan (default: .mp4,.mkv,.avi,.mov,.m4v).
+- `--extensions, -e TEXT`: Comma-separated list of file extensions to scan (default from config: .mp4,.mkv,.avi,.mov,.m4v).
 - `--verbose, -v`: Enable verbose output.
 - `--help`: Show help message and exit.
 
 **Example:**
 ```bash
 plexomatic scan --path /media/tv_shows --extensions .mp4,.mkv --verbose
+```
+
+**Output:**
+```
+Scanning directory: /media/tv_shows
+Found 42 media files
+  - /media/tv_shows/The.Office.S01E01.mp4
+  - /media/tv_shows/The.Office.S01E02.mp4
+  ...
 ```
 
 ### Preview Command
@@ -54,12 +63,24 @@ plexomatic preview [OPTIONS]
 ```
 
 **Options:**
-- `--verbose, -v`: Enable verbose output.
+- `--path, -p PATH`: Path to directory containing media files (optional if you've already run scan).
+- `--recursive/--no-recursive`: Scan directories recursively (default: recursive).
+- `--extensions, -e TEXT`: Comma-separated list of file extensions to scan (default from config).
+- `--verbose, -v`: Enable verbose output to see all proposed changes.
 - `--help`: Show help message and exit.
 
 **Example:**
 ```bash
-plexomatic preview --verbose
+plexomatic preview --path /media/tv_shows --verbose
+```
+
+**Output:**
+```
+Previewing changes
+The Office S1E1.mp4 → The.Office.S01E01.mp4
+The Office S1E2.mp4 → The.Office.S01E02.mp4
+...
+Total: 15 file(s) to rename
 ```
 
 ### Apply Command
@@ -72,12 +93,23 @@ plexomatic apply [OPTIONS]
 
 **Options:**
 - `--dry-run`: Show what would be done without making changes.
+- `--path, -p PATH`: Path to directory containing media files (optional if you've already run scan or preview).
 - `--verbose, -v`: Enable verbose output.
 - `--help`: Show help message and exit.
 
 **Example:**
 ```bash
 plexomatic apply --dry-run
+plexomatic apply
+```
+
+**Output:**
+```
+Applying changes
+Renaming: /media/tv_shows/The Office S1E1.mp4 → /media/tv_shows/The.Office.S01E01.mp4
+Renaming: /media/tv_shows/The Office S1E2.mp4 → /media/tv_shows/The.Office.S01E02.mp4
+...
+Applied changes to 15 file(s). 0 error(s).
 ```
 
 ### Rollback Command
@@ -95,7 +127,15 @@ plexomatic rollback [OPTIONS]
 
 **Example:**
 ```bash
+plexomatic rollback
 plexomatic rollback --operation-id 42
+```
+
+**Output:**
+```
+Rolling back changes
+Rolling back operation 42
+Successfully rolled back operation 42
 ```
 
 ## Workflow Examples
@@ -128,6 +168,10 @@ plexomatic apply --dry-run --verbose
 # Then apply for real
 plexomatic apply
 ```
+
+## Configuration
+
+The CLI respects the configuration settings defined in `~/.plexomatic/config.json`. See [Configuration Documentation](../configuration/README.md) for details.
 
 ## Environment Variables
 
