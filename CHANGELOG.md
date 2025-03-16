@@ -14,9 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Code coverage reporting with Codecov
   - Automated releases to GitHub and PyPI
 - Mypy configuration for strict type checking
+- Command Line Interface (CLI) implementation
+  - Main CLI entry point with version display
+  - Scan command for finding media files
+  - Preview command placeholder
+  - Apply command placeholder with confirmation
+  - Rollback command placeholder with confirmation
+  - Verbose output option for detailed logging
 
 ### Changed
-- None
+- Enhanced FileScanner with recursive option to control directory traversal depth
+- Updated datetime usage to timezone-aware objects for better compatibility
 
 ### Deprecated
 - None
@@ -25,7 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - None
 
 ### Fixed
-- None
+- Fixed confirmation prompts in CLI commands for automated testing
+- Fixed version display format in CLI output
+- Fixed verbose mode output for better test capture and user feedback
 
 ### Security
 - None
