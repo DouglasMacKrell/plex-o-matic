@@ -21,10 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Apply command placeholder with confirmation
   - Rollback command placeholder with confirmation
   - Verbose output option for detailed logging
+- Configuration system for managing application settings
+  - Default configuration with customizable options
+  - Environment variable support
+  - Helper methods for common configuration values
+- File name utilities for standardizing media filenames
+  - TV show and movie filename pattern detection
+  - Standardized filename generation
+  - Preview of proposed file renames
+- File operations with backup support
+  - Safe file renaming with checksum verification
+  - Operation tracking in database
+  - Rollback capability for all operations
 
 ### Changed
 - Enhanced FileScanner with recursive option to control directory traversal depth
 - Updated datetime usage to timezone-aware objects for better compatibility
+- Connected CLI commands to actual functionality for file operations
 
 ### Deprecated
 - None
