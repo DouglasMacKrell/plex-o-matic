@@ -51,6 +51,8 @@ For more detailed usage instructions, please refer to the [CLI Documentation](cl
 - [Database Schema](database/README.md): Documentation on the database structure and schema.
 - [API Integration](api/README.md): Documentation on API clients and integration.
 - [Metadata Management](metadata/README.md): Information about the metadata management system.
+- [Episode Handling](episode_handling.md): TV show episode handling features.
+- [Metadata-Episode Integration](metadata/episode_integration.md): Integration between metadata system and episode handling.
 
 ## Features
 

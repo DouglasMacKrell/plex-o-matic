@@ -105,4 +105,118 @@ result = organize_season_pack(files)
 #   "Specials": [Path("/media/Show.Special.mp4")],
 #   "Unknown": []
 # }
-``` 
+```
+
+## Metadata Integration
+
+The episode handling system is fully integrated with the metadata system, allowing for advanced features:
+
+### Special Episode Metadata
+
+When a special episode is detected, the system can fetch specific metadata for it from providers:
+
+```python
+from plexomatic.metadata.manager import MetadataManager
+from plexomatic.utils.episode_handler import detect_special_episodes
+
+# Detect special episode information
+special_info = detect_special_episodes("Show.Special.1.mp4")
+if special_info:
+    # Create a metadata manager
+    manager = MetadataManager()
+    
+    # First match the show
+    match_result = manager.match("Show.mp4")
+    if match_result.matched:
+        # Fetch special episode metadata
+        special_metadata = manager.fetch_episode_metadata(
+            match_result.id,
+            {
+                "special_type": special_info["type"],
+                "special_number": special_info["number"]
+            }
+        )
+        
+        # Use the metadata to generate a filename
+        from plexomatic.utils.episode_handler import generate_filename_from_metadata
+        new_filename = generate_filename_from_metadata("Show.Special.1.mp4", special_metadata)
+        # Result: "Show.S00E01.Special.Episode.Title.mp4"
+```
+
+### Multi-Episode Metadata
+
+Similarly, when multiple episodes are detected in a file, metadata for all episodes can be fetched:
+
+```python
+from plexomatic.metadata.manager import MetadataManager
+from plexomatic.utils.episode_handler import detect_multi_episodes
+
+# Detect multi-episode information
+episodes = detect_multi_episodes("Show.S01E01E02E03.mp4")
+if len(episodes) > 1:
+    # Create a metadata manager
+    manager = MetadataManager()
+    
+    # First match the show
+    match_result = manager.match("Show.mp4")
+    if match_result.matched:
+        # Fetch multi-episode metadata
+        multi_episode_metadata = manager.fetch_episode_metadata(
+            match_result.id,
+            {
+                "episodes": episodes,
+                "season": 1  # Season number from the filename
+            }
+        )
+        
+        # Use the metadata to generate a filename
+        from plexomatic.utils.episode_handler import generate_filename_from_metadata
+        new_filename = generate_filename_from_metadata("Show.S01E01E02E03.mp4", multi_episode_metadata)
+        # Result: "Show.S01E01-E03.Episode.Titles.mp4"
+```
+
+### Generating Filenames from Metadata
+
+The `generate_filename_from_metadata` function provides a unified way to create filenames based on metadata and episode information:
+
+```python
+from plexomatic.utils.episode_handler import generate_filename_from_metadata
+
+# Regular episode
+regular_metadata = {
+    "title": "Show Name",
+    "season": 1,
+    "episode": 5,
+    "episode_title": "Episode Title"
+}
+regular_filename = generate_filename_from_metadata("original.mp4", regular_metadata)
+# Result: "Show.Name.S01E05.Episode.Title.mp4"
+
+# Special episode
+special_metadata = {
+    "title": "Show Name",
+    "special_type": "special",
+    "special_number": 1,
+    "special_episode": {
+        "title": "Behind the Scenes"
+    }
+}
+special_filename = generate_filename_from_metadata("original.mp4", special_metadata)
+# Result: "Show.Name.S00E01.Behind.the.Scenes.mp4"
+
+# Multi-episode
+multi_metadata = {
+    "title": "Show Name",
+    "season": 1,
+    "episode_numbers": [1, 2, 3],
+    "multi_episodes": [
+        {"title": "Part 1"},
+        {"title": "Part 2"},
+        {"title": "Part 3"}
+    ]
+}
+multi_filename = generate_filename_from_metadata("original.mp4", multi_metadata)
+# Result: "Show.Name.S01E01-E03.Part.1.&.Part.2.&.Part.3.mp4"
+```
+
+This integration allows for more accurate and comprehensive metadata-based episode handling, ensuring that files are named correctly even in complex scenarios like special episodes and multi-episode files. 

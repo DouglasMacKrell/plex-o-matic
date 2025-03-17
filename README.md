@@ -38,6 +38,9 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Multi-source aggregation
   - Efficient metadata caching
   - Flexible ID format with source prefixes
+  - Episode-specific metadata fetching
+  - Special episode and multi-episode support
+  - Metadata-driven filename generation
 
 - **Robust Backup System**:
   - SQLite database integration for operation tracking
@@ -213,6 +216,8 @@ Comprehensive documentation is available in the [docs](docs/) directory:
 - [Configuration System](docs/configuration/README.md)
 - [File Utilities](docs/file-utils/README.md)
 - [Episode Handling](docs/episode_handling.md)
+- [Metadata System](docs/metadata/README.md)
+- [Metadata-Episode Integration](docs/metadata/episode_integration.md)
 - [Backend Architecture](docs/backend/README.md)
 - [Database Schema](docs/database/README.md)
 - [API Integration](docs/api/README.md)

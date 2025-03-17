@@ -117,6 +117,106 @@ anidb_metadata = manager.fetch_metadata("anidb-12345")
 tvmaze_metadata = manager.fetch_metadata("tvmaze-12345")
 ```
 
+### Episode-Specific Metadata
+
+The metadata manager can fetch specific metadata for special episodes and multi-episode files:
+
+```python
+# Fetch metadata for a special episode
+special_episode_metadata = manager.fetch_episode_metadata(
+    "tvdb-12345",
+    {
+        "special_type": "special",
+        "special_number": 1
+    }
+)
+
+# Fetch metadata for multiple episodes in a file
+multi_episode_metadata = manager.fetch_episode_metadata(
+    "tvdb-12345",
+    {
+        "episodes": [1, 2, 3],
+        "season": 1
+    }
+)
+```
+
+#### Special Episode Metadata
+
+For special episodes, the system fetches metadata specific to that episode type (specials, OVAs, movies):
+
+```python
+# The returned metadata includes special episode information
+special_metadata = {
+    "id": "tvdb-12345",
+    "title": "Show Name",
+    "special_type": "special",
+    "special_episode": {
+        "id": 67890,
+        "title": "Behind the Scenes",
+        "overview": "A behind-the-scenes look at the making of the show",
+        "special_number": 1,
+        "air_date": "2020-05-01"
+    }
+}
+```
+
+#### Multi-Episode Metadata
+
+For multi-episode files, the system fetches metadata for all included episodes:
+
+```python
+# The returned metadata includes information for all episodes
+multi_metadata = {
+    "id": "tvdb-12345",
+    "title": "Show Name",
+    "episode_numbers": [1, 2, 3],
+    "multi_episodes": [
+        {
+            "id": 67890,
+            "title": "Part 1",
+            "overview": "First part of the story",
+            "season": 1,
+            "episode": 1,
+            "air_date": "2020-01-01"
+        },
+        {
+            "id": 67891,
+            "title": "Part 2",
+            "overview": "Second part of the story",
+            "season": 1,
+            "episode": 2,
+            "air_date": "2020-01-08"
+        },
+        {
+            "id": 67892,
+            "title": "Part 3",
+            "overview": "Final part of the story",
+            "season": 1,
+            "episode": 3,
+            "air_date": "2020-01-15"
+        }
+    ]
+}
+```
+
+### Intelligent Episode Detection in Match
+
+The metadata manager can automatically detect special episodes and multi-episodes during the match process:
+
+```python
+# Match a special episode
+special_match = manager.match("Show.Special.1.mp4", media_type=MediaType.TV_SHOW)
+if special_match.matched and "special_type" in special_match.metadata:
+    print(f"Detected special: {special_match.metadata['special_type']}")
+    print(f"Special number: {special_match.metadata['special_number']}")
+    
+# Match a multi-episode file
+multi_match = manager.match("Show.S01E01E02E03.mp4", media_type=MediaType.TV_SHOW)
+if multi_match.matched and "episodes" in multi_match.metadata:
+    print(f"Detected episodes: {multi_match.metadata['episodes']}")
+```
+
 ### Efficient Caching
 
 The metadata manager includes an efficient caching mechanism to reduce API calls and improve performance.
