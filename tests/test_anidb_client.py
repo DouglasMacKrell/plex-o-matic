@@ -1,13 +1,9 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import time
-import os
-import re
 from datetime import datetime, timezone, timedelta
-from xml.etree import ElementTree as ET
 
 from plexomatic.api.anidb_client import AniDBClient, AniDBUDPClient, AniDBHTTPClient
-from plexomatic.api.anidb_client import AniDBError, AniDBRateLimitError, AniDBAuthenticationError
+from plexomatic.api.anidb_client import AniDBRateLimitError, AniDBAuthenticationError
 
 
 class TestAniDBUDPClient:

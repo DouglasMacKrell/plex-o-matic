@@ -97,7 +97,7 @@ CREATE TABLE configuration_history (
 
 ### Query Recent Operations
 ```sql
-SELECT 
+SELECT
     id,
     original_path,
     new_path,
@@ -111,7 +111,7 @@ ORDER BY created_at DESC;
 
 ### Check Failed Operations
 ```sql
-SELECT 
+SELECT
     id,
     original_path,
     new_path,
@@ -124,7 +124,7 @@ ORDER BY created_at DESC;
 
 ### Rollback History
 ```sql
-SELECT 
+SELECT
     id,
     original_path,
     new_path,
@@ -132,4 +132,4 @@ SELECT
 FROM file_operations
 WHERE rolled_back_at IS NOT NULL
 ORDER BY rolled_back_at DESC;
-``` 
+```

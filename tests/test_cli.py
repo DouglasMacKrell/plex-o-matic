@@ -1,10 +1,9 @@
 import pytest
-import os
 from pathlib import Path
 from click.testing import CliRunner
 from unittest.mock import patch, MagicMock
 
-from plexomatic.cli import cli, scan_command, preview_command, apply_command, rollback_command
+from plexomatic.cli import cli
 from plexomatic.core.backup_system import BackupSystem
 
 

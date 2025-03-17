@@ -1,6 +1,5 @@
 """File operations utilities with backup support."""
 
-import os
 import hashlib
 import shutil
 from pathlib import Path

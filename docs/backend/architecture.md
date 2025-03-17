@@ -101,4 +101,4 @@ backup.rollback_operation(op_id)
 2. **Integration Points**
    - TVDB/TMDB API integration
    - Local LLM integration
-   - Plex API integration 
+   - Plex API integration

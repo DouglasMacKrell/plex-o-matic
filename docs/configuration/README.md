@@ -131,4 +131,4 @@ plexomatic scan --path /media/tv_shows --extensions ".mp4,.mkv"
 
 # Override recursive scanning for this command
 plexomatic scan --path /media/tv_shows --no-recursive
-``` 
+```

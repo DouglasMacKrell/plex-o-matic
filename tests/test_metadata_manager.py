@@ -1,9 +1,7 @@
 import pytest
 import unittest.mock as mock
-from collections import defaultdict
-from dataclasses import dataclass
 
-from plexomatic.metadata.manager import MetadataManager, MetadataMatchResult
+from plexomatic.metadata.manager import MetadataManager
 from plexomatic.core.models import MediaType
 
 

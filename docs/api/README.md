@@ -179,11 +179,11 @@ if client.check_model_available():
         temperature=0.7,
         max_tokens=512
     )
-    
+
     # Analyze a filename to extract metadata
     metadata = client.analyze_filename("BreakingBad.S01E01.720p.HDTV.x264.mp4")
     # Returns: {"title": "Breaking Bad", "season": 1, "episode": 1, ...}
-    
+
     # Get a standardized filename suggestion
     new_filename = client.suggest_filename(
         original_filename="BreakingBad.S01E01.720p.HDTV.x264.mp4",
@@ -242,4 +242,4 @@ API keys and settings are managed through the application's configuration system
         }
     }
 }
-``` 
+```

@@ -1,9 +1,9 @@
 """File scanner module for identifying and analyzing media files."""
 
-import os
 import re
+import os
 from pathlib import Path
-from typing import Iterator, List, Set, Optional
+from typing import Iterator, List, Optional
 
 
 class MediaFile:

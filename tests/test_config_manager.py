@@ -21,6 +21,7 @@ def temp_config_path(tmp_path):
 def test_config_manager_init(temp_config_path):
     """Test configuration manager initialization."""
     config = ConfigManager()
+    assert config is not None
 
     # Check that config file was created
     assert temp_config_path.exists()

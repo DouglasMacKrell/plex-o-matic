@@ -218,4 +218,4 @@ The CLI uses the following exit codes:
 - `2`: Invalid command line options
 - `3`: Media file scanning error
 - `4`: Operation application error
-- `5`: Rollback error 
+- `5`: Rollback error

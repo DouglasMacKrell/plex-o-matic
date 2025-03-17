@@ -69,4 +69,4 @@ docs/_build/
 site/
 
 # Jupyter Notebook
-.ipynb_checkpoints 
+.ipynb_checkpoints

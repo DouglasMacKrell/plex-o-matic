@@ -1,11 +1,10 @@
 """TMDB API client for retrieving movie and TV show metadata."""
 
-import os
 import time
 import json
 import requests
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)

@@ -1,8 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
 import json
-import os
-from datetime import datetime, timezone, timedelta
 
 from plexomatic.api.llm_client import LLMClient, LLMRequestError, LLMModelNotAvailableError
 

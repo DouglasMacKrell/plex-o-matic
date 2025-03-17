@@ -1,10 +1,7 @@
 """Tests for the configure command in the CLI."""
 
-import os
-import json
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from click.testing import CliRunner
 
 from plexomatic.cli import cli

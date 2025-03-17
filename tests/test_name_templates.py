@@ -1,17 +1,15 @@
 """Tests for the name template system."""
 
-import pytest
-from pathlib import Path
-from typing import Dict, List, Optional
-
 # These imports will be implemented later
 from plexomatic.utils.name_templates import (
-    NameTemplate,
     TemplateManager,
     TemplateType,
     apply_template,
     register_template,
     get_available_templates,
+    _format_multi_episode,
+    _ensure_episode_list,
+    _default_formatter,
 )
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
 
@@ -157,3 +155,182 @@ class TestNameTemplates:
         tv_templates = manager.get_templates(TemplateType.TV_SHOW)
         assert "minimal_tv" in tv_templates
         assert "plex" in tv_templates  # Should include default templates too
+
+    def test_multi_episode_formatting(self):
+        """Test different multi-episode formatting options."""
+        # Test sequential episodes with range format
+        assert _format_multi_episode([1, 2, 3], "range") == "E01-E03"
+
+        # Test non-sequential episodes with range format
+        assert _format_multi_episode([1, 3, 5], "range") == "E01E03E05"
+
+        # Test plus format
+        assert _format_multi_episode([1, 2, 3], "plus") == "E01+E02+E03"
+
+        # Test list format
+        assert _format_multi_episode([1, 2, 3], "list") == "E01E02E03"
+
+        # Test single episode
+        assert _format_multi_episode([1]) == "E01"
+
+        # Test empty list
+        assert _format_multi_episode([]) == "E00"
+
+    def test_ensure_episode_list(self):
+        """Test episode list conversion function."""
+        # Test None input
+        assert _ensure_episode_list(None) == []
+
+        # Test integer input
+        assert _ensure_episode_list(1) == [1]
+
+        # Test list input
+        assert _ensure_episode_list([1, 2, 3]) == [1, 2, 3]
+
+    def test_template_error_handling(self):
+        """Test error handling in template application."""
+        # Test with missing required template values
+        show = ParsedMediaName(
+            media_type=MediaType.TV_SHOW,
+            title="Show Name",
+            extension=".mp4",
+        )
+
+        # Should handle missing season/episode gracefully
+        result = apply_template(show, "default")
+        assert result == "Show.Name.S01E00.mp4"
+
+        # Test with invalid template name
+        try:
+            apply_template(show, "nonexistent_template")
+            assert False, "Should raise ValueError"
+        except ValueError:
+            pass
+
+    def test_anime_special_handling(self):
+        """Test handling of anime specials."""
+        # Create an anime special
+        special = ParsedMediaName(
+            media_type=MediaType.ANIME_SPECIAL,
+            title="Anime Name",
+            special_type="OVA",
+            special_number=2,
+            group="Fansub",
+            quality="1080p",
+            extension=".mkv",
+        )
+
+        # Test with fansub template
+        result = apply_template(special, "fansub")
+        assert "[Fansub] Anime Name" in result
+        assert "1080p" in result
+
+        # Test with no special number
+        special.special_number = None
+        result = apply_template(special, "default")
+        assert "Anime.Name" in result
+
+        # Test with no group
+        special.group = None
+        result = apply_template(special, "fansub")
+        assert "Anime Name" in result
+
+    def test_template_manager_fallbacks(self):
+        """Test template manager fallback behavior."""
+        manager = TemplateManager()
+
+        # Test fallback to default template
+        show = ParsedMediaName(
+            media_type=MediaType.TV_SHOW,
+            title="Show Name",
+            season=1,
+            episodes=[2],
+            extension=".mp4",
+        )
+
+        result = manager.apply_template(show, "nonexistent_template")
+        assert result == "Show.Name.S01E02.mp4"  # Should use default template
+
+        # Test with unknown media type
+        unknown = ParsedMediaName(
+            media_type="UNKNOWN",
+            title="Unknown Media",
+            extension=".mp4",
+        )
+
+        result = manager.apply_template(unknown)
+        assert result == "Unknown Media.mp4"  # Should use simple fallback
+
+    def test_default_formatter_edge_cases(self):
+        """Test edge cases in the default formatter."""
+        # Test with missing required values
+        show = ParsedMediaName(
+            media_type=MediaType.TV_SHOW,
+            title="Test Show",
+            extension=".mp4",
+        )
+
+        # Test with a template that uses unavailable keys
+        result = _default_formatter(show, "{title}{nonexistent}{extension}")
+        assert result == "Test.Show.S01E00.mp4"  # Should fall back to simple format
+
+        # Test with index error in template
+        result = _default_formatter(show, "{title}{episodes[5]}{extension}")
+        assert result == "Test.Show.S01E00.mp4"  # Should fall back to simple format
+
+        # Test with movie missing year
+        movie = ParsedMediaName(
+            media_type=MediaType.MOVIE,
+            title="Test Movie",
+            extension=".mp4",
+        )
+        result = _default_formatter(movie, "{title}.{year}{extension}")
+        assert result == "Test.Movie.mp4"  # Should handle missing year gracefully
+
+    def test_template_registration_edge_cases(self):
+        """Test edge cases in template registration."""
+        # Test registering template with same name but different type
+        register_template("test_template", TemplateType.TV_SHOW, "{title}{extension}")
+        register_template("test_template", TemplateType.MOVIE, "{title}{extension}")
+
+        # Both templates should be accessible via their combined keys
+        tv_templates = get_available_templates(TemplateType.TV_SHOW)
+        movie_templates = get_available_templates(TemplateType.MOVIE)
+        assert "test_template" in tv_templates
+        assert "test_template" in movie_templates
+
+        # Test registering template with empty format string
+        register_template("empty_template", TemplateType.GENERAL, "")
+        templates = get_available_templates(TemplateType.GENERAL)
+        assert "empty_template" in templates
+
+    def test_template_manager_initialization(self):
+        """Test template manager initialization and customization."""
+        # Create a new manager
+        manager = TemplateManager()
+
+        # Verify default templates are loaded
+        assert manager.get_templates(TemplateType.TV_SHOW)
+        assert manager.get_templates(TemplateType.MOVIE)
+        assert manager.get_templates(TemplateType.ANIME)
+
+        # Test adding a custom template with spaces
+        manager.add_template(
+            "custom_spaces",
+            TemplateType.TV_SHOW,
+            "{title_spaces} - {episode_title_spaces}{extension}",
+        )
+
+        show = ParsedMediaName(
+            media_type=MediaType.TV_SHOW,
+            title="Test Show",
+            episode_title="Test Episode",
+            extension=".mp4",
+        )
+
+        result = manager.apply_template(show, "custom_spaces")
+        assert result == "Test Show - Test Episode.mp4"
+
+        # Test template type inference
+        result = manager.apply_template(show)  # Should use default TV show template
+        assert "Test.Show" in result

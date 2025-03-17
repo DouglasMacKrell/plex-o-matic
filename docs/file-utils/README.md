@@ -128,4 +128,4 @@ plexomatic apply --path /media/tv_shows
 
 # Rollback
 plexomatic rollback
-``` 
+```

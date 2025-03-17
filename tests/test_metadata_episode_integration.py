@@ -2,10 +2,9 @@
 
 import pytest
 from unittest.mock import patch, MagicMock
-from typing import Dict, List, Any, Optional
 
 from plexomatic.metadata.manager import MetadataManager, MetadataMatchResult
-from plexomatic.metadata.fetcher import MediaType, MetadataResult
+from plexomatic.metadata.fetcher import MediaType
 from plexomatic.utils.episode_handler import (
     detect_special_episodes,
     detect_multi_episodes,

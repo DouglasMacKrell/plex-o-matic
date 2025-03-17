@@ -1,13 +1,12 @@
 import click
 import logging
 import sys
-import os
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional
 from pathlib import Path
 
 from plexomatic import __version__
 from plexomatic.core.file_scanner import FileScanner
-from plexomatic.core.backup_system import BackupSystem, FileOperation
+from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
 from plexomatic.utils import rename_file, rollback_operation, get_preview_rename
 

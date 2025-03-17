@@ -2,11 +2,9 @@
 
 import os
 import pytest
-from datetime import datetime
-from pathlib import Path
 from sqlalchemy.orm import Session
 from plexomatic.core.backup_system import BackupSystem, FileOperation
-from plexomatic.core.models import Base, FileRename
+from plexomatic.core.models import FileRename
 
 
 @pytest.fixture

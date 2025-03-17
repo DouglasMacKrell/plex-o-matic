@@ -1,9 +1,9 @@
 """Backup system for tracking and managing file operations."""
 
-from datetime import datetime, UTC
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
+from datetime import datetime, UTC
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from .models import Base, FileRename

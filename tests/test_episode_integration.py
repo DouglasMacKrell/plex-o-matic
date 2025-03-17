@@ -1,12 +1,10 @@
 """Integration tests for the episode handling and name utils."""
 
-import pytest
 from pathlib import Path
 from plexomatic.utils.name_utils import extract_show_info, generate_tv_filename, get_preview_rename
 from plexomatic.utils.episode_handler import (
     detect_multi_episodes,
     detect_special_episodes,
-    organize_season_pack,
 )
 
 

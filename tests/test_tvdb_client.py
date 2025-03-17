@@ -1,7 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import time
-import os
 from datetime import datetime, timezone, timedelta
 
 from plexomatic.api.tvdb_client import (

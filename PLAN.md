@@ -101,7 +101,39 @@
 3. Create name formatter
 4. Add template system
 
-### 3.3 Preview System
+### 3.3 Name Parser Refactoring
+1. Data Model Simplification
+   - Split into specific media type classes
+   - Remove unnecessary optional fields
+   - Implement proper inheritance hierarchy
+   - Separate confidence scoring system
+2. Pattern Matching Improvements
+   - Create pattern registry system
+   - Implement pattern priority ordering
+   - Add pattern confidence scoring
+   - Create pattern testing framework
+3. Confidence System Overhaul
+   - Define clear confidence levels
+   - Document confidence scoring rules
+   - Implement consistent scoring system
+   - Add confidence validation
+4. Modular Processing
+   - Create separate parsers per media type
+   - Implement parser factory
+   - Add parser configuration system
+   - Create parser testing framework
+5. Code Quality Improvements
+   - Reduce regex complexity
+   - Implement proper error handling
+   - Add comprehensive logging
+   - Improve test coverage
+6. Performance Optimization
+   - Implement pattern caching
+   - Add result caching
+   - Optimize regex patterns
+   - Add performance benchmarks
+
+### 3.4 Preview System
 1. Create preview generator
 2. Implement diff display
 3. Add batch preview
@@ -211,4 +243,4 @@
 - Phase 4: Weeks 13-16
 - Testing & Documentation: Ongoing
 - First Release: Week 16
-- Maintenance: Ongoing 
+- Maintenance: Ongoing

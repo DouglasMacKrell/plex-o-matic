@@ -30,7 +30,7 @@ match_result = manager.match("Breaking.Bad.S01E01.720p.mkv", media_type=MediaTyp
 if match_result.matched:
     print(f"Found match: {match_result.title} ({match_result.year})")
     print(f"Confidence: {match_result.confidence}")
-    
+
 # Fetch detailed metadata for a specific ID
 metadata = manager.fetch_metadata("tvdb-123456")
 
@@ -210,7 +210,7 @@ special_match = manager.match("Show.Special.1.mp4", media_type=MediaType.TV_SHOW
 if special_match.matched and "special_type" in special_match.metadata:
     print(f"Detected special: {special_match.metadata['special_type']}")
     print(f"Special number: {special_match.metadata['special_number']}")
-    
+
 # Match a multi-episode file
 multi_match = manager.match("Show.S01E01E02E03.mp4", media_type=MediaType.TV_SHOW)
 if multi_match.matched and "episodes" in multi_match.metadata:
@@ -240,10 +240,10 @@ The metadata management system integrates with the file operations to provide me
 for file_path in file_scanner.scan_directory("/path/to/media"):
     # Determine the media type based on the path or filename
     media_type = determine_media_type(file_path)
-    
+
     # Match the file to metadata
     match_result = manager.match(os.path.basename(file_path), media_type)
-    
+
     if match_result.matched:
         # Generate a standardized filename using the metadata
         new_filename = generate_standardized_filename(
@@ -252,10 +252,10 @@ for file_path in file_scanner.scan_directory("/path/to/media"):
             media_type=match_result.media_type,
             # Additional metadata from match_result.metadata
         )
-        
+
         # Create the new path
         new_path = os.path.join(os.path.dirname(file_path), new_filename)
-        
+
         # Perform the rename operation
         file_ops.rename_file(file_path, new_path)
 ```
@@ -292,4 +292,4 @@ This command will walk you through:
 3. Configuring AniDB username and password (optional)
 4. Setting up local LLM integration (optional)
 
-The API keys will be saved in your configuration file at `~/.plexomatic/config.json` and used by the metadata management system when making API requests. 
+The API keys will be saved in your configuration file at `~/.plexomatic/config.json` and used by the metadata management system when making API requests.

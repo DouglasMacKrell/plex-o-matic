@@ -202,7 +202,7 @@ special_info = detect_special_episodes("Show.Special.1.mp4")
 if special_info:
     # Create a metadata manager
     manager = MetadataManager()
-    
+
     # First match the show
     match_result = manager.match("Show.mp4")
     if match_result.matched:
@@ -214,7 +214,7 @@ if special_info:
                 "special_number": special_info["number"]
             }
         )
-        
+
         # Use the metadata to generate a filename
         from plexomatic.utils.episode_handler import generate_filename_from_metadata
         new_filename = generate_filename_from_metadata("Show.Special.1.mp4", special_metadata)
@@ -234,7 +234,7 @@ episodes = detect_multi_episodes("Show.S01E01E02E03.mp4")
 if len(episodes) > 1:
     # Create a metadata manager
     manager = MetadataManager()
-    
+
     # First match the show
     match_result = manager.match("Show.mp4")
     if match_result.matched:
@@ -246,7 +246,7 @@ if len(episodes) > 1:
                 "season": 1  # Season number from the filename
             }
         )
-        
+
         # Use the metadata to generate a filename
         from plexomatic.utils.episode_handler import generate_filename_from_metadata
         new_filename = generate_filename_from_metadata("Show.S01E01E02E03.mp4", multi_episode_metadata)
@@ -297,4 +297,4 @@ multi_filename = generate_filename_from_metadata("original.mp4", multi_metadata)
 # Result: "Show.Name.S01E01-E03.Part.1.&.Part.2.&.Part.3.mp4"
 ```
 
-This integration allows for more accurate and comprehensive metadata-based episode handling, ensuring that files are named correctly even in complex scenarios like special episodes and multi-episode files. 
+This integration allows for more accurate and comprehensive metadata-based episode handling, ensuring that files are named correctly even in complex scenarios like special episodes and multi-episode files.

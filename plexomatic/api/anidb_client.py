@@ -4,15 +4,13 @@ This module provides clients for both the UDP API (for detailed anime data) and 
 (for titles and descriptions). The main client combines both to provide a comprehensive interface.
 """
 
-import os
-import re
 import socket
 import hashlib
 import logging
 import time
 import difflib
 import requests
-from typing import Dict, List, Any, Optional, Union, Tuple
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree as ET
 from functools import lru_cache
@@ -86,7 +84,7 @@ class AniDBUDPClient:
         if self.socket:
             try:
                 self.socket.close()
-            except:
+            except Exception:
                 pass
             finally:
                 self.socket = None
@@ -312,7 +310,7 @@ class AniDBUDPClient:
                 # Send logout command
                 cmd = f"LOGOUT s={self.session}"
                 self._send_cmd(cmd)
-            except:
+            except Exception:
                 pass
             finally:
                 self._disconnect()

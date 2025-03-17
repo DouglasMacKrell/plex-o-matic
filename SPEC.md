@@ -155,4 +155,4 @@ CREATE TABLE file_renames (
 - Remote operation capability
 - Plugin system
 - Additional metadata sources
-- Custom naming templates 
+- Custom naming templates

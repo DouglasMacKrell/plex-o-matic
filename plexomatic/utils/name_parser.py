@@ -3,7 +3,7 @@
 import re
 import enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Any, Tuple
+from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
 
@@ -32,7 +32,7 @@ class ParsedMediaName:
 
     # TV Show specific fields
     season: Optional[int] = None
-    episodes: Optional[List[int]] = None
+    episodes: Optional[Union[int, List[int]]] = None
     episode_title: Optional[str] = None
 
     # Movie specific fields
@@ -47,10 +47,10 @@ class ParsedMediaName:
     # Additional metadata that doesn't fit elsewhere
     additional_info: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and initialize any derived fields after initialization."""
         # Ensure episodes is always a list if provided
-        if self.episodes is not None and not isinstance(self.episodes, list):
+        if isinstance(self.episodes, int):
             self.episodes = [self.episodes]
 
 
@@ -64,9 +64,30 @@ def detect_media_type(filename: str) -> MediaType:
     Returns:
         MediaType: The detected media type
     """
-    # Check for anime special files first
-    if re.search(r"^\[.*?\].*?OVA\d*\s*\[", filename):
-        return MediaType.ANIME_SPECIAL
+    # Check for anime patterns first (must have [Group] prefix)
+    if filename.startswith("["):
+        # Check for anime special files first
+        if re.search(r"\b(OVA|Special|Movie)\d*\b", filename, re.IGNORECASE):
+            return MediaType.ANIME_SPECIAL
+        # Then check for regular anime
+        if re.search(r" - \d{1,2}(v\d)? \[", filename):
+            return MediaType.ANIME
+
+    # TV special patterns (check before regular TV show patterns)
+    tv_special_patterns = [
+        # S01.5xSpecial format
+        r"[sS]\d{1,2}\.5x[Ss]pecial",
+        # Special Episode format
+        r"[Ss]pecial[. _-]+[Ee]pisode",
+        # OVA format (when not in anime format)
+        r"\bOVA\d*\b",
+        # Special followed by separator or end of name
+        r"[Ss]pecial(?:[. _-]|$)",
+    ]
+
+    for pattern in tv_special_patterns:
+        if re.search(pattern, filename, re.IGNORECASE):
+            return MediaType.TV_SPECIAL
 
     # TV show patterns
     tv_patterns = [
@@ -82,15 +103,9 @@ def detect_media_type(filename: str) -> MediaType:
         r"[sS]\d{1,2}\.[eE]\d{1,2}",
     ]
 
-    # TV special patterns
-    tv_special_patterns = [
-        # S01.5xSpecial format
-        r"[sS]\d{1,2}\.5x[Ss]pecial",
-        # Special Episode format
-        r"[Ss]pecial\s+[Ee]pisode",
-        # OVA format (often anime)
-        r"OVA\d*",
-    ]
+    for pattern in tv_patterns:
+        if re.search(pattern, filename):
+            return MediaType.TV_SHOW
 
     # Movie patterns
     movie_patterns = [
@@ -101,62 +116,32 @@ def detect_media_type(filename: str) -> MediaType:
         r"[. _-]+(19|20)\d{2}[. _-]",
         # Year followed by quality or other info
         r"\b(19|20)\d{2}\b.*\d+p",
+        # Simple year at end of name
+        r"(19|20)\d{2}(\.|$|\s)",
     ]
 
-    # Anime patterns
-    anime_patterns = [
-        # Group format
-        r"^\[([^\]]+)\]",
-        # Episode number without season
-        r" - \d{1,2}(v\d)? \[",
-        # OVA, special, etc.
-        r" - (OVA|Special)\d* \[",
-    ]
-
-    # Check anime patterns first
-    for pattern in anime_patterns:
-        if re.search(pattern, filename):
-            # Differentiate between regular anime and specials
-            if "OVA" in filename or "Special" in filename:
-                return MediaType.ANIME_SPECIAL
-            return MediaType.ANIME
-
-    # Check TV special patterns
-    for pattern in tv_special_patterns:
-        if re.search(pattern, filename):
-            return MediaType.TV_SPECIAL
-
-    # Check TV show patterns
-    for pattern in tv_patterns:
-        if re.search(pattern, filename):
-            return MediaType.TV_SHOW
-
-    # Check movie patterns
     for pattern in movie_patterns:
         if re.search(pattern, filename):
             return MediaType.MOVIE
-
-    # Simple movie pattern - name followed by four-digit year at the end of the name part
-    if re.search(r"(19|20)\d{2}(\.|$|\s)", filename):
-        return MediaType.MOVIE
 
     # Default to unknown if no pattern matches
     return MediaType.UNKNOWN
 
 
-def parse_tv_show(filename: str) -> ParsedMediaName:
+def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> ParsedMediaName:
     """
     Parse a TV show filename into its components.
 
     Args:
         filename: The filename to parse
+        media_type: Optional media type to use (defaults to TV_SHOW)
 
     Returns:
         ParsedMediaName: Object containing parsed information
     """
     # Base information
-    media_type = MediaType.TV_SHOW
-    extension = Path(filename).suffix
+    media_type = media_type or MediaType.TV_SHOW
+    extension = ""
     title = ""
     season = 1  # Default to season 1 if not specified
     episodes = []
@@ -164,19 +149,57 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
     quality = None
     confidence = 0.8  # Default confidence
 
+    # Handle empty filename
+    if not filename:
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            extension=extension,
+            quality=quality,
+            confidence=confidence,
+            season=season,
+            episodes=episodes,
+            episode_title=episode_title,
+        )
+
+    # Get extension and name part
+    path = Path(filename)
+    extension = path.suffix
+    name_part = path.stem
+
+    # If filename is just an extension, return minimal info
+    if not name_part:
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            extension=extension,
+            quality=quality,
+            confidence=confidence,
+            season=season,
+            episodes=episodes,
+            episode_title=episode_title,
+        )
+
     # Extract quality if present
+    quality_parts = []
     quality_patterns = [
-        r"(\d{3,4}p\s+(?:HDTV|WEB-DL|BluRay|BRRip))",  # Combined formats: 720p HDTV
         r"(\d{3,4}p)",  # 720p, 1080p, etc.
         r"(HDTV|WEB-DL|BluRay|BRRip)",  # Source
         r"(x264|x265|HEVC)",  # Codec
     ]
 
-    name_part = Path(filename).stem
+    # Extract all quality components
+    for pattern in quality_patterns:
+        match = re.search(pattern, name_part, re.IGNORECASE)
+        if match:
+            quality_parts.append(match.group(1))
+            name_part = re.sub(pattern, "", name_part, flags=re.IGNORECASE)
+
+    quality = " ".join(quality_parts) if quality_parts else None
 
     # Special case for standard dash format with quality
     dash_quality_match = re.search(
-        r"(?P<show_name>.*?)\s+-\s+[sS](?P<season>\d{1,2})[eE](?P<episode>\d{1,2})\s+-\s+(?P<title>.*?)\s+-\s+(?P<quality>.*?)$",
+        r"(?P<show_name>.*?)\s+-\s+[sS](?P<season>\d{1,2})[eE](?P<episode>\d{1,2})\s+-\s+(?P<title>.*?)(?:\s+-\s+(?P<quality>.*?))?$",
         name_part,
     )
 
@@ -186,8 +209,9 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
         season = int(match_dict["season"])
         episodes = [int(match_dict["episode"])]
         episode_title = match_dict["title"].strip()
-        quality = match_dict["quality"].strip()
-        confidence = 0.95
+        if match_dict.get("quality"):
+            quality = match_dict["quality"].strip()
+        confidence = 0.95  # High confidence for well-formatted names
 
         return ParsedMediaName(
             media_type=media_type,
@@ -199,13 +223,6 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
             quality=quality,
             confidence=confidence,
         )
-
-    # Remove quality information to avoid it being included in episode title
-    for pattern in quality_patterns:
-        match = re.search(pattern, name_part, re.IGNORECASE)
-        if match:
-            quality = match.group(1)
-            name_part = re.sub(pattern, "", name_part, flags=re.IGNORECASE)
 
     # Alternative format with dash separator (without quality)
     dash_match = re.search(
@@ -219,7 +236,7 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
         season = int(match_dict["season"])
         episodes = [int(match_dict["episode"])]
         episode_title = match_dict["title"].strip()
-        confidence = 0.95
+        confidence = 0.95  # High confidence for well-formatted names
 
         return ParsedMediaName(
             media_type=media_type,
@@ -232,7 +249,7 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
             confidence=confidence,
         )
 
-    # Check for range format with hyphen "S01E02-E03"
+    # Check for multi-episode range format
     range_match = re.search(
         r"(?P<show_name>.*?)[. _-]+[sS](?P<season>\d{1,2})[eE](?P<first_ep>\d{1,2})-[eE](?P<last_ep>\d{1,2})(?:[. _-]+(?P<title>.*))?",
         name_part,
@@ -240,16 +257,24 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
 
     if range_match:
         match_dict = range_match.groupdict()
-        title = match_dict["show_name"].replace(".", " ").replace("_", " ").strip()
+        title_part = match_dict["show_name"]
+        title = title_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+        # Remove multiple spaces
+        title = " ".join(title.split())
+
         season = int(match_dict["season"])
         first_ep = int(match_dict["first_ep"])
         last_ep = int(match_dict["last_ep"])
         episodes = list(range(first_ep, last_ep + 1))
 
-        if match_dict["title"]:
-            episode_title = match_dict["title"].replace(".", " ").replace("_", " ").strip()
+        if match_dict.get("title"):
+            episode_title = (
+                match_dict["title"].replace(".", " ").replace("_", " ").replace("-", " ").strip()
+            )
+            # Remove multiple spaces
+            episode_title = " ".join(episode_title.split())
 
-        confidence = 0.9
+        confidence = 0.8  # Standard format confidence
 
         return ParsedMediaName(
             media_type=media_type,
@@ -262,86 +287,96 @@ def parse_tv_show(filename: str) -> ParsedMediaName:
             confidence=confidence,
         )
 
-    # Standard patterns
-    # S01E02 format
-    se_match = re.search(
-        r"(?P<show_name>.*?)[. _-]+[sS](?P<season>\d{1,2})[eE](?P<episode>\d{1,2})(?P<multi_ep>(?:[eE]\d{1,2})*)(?:[. _-]+(?P<title>.*))?",
+    # Check for multi-episode separate format (S01E01E02)
+    multi_ep_match = re.search(
+        r"(?P<show_name>.*?)[. _-]+[sS](?P<season>\d{1,2})(?P<episodes>(?:[eE]\d{1,2})+)(?:[. _-]+(?P<title>.*))?",
         name_part,
     )
 
-    # 1x02 format
-    alt_match = re.search(
-        r"(?P<show_name>.*?)[. _-]+(?P<season>\d{1,2})x(?P<episode>\d{1,2})(?:[. _-]+(?P<title>.*))?",
+    if multi_ep_match:
+        match_dict = multi_ep_match.groupdict()
+        title_part = match_dict["show_name"]
+        title = title_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+        # Remove multiple spaces
+        title = " ".join(title.split())
+
+        season = int(match_dict["season"])
+        episode_numbers = re.findall(r"[eE](\d{1,2})", match_dict["episodes"])
+        episodes = [int(ep) for ep in episode_numbers]
+
+        if match_dict.get("title"):
+            episode_title = (
+                match_dict["title"].replace(".", " ").replace("_", " ").replace("-", " ").strip()
+            )
+            # Remove multiple spaces
+            episode_title = " ".join(episode_title.split())
+
+        confidence = 0.8  # Standard format confidence
+
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            season=season,
+            episodes=episodes,
+            episode_title=episode_title,
+            extension=extension,
+            quality=quality,
+            confidence=confidence,
+        )
+
+    # Extract season and episode information
+    season_ep_match = re.search(
+        r"(?P<show_name>.*?)(?:[. _-]+(?:(?:[sS](?P<season>\d{1,2})[eE](?P<episode>\d{1,2}))|(?:(?P<alt_season>\d{1,2})x(?P<alt_episode>\d{1,2})))(?:[. _-]+(?P<title>.*))?|[. _-]+[sS](?P<season2>\d{1,2})[. _-]+[eE](?P<episode2>\d{1,2}))",
         name_part,
     )
 
-    # Season 1 Episode 2 format
-    verbose_match = re.search(
-        r"(?P<show_name>.*?)[. _-]+[Ss]eason[. _-]+(?P<season>\d{1,2})[. _-]+[Ee]pisode[. _-]+(?P<episode>\d{1,2})(?:[. _-]+(?P<title>.*))?",
-        name_part,
-    )
+    if season_ep_match:
+        match_dict = season_ep_match.groupdict()
+        title_part = match_dict["show_name"]
+        title = title_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+        # Remove multiple spaces
+        title = " ".join(title.split())
 
-    # S01.E02 format
-    period_match = re.search(
-        r"(?P<show_name>.*?)[. _-]+[sS](?P<season>\d{1,2})\.[eE](?P<episode>\d{1,2})(?:[. _-]+(?P<title>.*))?",
-        name_part,
-    )
+        # Get season and episode numbers
+        season = int(match_dict["season"] or match_dict["alt_season"] or match_dict["season2"] or 0)
+        episode = int(
+            match_dict["episode"] or match_dict["alt_episode"] or match_dict["episode2"] or 0
+        )
+        episodes = [episode]
 
-    # Process the matches
-    if se_match:
-        match_dict = se_match.groupdict()
-        title = match_dict["show_name"].replace(".", " ").replace("_", " ").strip()
-        season = int(match_dict["season"])
-        episodes = [int(match_dict["episode"])]
+        if match_dict.get("title"):
+            episode_title = (
+                match_dict["title"].replace(".", " ").replace("_", " ").replace("-", " ").strip()
+            )
+            # Remove multiple spaces
+            episode_title = " ".join(episode_title.split())
 
-        # Handle multi-episode format (S01E01E02E03)
-        if match_dict["multi_ep"]:
-            additional_eps = re.findall(r"[eE](\d{1,2})", match_dict["multi_ep"])
-            episodes.extend([int(ep) for ep in additional_eps])
+        # Set confidence based on available information
+        confidence = 0.8  # Default confidence
+        if episode_title or quality:
+            confidence = 0.85  # Higher confidence when episode title or quality is present
 
-        if match_dict["title"]:
-            episode_title = match_dict["title"].replace(".", " ").replace("_", " ").strip()
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            season=season,
+            episodes=episodes,
+            episode_title=episode_title,
+            extension=extension,
+            quality=quality,
+            confidence=confidence,
+        )
 
-        confidence = 0.95
-
-    # Process other formats
-    elif alt_match:
-        match_dict = alt_match.groupdict()
-        title = match_dict["show_name"].replace(".", " ").replace("_", " ").strip()
-        season = int(match_dict["season"])
-        episodes = [int(match_dict["episode"])]
-
-        if match_dict["title"]:
-            episode_title = match_dict["title"].replace(".", " ").replace("_", " ").strip()
-
-        confidence = 0.85
-
-    elif verbose_match:
-        match_dict = verbose_match.groupdict()
-        title = match_dict["show_name"].replace(".", " ").replace("_", " ").strip()
-        season = int(match_dict["season"])
-        episodes = [int(match_dict["episode"])]
-
-        if match_dict["title"]:
-            episode_title = match_dict["title"].replace(".", " ").replace("_", " ").strip()
-
-        confidence = 0.8
-
-    elif period_match:
-        match_dict = period_match.groupdict()
-        title = match_dict["show_name"].replace(".", " ").replace("_", " ").strip()
-        season = int(match_dict["season"])
-        episodes = [int(match_dict["episode"])]
-
-        if match_dict["title"]:
-            episode_title = match_dict["title"].replace(".", " ").replace("_", " ").strip()
-
-        confidence = 0.8
-
-    # If we have a title with a year in parentheses, keep it that way
-    year_match = re.search(r"(.*?) \((\d{4})\)", title)
-    if year_match:
-        title = f"{year_match.group(1)} ({year_match.group(2)})"
+    # Special case for TV specials
+    elif media_type == MediaType.TV_SPECIAL:
+        # Extract title by taking everything before "Special" or "OVA"
+        special_match = re.search(r"(Special|OVA)", name_part, re.IGNORECASE)
+        if special_match:
+            title_part = name_part[: special_match.start()]
+            title = title_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+            # Remove multiple spaces
+            title = " ".join(title.split())
+        confidence = 0.85  # Moderate confidence for specials
 
     return ParsedMediaName(
         media_type=media_type,
@@ -373,18 +408,24 @@ def parse_movie(filename: str) -> ParsedMediaName:
     quality = None
     confidence = 0.8  # Default confidence
 
-    # Extract quality if present
+    name_part = Path(filename).stem
+
+    # Extract quality components
+    quality_parts = []
     quality_patterns = [
         r"(\d{3,4}p)",  # 720p, 1080p, etc.
         r"(HDTV|WEB-DL|BluRay|BRRip)",  # Source
         r"(x264|x265|HEVC)",  # Codec
-        r"(\d{3,4}p\s+(?:HDTV|WEB-DL|BluRay|BRRip))",  # Combined
     ]
 
+    # Extract all quality components
     for pattern in quality_patterns:
-        match = re.search(pattern, filename, re.IGNORECASE)
+        match = re.search(pattern, name_part, re.IGNORECASE)
         if match:
-            quality = match.group(1)
+            quality_parts.append(match.group(1))
+            name_part = re.sub(pattern, "", name_part, flags=re.IGNORECASE)
+
+    quality = " ".join(quality_parts) if quality_parts else None
 
     # Year formats
     # Year in parentheses: Movie Name (2020)
@@ -427,100 +468,120 @@ def parse_movie(filename: str) -> ParsedMediaName:
     )
 
 
-def parse_anime(filename: str) -> ParsedMediaName:
+def parse_anime(filename: str, media_type: Optional[MediaType] = None) -> ParsedMediaName:
     """
     Parse an anime filename into its components.
 
     Args:
         filename: The filename to parse
+        media_type: Optional media type to use (defaults to ANIME)
 
     Returns:
         ParsedMediaName: Object containing parsed information
     """
     # Base information
+    media_type = media_type or MediaType.ANIME
     extension = Path(filename).suffix
     title = ""
     episodes = []
+    quality = None
     group = None
     version = None
     special_type = None
     special_number = None
-    quality = None
     confidence = 0.8  # Default confidence
 
-    # Determine if it's a special or regular episode
-    if "OVA" in filename or "Special" in filename:
-        media_type = MediaType.ANIME_SPECIAL
-    else:
-        media_type = MediaType.ANIME
+    name_part = Path(filename).stem
 
-    # Extract group name from [Group] format
-    group_match = re.search(r"^\[([^\]]+)\]", filename)
-    if group_match:
-        group = group_match.group(1)
+    # Extract quality components
+    quality_parts = []
+    quality_patterns = [
+        r"(\d{3,4}p)",  # 720p, 1080p, etc.
+        r"(HDTV|WEB-DL|BluRay|BRRip)",  # Source
+        r"(x264|x265|HEVC)",  # Codec
+    ]
 
-    # Extract quality (usually in brackets at the end)
-    quality_match = re.search(r"\[(\d{3,4}p)\]", filename)
-    if quality_match:
-        quality = quality_match.group(1)
+    # Extract all quality components
+    for pattern in quality_patterns:
+        match = re.search(pattern, name_part, re.IGNORECASE)
+        if match:
+            quality_parts.append(match.group(1))
+            name_part = re.sub(pattern, "", name_part, flags=re.IGNORECASE)
 
-    # Standard fansub format: [Group] Anime Name - 01 [720p].mkv
-    standard_match = re.search(
-        r"^\[(?P<group>[^\]]+)\]\s*(?P<title>.*?)\s*-\s*(?P<episode>\d{1,2})(?P<version>v\d)?\s*(?:\[.*?)\]",
-        filename,
-    )
+    quality = " ".join(quality_parts) if quality_parts else None
 
-    # Special episode format: [Group] Anime Name - OVA1 [1080p].mkv
-    special_match = re.search(
-        r"^\[(?P<group>[^\]]+)\]\s*(?P<title>.*?)\s*-\s*(?P<special_type>OVA|Special)(?P<special_number>\d*)\s*(?:\[.*?)\]",
-        filename,
-    )
-
-    # Process matches
-    if standard_match:
-        match_dict = standard_match.groupdict()
-        title = match_dict["title"].strip()
-        episodes = [int(match_dict["episode"])]
-        group = match_dict["group"]
-
-        if match_dict["version"]:
-            version = int(match_dict["version"][1:])  # Extract number from "v2"
-
-        confidence = 0.9
-
-    elif special_match:
-        match_dict = special_match.groupdict()
-        title = match_dict["title"].strip()
-        special_type = match_dict["special_type"]
-
-        if match_dict["special_number"]:
-            special_number = int(match_dict["special_number"])
+    # Extract group name(s) from brackets at start
+    group_parts = []
+    while name_part.startswith("["):
+        group_match = re.match(r"^\[([^\]]+)\]", name_part)
+        if group_match:
+            group_parts.append(group_match.group(1))
+            name_part = name_part[len(group_match.group(0)) :].strip()
         else:
-            special_number = 1  # Default to 1 if not specified
+            break
 
-        group = match_dict["group"]
-        confidence = 0.85
-        media_type = MediaType.ANIME_SPECIAL  # Ensure special type is set
+    if group_parts:
+        group = group_parts[0]  # Only use the first group
+        confidence = 0.9  # Higher confidence when group is present
 
-    # For cases without clear match, try to extract basic information
+    # Check for special episode types
+    special_match = re.search(r"\b(OVA|Special|Movie)\d*\b", name_part, re.IGNORECASE)
+    if special_match:
+        media_type = MediaType.ANIME_SPECIAL
+        special_type = special_match.group(1)
+        special_number = 1  # Default to 1 if not specified
+        # Look for a number after the special type
+        number_match = re.search(rf"{special_type}(\d+)", name_part, re.IGNORECASE)
+        if number_match:
+            special_number = int(number_match.group(1))
+        # Remove the special part from the name_part
+        name_part = re.sub(rf"{special_type}\d*", "", name_part, flags=re.IGNORECASE)
+        confidence = 0.95  # Higher confidence for special episodes
+
+    # Extract title and episode number
+    title_ep_match = re.search(r"(.*?)(?:\s*-\s*(\d+(?:v\d)?|\w+\d*))?(?:\s*\[.*)?$", name_part)
+    if title_ep_match:
+        title = title_ep_match.group(1).strip()
+        # Clean up trailing hyphens
+        title = re.sub(r"\s*-\s*$", "", title)
+        if title_ep_match.group(2):
+            episode_str = title_ep_match.group(2)
+            # Check for version number
+            version_match = re.search(r"v(\d+)$", episode_str)
+            if version_match:
+                version = int(version_match.group(1))
+                episode_str = re.sub(r"v\d+$", "", episode_str)
+                confidence = 0.95  # Higher confidence when version is present
+
+            try:
+                episode_num = int(episode_str)
+                episodes = [episode_num]
+                if not version:  # Only increase confidence if not already increased
+                    confidence = 0.9  # Higher confidence when episode number is present
+            except ValueError:
+                # Handle non-numeric episode strings (e.g., OVA1)
+                pass
     else:
-        # Try to extract title and episode number
-        basic_match = re.search(r"^\[.*?\]\s*(.*?)\s*-\s*(\d{1,2})", filename)
-        if basic_match:
-            title = basic_match.group(1).strip()
-            episodes = [int(basic_match.group(2))]
-            confidence = 0.6
+        title = name_part.strip()
+
+    # Clean up title
+    title = title.replace(".", " ").replace("_", " ").strip()
+
+    # If we have a title with a year in parentheses, keep it that way
+    year_match = re.search(r"(.*?) \((\d{4})\)", title)
+    if year_match:
+        title = f"{year_match.group(1)} ({year_match.group(2)})"
 
     return ParsedMediaName(
         media_type=media_type,
         title=title,
-        episodes=episodes,
-        group=group,
-        version=version,
-        special_type=special_type,
-        special_number=special_number,
         extension=extension,
         quality=quality,
+        group=group,
+        version=version,
+        episodes=episodes,
+        special_type=special_type,
+        special_number=special_number,
         confidence=confidence,
     )
 
@@ -540,14 +601,11 @@ def parse_media_name(filename: str) -> ParsedMediaName:
 
     # Parse according to media type
     if media_type == MediaType.TV_SHOW or media_type == MediaType.TV_SPECIAL:
-        return parse_tv_show(filename)
+        return parse_tv_show(filename, media_type)
     elif media_type == MediaType.MOVIE:
         return parse_movie(filename)
     elif media_type == MediaType.ANIME or media_type == MediaType.ANIME_SPECIAL:
-        result = parse_anime(filename)
-        # Make sure we respect the detected media type
-        result.media_type = media_type
-        return result
+        return parse_anime(filename, media_type)
     else:
         # Unknown type - return minimal information
         return ParsedMediaName(

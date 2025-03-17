@@ -2,7 +2,7 @@
 
 import re
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Union, List
 
 
 def sanitize_filename(filename: str) -> str:
@@ -35,7 +35,7 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
     tv_pattern = re.compile(
         r"(?P<show_name>.*?)[. _-]+"
         r"[sS](?P<season>\d{1,2})[eE](?P<episode>\d{1,2})(?:[eE]\d{1,2})*"
-        r"(?:[. _-](?P<title>.*))?$"
+        r"(?:[. _-](?P<title>.*?))?(?:\.[^.]+)?$"  # Make title non-greedy and exclude extension
     )
 
     # Try to match the TV show pattern
@@ -45,11 +45,22 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
         # Clean up show name
         if info["show_name"]:
             info["show_name"] = info["show_name"].replace(".", " ").replace("_", " ").strip()
+        # If title is just the extension without the dot or empty, set it to None
+        if (
+            info["title"] is None
+            or not info["title"].strip()
+            or info["title"].lower() in ["mp4", "mkv", "avi"]
+        ):
+            info["title"] = None
+        else:
+            info["title"] = info["title"].replace(".", " ").replace("_", " ").strip()
         return info
 
     # If not a TV show, try movie pattern: MovieName.Year.OptionalInfo.ext
     movie_pattern = re.compile(
-        r"(?P<movie_name>.*?)[. _-]+" r"(?P<year>19\d{2}|20\d{2})" r"(?:[. _-](?P<info>.*))?$"
+        r"(?P<movie_name>.*?)[. _-]+"
+        r"(?P<year>19\d{2}|20\d{2})"
+        r"(?:[. _-](?P<info>.*?))?(?:\.[^.]+)?$"  # Make info non-greedy and exclude extension
     )
 
     movie_match = movie_pattern.search(filename)
@@ -58,6 +69,13 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
         # Clean up movie name
         if info["movie_name"]:
             info["movie_name"] = info["movie_name"].replace(".", " ").replace("_", " ").strip()
+        # If info is just the extension without the dot or empty, set it to None
+        if (
+            info["info"] is None
+            or not info["info"].strip()
+            or info["info"].lower() in ["mp4", "mkv", "avi"]
+        ):
+            info["info"] = None
         return info
 
     # If no patterns match, return just the name
@@ -75,7 +93,7 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
 def generate_tv_filename(
     show_name: str,
     season: int,
-    episode: int,
+    episode: Union[int, List[int]],
     title: Optional[str] = None,
     extension: str = ".mp4",
     concatenated: bool = False,

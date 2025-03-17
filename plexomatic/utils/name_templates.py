@@ -1,11 +1,10 @@
 """Templating system for media file names."""
 
 import enum
-import re
 import os
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Callable, Any
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Callable, Union
+from dataclasses import dataclass
+import copy
 
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
 
@@ -68,6 +67,23 @@ def _format_multi_episode(episodes: List[int], format_type: str = "range") -> st
         return "".join([f"E{ep:02d}" for ep in episodes])
 
 
+def _ensure_episode_list(episodes: Optional[Union[int, List[int]]]) -> List[int]:
+    """
+    Convert episode input to a list of integers.
+
+    Args:
+        episodes: Episode number(s) as integer or list of integers
+
+    Returns:
+        List[int]: List of episode numbers
+    """
+    if episodes is None:
+        return []
+    if isinstance(episodes, int):
+        return [episodes]
+    return episodes
+
+
 def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
     """
     Default formatter that replaces template placeholders with values.
@@ -80,7 +96,7 @@ def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
         str: Formatted filename
     """
     # Create a dictionary of values to substitute
-    values = {}
+    values: Dict[str, str] = {}
 
     # Common fields
     values["title"] = parsed.title.replace(" ", ".")
@@ -94,17 +110,20 @@ def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
 
     # Type-specific fields
     if parsed.media_type in [MediaType.TV_SHOW, MediaType.TV_SPECIAL]:
-        values["season"] = parsed.season if parsed.season is not None else 1
-        values["season_padded"] = f"{values['season']:02d}"
+        season_num = parsed.season if parsed.season is not None else 1
+        values["season"] = str(season_num)
+        values["season_padded"] = f"{season_num:02d}"
 
-        if parsed.episodes:
-            values["episode"] = parsed.episodes[0]
-            values["episode_padded"] = f"{values['episode']:02d}"
-            values["episodes"] = _format_multi_episode(parsed.episodes, "range")
-            values["episodes_plus"] = _format_multi_episode(parsed.episodes, "plus")
-            values["episodes_list"] = _format_multi_episode(parsed.episodes, "list")
+        episode_list = _ensure_episode_list(parsed.episodes)
+        if episode_list:
+            episode_num = episode_list[0]
+            values["episode"] = str(episode_num)
+            values["episode_padded"] = f"{episode_num:02d}"
+            values["episodes"] = _format_multi_episode(episode_list, "range")
+            values["episodes_plus"] = _format_multi_episode(episode_list, "plus")
+            values["episodes_list"] = _format_multi_episode(episode_list, "list")
         else:
-            values["episode"] = 0
+            values["episode"] = "0"
             values["episode_padded"] = "00"
             values["episodes"] = "E00"
             values["episodes_plus"] = "E00"
@@ -119,16 +138,18 @@ def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
 
     elif parsed.media_type == MediaType.MOVIE:
         if parsed.year:
-            values["year"] = parsed.year
+            values["year"] = str(parsed.year)
         else:
             values["year"] = ""
 
     elif parsed.media_type in [MediaType.ANIME, MediaType.ANIME_SPECIAL]:
-        if parsed.episodes and parsed.episodes[0]:
-            values["episode"] = parsed.episodes[0]
-            values["episode_padded"] = f"{values['episode']:02d}"
+        episode_list = _ensure_episode_list(parsed.episodes)
+        if episode_list:
+            episode_num = episode_list[0]
+            values["episode"] = str(episode_num)
+            values["episode_padded"] = f"{episode_num:02d}"
         else:
-            values["episode"] = 0
+            values["episode"] = "0"
             values["episode_padded"] = "00"
 
         if parsed.group:
@@ -139,7 +160,7 @@ def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
         if parsed.special_type:
             values["special_type"] = parsed.special_type
             if parsed.special_number:
-                values["special_number"] = parsed.special_number
+                values["special_number"] = str(parsed.special_number)
             else:
                 values["special_number"] = ""
         else:
@@ -149,64 +170,53 @@ def _default_formatter(parsed: ParsedMediaName, template: str) -> str:
     # Custom format using the string's format method with all values available
     try:
         result = template.format(**values)
-
-        # Clean up any leftover placeholders or double dots/spaces
-        result = re.sub(r"\.\.+", ".", result)
-        result = re.sub(r"  +", " ", result)
-        result = result.strip(". ")
-
+        # Clean up any double dots that might occur from empty values
+        while ".." in result:
+            result = result.replace("..", ".")
         return result
-    except KeyError as e:
+    except KeyError:
         # If a key is missing, return a simplified version
         if parsed.media_type in [MediaType.TV_SHOW, MediaType.TV_SPECIAL]:
-            return f"{parsed.title}{parsed.extension}"
-        elif parsed.media_type == MediaType.MOVIE and parsed.year:
-            return f"{parsed.title} ({parsed.year}){parsed.extension}"
+            season = parsed.season if parsed.season is not None else 1
+            episode_list = _ensure_episode_list(parsed.episodes)
+            episode = episode_list[0] if episode_list else 0
+            return f"{values['title']}.S{season:02d}E{episode:02d}{parsed.extension}"
         else:
-            return f"{parsed.title}{parsed.extension}"
-    except IndexError as e:
+            return f"{values['title']}{parsed.extension}"
+    except IndexError:
         # If there's an index error, likely with a condition, return a simplified version
         if parsed.media_type in [MediaType.TV_SHOW, MediaType.TV_SPECIAL]:
-            return f"{parsed.title}.S{parsed.season:02d}{_format_multi_episode(parsed.episodes, 'range')}{parsed.extension}"
-        elif parsed.media_type == MediaType.MOVIE and parsed.year:
-            return f"{parsed.title}.{parsed.year}{parsed.extension}"
-        elif parsed.media_type in [MediaType.ANIME, MediaType.ANIME_SPECIAL] and parsed.episodes:
-            return f"{parsed.title}.E{parsed.episodes[0]:02d}{parsed.extension}"
+            season = parsed.season if parsed.season is not None else 1
+            episode_list = _ensure_episode_list(parsed.episodes)
+            episode = episode_list[0] if episode_list else 0
+            return f"{values['title']}.S{season:02d}E{episode:02d}{parsed.extension}"
         else:
-            return f"{parsed.title}{parsed.extension}"
+            return f"{values['title']}{parsed.extension}"
 
 
 def _tv_kodi_formatter(parsed: ParsedMediaName) -> str:
-    """
-    Custom formatter for Kodi TV show structure.
+    """Format TV show name according to Kodi standards."""
+    if parsed.episodes is None:
+        return ""
 
-    Args:
-        parsed: The parsed media information
+    episode_list = _ensure_episode_list(parsed.episodes)
+    if not episode_list:
+        return ""
 
-    Returns:
-        str: Formatted path and filename
-    """
+    season = parsed.season if parsed.season is not None else 1
     show_folder = parsed.title
-    season_folder = f"Season {parsed.season:02d}"
+    season_folder = f"Season {season:02d}"
 
     if parsed.episode_title:
-        filename = f"{parsed.title} - S{parsed.season:02d}{_format_multi_episode(parsed.episodes, 'range')} - {parsed.episode_title}{parsed.extension}"
+        filename = f"{parsed.title} - S{season:02d}E{episode_list[0]:02d} - {parsed.episode_title}{parsed.extension}"
     else:
-        filename = f"{parsed.title} - S{parsed.season:02d}{_format_multi_episode(parsed.episodes, 'range')}{parsed.extension}"
+        filename = f"{parsed.title} - S{season:02d}E{episode_list[0]:02d}{parsed.extension}"
 
     return os.path.join(show_folder, season_folder, filename)
 
 
 def _movie_kodi_formatter(parsed: ParsedMediaName) -> str:
-    """
-    Custom formatter for Kodi movie structure.
-
-    Args:
-        parsed: The parsed media information
-
-    Returns:
-        str: Formatted path and filename
-    """
+    """Format movie name according to Kodi standards."""
     if parsed.year:
         folder = f"{parsed.title} ({parsed.year})"
         filename = f"{parsed.title} ({parsed.year}){parsed.extension}"
@@ -218,7 +228,7 @@ def _movie_kodi_formatter(parsed: ParsedMediaName) -> str:
 
 
 # Register default templates
-def _register_default_templates():
+def _register_default_templates() -> None:
     """Register the default set of templates."""
     # TV Show templates
     register_template(
@@ -342,6 +352,8 @@ def register_template(
     # Use a combined key for the global registry
     key = f"{template_type.value}:{name}"
     _TEMPLATES[key] = template
+    # Also store with just the name for backward compatibility
+    _TEMPLATES[name] = template
 
 
 def get_available_templates(template_type: Optional[TemplateType] = None) -> List[str]:
@@ -367,20 +379,7 @@ def get_available_templates(template_type: Optional[TemplateType] = None) -> Lis
 
 
 def apply_template(parsed: ParsedMediaName, template_name: str = "default") -> str:
-    """
-    Apply a template to a parsed media name.
-
-    Args:
-        parsed: The parsed media information
-        template_name: Name of the template to apply
-
-    Returns:
-        str: Formatted filename
-    """
-    # Make sure default templates are registered
-    if not _TEMPLATES:
-        _register_default_templates()
-
+    """Apply a template to format a media name."""
     # Determine the template type from the parsed media type
     template_type = None
     if parsed.media_type in [MediaType.TV_SHOW, MediaType.TV_SPECIAL]:
@@ -392,29 +391,33 @@ def apply_template(parsed: ParsedMediaName, template_name: str = "default") -> s
     else:
         template_type = TemplateType.GENERAL
 
-    # Look up the template
+    # First try to find the template with the combined key
     key = f"{template_type.value}:{template_name}"
-    if key not in _TEMPLATES:
-        # Fall back to the default template
-        key = f"{template_type.value}:default"
-
     template = _TEMPLATES.get(key)
 
-    # Fall back to a very simple template if nothing is found
+    # If not found, try just the name
     if not template:
-        return f"{parsed.title}{parsed.extension}"
+        template = _TEMPLATES.get(template_name)
 
-    # Use the custom formatter if provided, otherwise use the default formatter
+    if not template:
+        raise ValueError(f"Template '{template_name}' not found")
+
     if template.formatter:
         return template.formatter(parsed)
-    else:
-        return _default_formatter(parsed, template.format_string)
+
+    # Create a copy to avoid modifying the original
+    parsed_copy = copy.deepcopy(parsed)
+    if parsed_copy.episodes is not None:
+        if isinstance(parsed_copy.episodes, int):
+            parsed_copy.episodes = [parsed_copy.episodes]
+
+    return _default_formatter(parsed_copy, template.format_string)
 
 
 class TemplateManager:
     """Class for managing and applying templates for media names."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the template manager with default templates."""
         # Make sure default templates are registered
         if not _TEMPLATES:
@@ -446,8 +449,24 @@ class TemplateManager:
             # Replace {title} with {title_spaces} for spaces instead of dots
             format_string = format_string.replace("{title}", "{title_spaces}")
 
-            # Replace episode with episodes for multi-episode support
+            # Replace episode with episode_padded for proper formatting
             format_string = format_string.replace("E{episode:02d}", "{episodes}")
+
+            # Create a custom formatter for minimal_tv template
+            def minimal_tv_formatter(parsed: ParsedMediaName) -> str:
+                episode_list = _ensure_episode_list(parsed.episodes)
+                if not episode_list:
+                    return ""
+
+                season = parsed.season if parsed.season is not None else 1
+                if len(episode_list) == 1:
+                    episode_str = f"E{episode_list[0]:02d}"
+                else:
+                    episode_str = f"E{episode_list[0]:02d}-E{episode_list[-1]:02d}"
+
+                return f"{parsed.title}.S{season:02d}{episode_str}{parsed.extension}"
+
+            formatter = minimal_tv_formatter
 
         template = NameTemplate(
             name=name,
@@ -460,6 +479,8 @@ class TemplateManager:
         # Use a combined key for the registry
         key = f"{template_type.value}:{name}"
         self.templates[key] = template
+        # Also store with just the name for backward compatibility
+        self.templates[name] = template
 
     def get_templates(self, template_type: Optional[TemplateType] = None) -> List[str]:
         """
@@ -525,7 +546,9 @@ class TemplateManager:
                 quality=parsed.quality,
                 confidence=parsed.confidence,
                 season=parsed.season,
-                episodes=parsed.episodes.copy() if parsed.episodes else None,
+                episodes=(
+                    list(parsed.episodes) if isinstance(parsed.episodes, list) else parsed.episodes
+                ),
                 episode_title=parsed.episode_title,
                 year=parsed.year,
                 group=parsed.group,

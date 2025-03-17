@@ -24,7 +24,7 @@ manager = MetadataManager()
 result = manager.match("Show.Name.Special.mp4", MediaType.TV_SHOW)
 if result.matched and "special_type" in result.metadata:
     print(f"Detected special: {result.metadata['special_type']}")
-    
+
 # Match a filename that contains multiple episodes
 result = manager.match("Show.Name.S01E01E02E03.mp4", MediaType.TV_SHOW)
 if result.matched and "episodes" in result.metadata:
@@ -199,7 +199,7 @@ episodes = detect_multi_episodes(filename)
 if len(episodes) > 1:
     # 3. Match the show to get its ID
     match_result = manager.match("Show.mp4", media_type=MediaType.TV_SHOW)
-    
+
     if match_result.matched:
         # 4. Fetch detailed metadata for the episodes
         episode_metadata = manager.fetch_episode_metadata(
@@ -209,10 +209,10 @@ if len(episodes) > 1:
                 "season": 1  # Season from the filename
             }
         )
-        
+
         # 5. Generate a standardized filename
         new_filename = generate_filename_from_metadata(filename, episode_metadata)
-        
+
         print(f"Original: {filename}")
         print(f"New: {new_filename}")
 ```
@@ -257,4 +257,4 @@ new_path = original_path.parent / new_filename
 rename_file(str(original_path), str(new_path), create_backup=True)
 ```
 
-This integration is a core component of Plex-o-matic, enhancing the system's ability to handle complex episode scenarios with accurate metadata. 
+This integration is a core component of Plex-o-matic, enhancing the system's ability to handle complex episode scenarios with accurate metadata.

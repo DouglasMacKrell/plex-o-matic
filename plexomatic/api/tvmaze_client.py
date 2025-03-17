@@ -4,10 +4,8 @@ This module provides a client for interacting with the TVMaze API to retrieve TV
 """
 
 import logging
-import time
 import json
-from typing import Dict, List, Any, Optional, Union, Tuple
-from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
 from functools import lru_cache
 import requests
 

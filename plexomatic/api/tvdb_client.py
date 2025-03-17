@@ -1,11 +1,10 @@
 """TVDB API client for retrieving TV show metadata."""
 
-import os
 import time
 import requests
 import logging
 import json
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 

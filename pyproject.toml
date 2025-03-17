@@ -51,4 +51,4 @@ target-version = "py38"
 
 [tool.black]
 line-length = 100
-target-version = ["py38"] 
+target-version = ["py38"]

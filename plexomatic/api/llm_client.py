@@ -1,10 +1,9 @@
 """Ollama LLM client for local AI inferencing with Deepseek R1 8b."""
 
-import os
 import json
 import logging
 import requests
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 

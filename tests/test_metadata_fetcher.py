@@ -1,7 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
-import json
-from typing import Dict, List, Any, Optional
+from unittest.mock import MagicMock
 
 from plexomatic.metadata.fetcher import (
     MetadataFetcher,
@@ -9,7 +7,6 @@ from plexomatic.metadata.fetcher import (
     TMDBMetadataFetcher,
     AniDBMetadataFetcher,
     TVMazeMetadataFetcher,
-    MetadataResult,
     MediaType,
 )
 

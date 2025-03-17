@@ -128,4 +128,4 @@ You can use the interactive configuration command:
 plexomatic configure
 ```
 
-This will guide you through setting up API keys for TVDB, TMDB, and other metadata sources. It's the recommended way to configure Plex-o-matic rather than editing the configuration file manually. 
+This will guide you through setting up API keys for TVDB, TMDB, and other metadata sources. It's the recommended way to configure Plex-o-matic rather than editing the configuration file manually.

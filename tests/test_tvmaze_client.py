@@ -1,9 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-import time
-import json
-from datetime import datetime, timedelta
-import requests
 
 from plexomatic.api.tvmaze_client import TVMazeClient, TVMazeRequestError, TVMazeRateLimitError
 

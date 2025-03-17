@@ -6,19 +6,15 @@ from various sources like TVDB, TMDB, AniDB, and TVMaze.
 
 import logging
 import re
-from typing import Dict, List, Any, Optional, Tuple, Union, Set
+from typing import Dict, List, Any, Optional, Tuple
 from functools import lru_cache
-import os.path
 from dataclasses import dataclass
-from enum import Enum
 
 from plexomatic.metadata.fetcher import (
-    MetadataFetcher,
     TVDBMetadataFetcher,
     TMDBMetadataFetcher,
     AniDBMetadataFetcher,
     TVMazeMetadataFetcher,
-    MetadataResult,
     MediaType,
 )
 
@@ -151,13 +147,10 @@ class MetadataManager:
         return results
 
     @lru_cache(maxsize=CACHE_SIZE)
-    def _cached_search(
-        self, cache_key: str, query: str, media_type_str: Optional[str]
-    ) -> List[Dict[str, Any]]:
+    def _cached_search(self, query: str, media_type_str: Optional[str]) -> List[Dict[str, Any]]:
         """Cached version of the search method.
 
         Args:
-            cache_key: Key for caching
             query: Search query
             media_type_str: String representation of the media type
 
@@ -180,10 +173,6 @@ class MetadataManager:
         Returns:
             List of metadata results
         """
-        # Create a cache key
-        media_type_str = media_type.name if media_type else None
-        cache_key = f"{query}:{media_type_str}"
-
         # For testing purposes, allow direct patching of this method
         return self._search_uncached(query, media_type)
 

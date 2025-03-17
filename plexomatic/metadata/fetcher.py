@@ -6,7 +6,7 @@ This module contains classes for fetching metadata from different sources like T
 import logging
 import re
 from enum import Enum, auto
-from typing import Dict, List, Any, Optional, Callable, Union
+from typing import Dict, List, Any, Optional
 from functools import lru_cache
 
 from plexomatic.api.tvdb_client import TVDBClient
