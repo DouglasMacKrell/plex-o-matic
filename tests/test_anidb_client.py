@@ -26,7 +26,7 @@ class TestAniDBUDPClient:
         self.udp_client.session_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
     @patch("plexomatic.api.anidb_client.socket.socket")
-    def test_authentication(self, mock_socket):
+    def test_authentication(self, mock_socket) -> None:
         """Test authentication with AniDB."""
         # Mock socket instance
         mock_socket_instance = MagicMock()
@@ -59,7 +59,7 @@ class TestAniDBUDPClient:
             self.udp_client.authenticate()
 
     @patch("plexomatic.api.anidb_client.socket.socket")
-    def test_get_anime_by_name(self, mock_socket):
+    def test_get_anime_by_name(self, mock_socket) -> None:
         """Test retrieving anime by name."""
         # Mock socket instance
         mock_socket_instance = MagicMock()
@@ -86,7 +86,7 @@ class TestAniDBUDPClient:
         assert b"aname=Cowboy Bebop" in args[0]
 
     @patch("plexomatic.api.anidb_client.socket.socket")
-    def test_get_anime_by_id(self, mock_socket):
+    def test_get_anime_by_id(self, mock_socket) -> None:
         """Test retrieving anime by ID."""
         # Mock socket instance
         mock_socket_instance = MagicMock()
@@ -112,7 +112,7 @@ class TestAniDBUDPClient:
         assert b"aid=1" in args[0]
 
     @patch("plexomatic.api.anidb_client.socket.socket")
-    def test_get_episodes(self, mock_socket):
+    def test_get_episodes(self, mock_socket) -> None:
         """Test retrieving episodes for an anime."""
         # Mock socket instance
         mock_socket_instance = MagicMock()
@@ -138,7 +138,7 @@ class TestAniDBUDPClient:
         assert b"aid=1" in args[0]
 
     @patch("plexomatic.api.anidb_client.socket.socket")
-    def test_rate_limiting(self, mock_socket):
+    def test_rate_limiting(self, mock_socket) -> None:
         """Test handling of rate limiting."""
         # Mock socket instance
         mock_socket_instance = MagicMock()
@@ -163,7 +163,7 @@ class TestAniDBHTTPClient:
         self.client = AniDBHTTPClient(client_name="plexomatic")
 
     @patch("plexomatic.api.anidb_client.requests.get")
-    def test_get_anime_titles(self, mock_get):
+    def test_get_anime_titles(self, mock_get) -> None:
         """Test retrieving anime titles from the HTTP API."""
         # Mock XML response
         mock_response = MagicMock()
@@ -195,7 +195,7 @@ class TestAniDBHTTPClient:
         assert "animetitles.xml" in mock_get.call_args[0][0]
 
     @patch("plexomatic.api.anidb_client.requests.get")
-    def test_get_anime_description(self, mock_get):
+    def test_get_anime_description(self, mock_get) -> None:
         """Test retrieving anime description from the HTTP API."""
         # Mock XML response
         mock_response = MagicMock()
@@ -242,7 +242,7 @@ class TestAniDBClient:
         self.client.udp_client = MagicMock()
         self.client.http_client = MagicMock()
 
-    def test_get_anime_by_name(self):
+    def test_get_anime_by_name(self) -> None:
         """Test retrieving anime by name."""
         # Mock UDP client response
         self.client.udp_client.get_anime_by_name.return_value = {
@@ -261,7 +261,7 @@ class TestAniDBClient:
         # Verify UDP client was called
         self.client.udp_client.get_anime_by_name.assert_called_with("Cowboy Bebop")
 
-    def test_get_anime_details(self):
+    def test_get_anime_details(self) -> None:
         """Test retrieving detailed anime info combining UDP and HTTP data."""
         # Mock UDP client response
         self.client.udp_client.get_anime_by_id.return_value = {
@@ -291,7 +291,7 @@ class TestAniDBClient:
         self.client.udp_client.get_anime_by_id.assert_called_with(1)
         self.client.http_client.get_anime_description.assert_called_with(1)
 
-    def test_get_episodes_with_titles(self):
+    def test_get_episodes_with_titles(self) -> None:
         """Test retrieving episodes with titles."""
         # Mock UDP client responses
         self.client.udp_client.get_episodes.return_value = [
@@ -314,7 +314,7 @@ class TestAniDBClient:
         # Verify UDP client was called
         self.client.udp_client.get_episodes.assert_called_with(1)
 
-    def test_map_title_to_series(self):
+    def test_map_title_to_series(self) -> None:
         """Test mapping a title to a series."""
         # Mock HTTP client response
         self.client.http_client.get_anime_titles.return_value = [

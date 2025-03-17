@@ -14,7 +14,7 @@ from plexomatic.utils.episode_handler import (
 class TestMultiEpisodeDetection:
     """Test class for multi-episode detection functionalities."""
 
-    def test_detect_multi_episodes_standard_format(self):
+    def test_detect_multi_episodes_standard_format(self) -> None:
         """Test detection of multi-episodes in standard format (S01E01E02)."""
         # Standard multi-episode format
         assert detect_multi_episodes("Show.S01E01E02.mp4") == [1, 2]
@@ -30,7 +30,7 @@ class TestMultiEpisodeDetection:
         # No episode found
         assert detect_multi_episodes("Show.2020.mp4") == []
 
-    def test_detect_multi_episodes_alternative_formats(self):
+    def test_detect_multi_episodes_alternative_formats(self) -> None:
         """Test detection of multi-episodes in alternative formats."""
         # Space separator format
         assert detect_multi_episodes("Show S01E01 E02.mp4") == [1, 2]
@@ -56,7 +56,7 @@ class TestMultiEpisodeDetection:
         # Episodes separated by comma
         assert detect_multi_episodes("Show S01E05,E06.mp4") == [5, 6]
 
-    def test_parse_episode_range(self):
+    def test_parse_episode_range(self) -> None:
         """Test parsing of episode ranges."""
         # Simple range
         assert parse_episode_range(1, 3) == [1, 2, 3]
@@ -79,7 +79,7 @@ class TestMultiEpisodeDetection:
         with pytest.raises(ValueError):
             parse_episode_range(1, -5)
 
-    def test_format_multi_episode_filename(self):
+    def test_format_multi_episode_filename(self) -> None:
         """Test formatting of multi-episode filenames."""
         # Standard multi-episode format
         filename = format_multi_episode_filename("Show", 1, [1, 2], "Title", ".mp4")
@@ -114,7 +114,7 @@ class TestMultiEpisodeDetection:
 class TestSpecialEpisodeHandling:
     """Test class for special episode detection and handling."""
 
-    def test_detect_special_episodes(self):
+    def test_detect_special_episodes(self) -> None:
         """Test detection of special episodes."""
         # Standard special episode markers
         assert detect_special_episodes("Show.S00E01.Special.mp4") == {
@@ -139,7 +139,7 @@ class TestSpecialEpisodeHandling:
 class TestSeasonPackOrganization:
     """Test class for season pack organization functionality."""
 
-    def test_organize_season_pack(self):
+    def test_organize_season_pack(self) -> None:
         """Test organizing files from a season pack."""
         # Create a list of paths for testing
         files = [

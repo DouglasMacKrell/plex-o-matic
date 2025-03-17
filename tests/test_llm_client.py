@@ -14,7 +14,7 @@ class TestLLMClient:
         self.client = LLMClient(model_name=self.model_name, base_url="http://localhost:11434")
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_check_model_available(self, mock_post):
+    def test_check_model_available(self, mock_post) -> None:
         """Test checking if a model is available."""
         # Mock successful model list response
         mock_response = MagicMock()
@@ -40,7 +40,7 @@ class TestLLMClient:
         assert self.client.check_model_available() is False
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_generate_text(self, mock_post):
+    def test_generate_text(self, mock_post) -> None:
         """Test generating text with the LLM."""
         # Mock successful generation response
         mock_response = MagicMock()
@@ -66,7 +66,7 @@ class TestLLMClient:
         assert request_args["json"]["prompt"] == prompt
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_generate_text_with_parameters(self, mock_post):
+    def test_generate_text_with_parameters(self, mock_post) -> None:
         """Test generating text with custom parameters."""
         # Mock successful generation response
         mock_response = MagicMock()
@@ -94,7 +94,7 @@ class TestLLMClient:
         assert request_args["json"]["max_tokens"] == 100
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_request_error(self, mock_post):
+    def test_request_error(self, mock_post) -> None:
         """Test handling of request errors."""
         # Mock error response
         mock_response = MagicMock()
@@ -107,7 +107,7 @@ class TestLLMClient:
             self.client.generate_text("This should fail")
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_model_not_available_error(self, mock_post):
+    def test_model_not_available_error(self, mock_post) -> None:
         """Test handling of model not available errors."""
         # Mock error response for model not found
         mock_response = MagicMock()
@@ -120,7 +120,7 @@ class TestLLMClient:
             self.client.generate_text("This should fail with model not available")
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_analyze_filename(self, mock_post):
+    def test_analyze_filename(self, mock_post) -> None:
         """Test analyzing a filename with the LLM."""
         # Mock successful analysis response
         mock_response = MagicMock()
@@ -154,7 +154,7 @@ class TestLLMClient:
         assert "JSON object" in request_args["json"]["system"]
 
     @patch("plexomatic.api.llm_client.requests.post")
-    def test_suggest_filename(self, mock_post):
+    def test_suggest_filename(self, mock_post) -> None:
         """Test suggesting a standardized filename with the LLM."""
         # Mock successful suggestion response
         mock_response = MagicMock()

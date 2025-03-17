@@ -12,7 +12,7 @@ class TestTVMazeClient:
         self.client = TVMazeClient()
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_search_shows(self, mock_get):
+    def test_search_shows(self, mock_get) -> None:
         """Test searching for shows by name."""
         # Set up mock response
         mock_response = MagicMock()
@@ -53,7 +53,7 @@ class TestTVMazeClient:
         assert len(results) == 0
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_get_show_by_id(self, mock_get):
+    def test_get_show_by_id(self, mock_get) -> None:
         """Test getting show details by ID."""
         # Set up mock response
         mock_response = MagicMock()
@@ -90,7 +90,7 @@ class TestTVMazeClient:
             self.client.get_show_by_id(99999)
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_get_show_by_imdb_id(self, mock_get):
+    def test_get_show_by_imdb_id(self, mock_get) -> None:
         """Test getting show details by IMDB ID."""
         # Set up mock response
         mock_response = MagicMock()
@@ -123,7 +123,7 @@ class TestTVMazeClient:
             self.client.get_show_by_imdb_id("tt9999999")
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_get_episodes(self, mock_get):
+    def test_get_episodes(self, mock_get) -> None:
         """Test getting episodes for a show."""
         # Set up mock response
         mock_response = MagicMock()
@@ -170,7 +170,7 @@ class TestTVMazeClient:
             self.client.get_episodes(99999)
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_get_episode_by_number(self, mock_get):
+    def test_get_episode_by_number(self, mock_get) -> None:
         """Test getting a specific episode by season and episode number."""
         # Set up mock response
         mock_response = MagicMock()
@@ -209,7 +209,7 @@ class TestTVMazeClient:
             self.client.get_episode_by_number(1, 99, 99)
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_search_people(self, mock_get):
+    def test_search_people(self, mock_get) -> None:
         """Test searching for people by name."""
         # Set up mock response
         mock_response = MagicMock()
@@ -242,7 +242,7 @@ class TestTVMazeClient:
         assert params["q"] == "Bryan Cranston"
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_get_show_cast(self, mock_get):
+    def test_get_show_cast(self, mock_get) -> None:
         """Test getting the cast for a show."""
         # Set up mock response
         mock_response = MagicMock()
@@ -271,7 +271,7 @@ class TestTVMazeClient:
         assert "shows/1/cast" in url
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_rate_limiting(self, mock_get):
+    def test_rate_limiting(self, mock_get) -> None:
         """Test handling of rate limiting."""
         # Set up mock response for rate limit
         mock_response = MagicMock()
@@ -286,7 +286,7 @@ class TestTVMazeClient:
             self.client.search_shows("Breaking Bad")
 
     @patch("plexomatic.api.tvmaze_client.requests.get")
-    def test_caching(self, mock_get):
+    def test_caching(self, mock_get) -> None:
         """Test request caching functionality."""
         # Set up mock response
         mock_response = MagicMock()

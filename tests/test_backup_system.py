@@ -33,7 +33,7 @@ def sample_operation(backup_system):
     return operation
 
 
-def test_backup_system_initialization(db_path):
+def test_backup_system_initialization(db_path) -> None:
     """Test that BackupSystem initializes correctly."""
     system = BackupSystem(db_path)
     system.initialize_database()
@@ -42,7 +42,7 @@ def test_backup_system_initialization(db_path):
     assert os.path.exists(db_path)
 
 
-def test_file_operation_creation(backup_system, sample_operation):
+def test_file_operation_creation(backup_system, sample_operation) -> None:
     """Test creating a new file operation."""
     operation_id = backup_system.record_operation(sample_operation)
 
@@ -57,7 +57,7 @@ def test_file_operation_creation(backup_system, sample_operation):
         assert stored_op.status == "pending"
 
 
-def test_operation_completion(backup_system, sample_operation):
+def test_operation_completion(backup_system, sample_operation) -> None:
     """Test marking an operation as complete."""
     operation_id = backup_system.record_operation(sample_operation)
     backup_system.mark_operation_complete(operation_id)
@@ -68,7 +68,7 @@ def test_operation_completion(backup_system, sample_operation):
         assert stored_op.completed_at is not None
 
 
-def test_operation_rollback(backup_system, sample_operation):
+def test_operation_rollback(backup_system, sample_operation) -> None:
     """Test rolling back an operation."""
     operation_id = backup_system.record_operation(sample_operation)
     backup_system.mark_operation_complete(operation_id)
@@ -82,7 +82,7 @@ def test_operation_rollback(backup_system, sample_operation):
         assert stored_op.rolled_back_at is not None
 
 
-def test_get_pending_operations(backup_system):
+def test_get_pending_operations(backup_system) -> None:
     """Test retrieving pending operations."""
     # Create multiple operations
     ops = [
@@ -104,7 +104,7 @@ def test_get_pending_operations(backup_system):
     assert len(pending) == 2
 
 
-def test_verify_checksum(backup_system, sample_operation):
+def test_verify_checksum(backup_system, sample_operation) -> None:
     """Test checksum verification for operations."""
     operation_id = backup_system.record_operation(sample_operation)
 

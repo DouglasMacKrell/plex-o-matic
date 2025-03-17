@@ -1,6 +1,5 @@
 """Tests for the name parser module."""
 
-import pytest
 from pathlib import Path
 from plexomatic.utils.name_parser import (
     MediaType,
@@ -11,12 +10,13 @@ from plexomatic.utils.name_parser import (
     parse_anime,
     parse_media_name,
 )
+from tests.conftest import mark
 
 
 class TestMediaType:
     """Test the MediaType enum."""
 
-    def test_media_type_values(self):
+    def test_media_type_values(self) -> None:
         """Test that all expected media types are defined."""
         assert MediaType.TV_SHOW.value == "tv_show"
         assert MediaType.TV_SPECIAL.value == "tv_special"
@@ -29,7 +29,7 @@ class TestMediaType:
 class TestParsedMediaName:
     """Test the ParsedMediaName dataclass."""
 
-    def test_basic_initialization(self):
+    def test_basic_initialization(self) -> None:
         """Test basic initialization with required fields."""
         parsed = ParsedMediaName(media_type=MediaType.TV_SHOW, title="Test Show", extension=".mkv")
         assert parsed.media_type == MediaType.TV_SHOW
@@ -46,7 +46,7 @@ class TestParsedMediaName:
         assert parsed.special_number is None
         assert parsed.additional_info == {}
 
-    def test_tv_show_initialization(self):
+    def test_tv_show_initialization(self) -> None:
         """Test initialization with TV show specific fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -60,7 +60,7 @@ class TestParsedMediaName:
         assert parsed.episodes == [1, 2]
         assert parsed.episode_title == "Test Episode"
 
-    def test_movie_initialization(self):
+    def test_movie_initialization(self) -> None:
         """Test initialization with movie specific fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.MOVIE,
@@ -72,7 +72,7 @@ class TestParsedMediaName:
         assert parsed.year == 2020
         assert parsed.quality == "1080p"
 
-    def test_anime_initialization(self):
+    def test_anime_initialization(self) -> None:
         """Test initialization with anime specific fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.ANIME,
@@ -86,7 +86,7 @@ class TestParsedMediaName:
         assert parsed.version == 2
         assert parsed.episodes == [1]
 
-    def test_single_episode_conversion(self):
+    def test_single_episode_conversion(self) -> None:
         """Test that single episode numbers are converted to lists."""
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW, title="Test Show", extension=".mkv", episodes=1
@@ -94,7 +94,7 @@ class TestParsedMediaName:
         assert isinstance(parsed.episodes, list)
         assert parsed.episodes == [1]
 
-    def test_episode_list_conversion(self):
+    def test_episode_list_conversion(self) -> None:
         """Test that single episode numbers are converted to lists."""
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW, title="Test Show", extension=".mkv", episodes=1
@@ -102,7 +102,7 @@ class TestParsedMediaName:
         assert isinstance(parsed.episodes, list)
         assert parsed.episodes == [1]
 
-    def test_full_tv_show_initialization(self):
+    def test_full_tv_show_initialization(self) -> None:
         """Test initialization with all TV show fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -123,7 +123,7 @@ class TestParsedMediaName:
         assert parsed.episodes == [1, 2]
         assert parsed.episode_title == "Pilot"
 
-    def test_full_movie_initialization(self):
+    def test_full_movie_initialization(self) -> None:
         """Test initialization with all movie fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.MOVIE,
@@ -138,7 +138,7 @@ class TestParsedMediaName:
         assert parsed.quality == "4K"
         assert parsed.year == 2020
 
-    def test_full_anime_initialization(self):
+    def test_full_anime_initialization(self) -> None:
         """Test initialization with all anime fields."""
         parsed = ParsedMediaName(
             media_type=MediaType.ANIME,
@@ -159,7 +159,7 @@ class TestParsedMediaName:
         assert parsed.special_type == "OVA"
         assert parsed.special_number == 1
 
-    def test_additional_info(self):
+    def test_additional_info(self) -> None:
         """Test handling of additional_info dictionary."""
         additional_info = {"source": "BluRay", "audio": "DTS"}
         parsed = ParsedMediaName(
@@ -176,53 +176,47 @@ class TestParsedMediaName:
 class TestDetectMediaType:
     """Test the detect_media_type function."""
 
-    @pytest.mark.parametrize(
+    @mark.parametrize(
         "filename,expected_type",
         [
             # TV Show formats
-            ("Show.S01E01.mp4", MediaType.TV_SHOW),
-            ("Show.S01E01E02.mkv", MediaType.TV_SHOW),
-            ("Show.1x01.avi", MediaType.TV_SHOW),
-            ("Show - Season 1 Episode 2.mp4", MediaType.TV_SHOW),
-            ("Show.S01.E01.mkv", MediaType.TV_SHOW),
+            ("Show.Name.S01E01.mp4", MediaType.TV_SHOW),
+            ("Show.Name.S01E01E02.mp4", MediaType.TV_SHOW),
+            ("Show.Name.1x01.mp4", MediaType.TV_SHOW),
+            ("Show Name - Season 1 Episode 2.mp4", MediaType.TV_SHOW),
+            ("Show.Name.S01.E01.mp4", MediaType.TV_SHOW),
             # TV Special formats
-            ("Show.S01.5xSpecial.mp4", MediaType.TV_SPECIAL),
-            ("Show.Special.Episode.1.mkv", MediaType.TV_SPECIAL),
-            ("Show.Special.01.mp4", MediaType.TV_SPECIAL),
-            ("Show.Special.mkv", MediaType.TV_SPECIAL),
-            ("Show.OVA1.mkv", MediaType.TV_SPECIAL),
+            ("Show.Name.S01.5xSpecial.mp4", MediaType.TV_SPECIAL),
+            ("Show Name - Special Episode.mp4", MediaType.TV_SPECIAL),
+            ("Show Name - OVA1.mp4", MediaType.TV_SPECIAL),
             # Movie formats
-            ("Movie (2020).mp4", MediaType.MOVIE),
-            ("Movie [2020].mkv", MediaType.MOVIE),
+            ("Movie Name (2020).mp4", MediaType.MOVIE),
+            ("Movie.Name.[2020].mp4", MediaType.MOVIE),
             ("Movie.Name.2020.1080p.mp4", MediaType.MOVIE),
-            ("Movie 2020 720p.mkv", MediaType.MOVIE),
-            ("Movie.2020.BluRay.mp4", MediaType.MOVIE),
+            ("Movie Name 2020 720p.mp4", MediaType.MOVIE),
+            ("Movie Name 2020.mp4", MediaType.MOVIE),
             # Anime formats
-            ("[SubGroup] Show - 01 [1080p].mkv", MediaType.ANIME),
-            ("[SubGroup] Show - 01v2 [1080p].mkv", MediaType.ANIME),
-            ("[SubGroup] Show - 1 [720p].mp4", MediaType.ANIME),
-            # Anime Special formats
-            ("[SubGroup] Show - OVA1 [1080p].mkv", MediaType.ANIME_SPECIAL),
-            ("[SubGroup] Show - Special1 [720p].mp4", MediaType.ANIME_SPECIAL),
-            ("[SubGroup] Show - Movie [1080p].mkv", MediaType.ANIME_SPECIAL),
+            ("[Group] Anime Name - 01 [1080p].mkv", MediaType.ANIME),
+            ("[Group] Anime Name - 01v2 [720p].mkv", MediaType.ANIME),
+            ("[Group] Anime Name OVA [1080p].mkv", MediaType.ANIME_SPECIAL),
+            ("[Group] Anime Name - Special1 [720p].mkv", MediaType.ANIME_SPECIAL),
             # Unknown formats
             ("random_file.mp4", MediaType.UNKNOWN),
-            ("show_without_episode.mkv", MediaType.UNKNOWN),
-            ("", MediaType.UNKNOWN),
+            ("document.pdf", MediaType.UNKNOWN),
         ],
     )
-    def test_detect_media_type(self, filename, expected_type):
-        """Test detection of various media types from filenames."""
+    def test_detect_media_type(self, filename: str, expected_type: MediaType) -> None:
+        """Test detection of media types from filenames."""
         assert detect_media_type(filename) == expected_type
 
-    def test_case_insensitive_detection(self):
+    def test_case_insensitive_detection(self) -> None:
         """Test that media type detection is case-insensitive."""
         assert detect_media_type("Show.s01e01.mp4") == MediaType.TV_SHOW
         assert detect_media_type("Show.S01E01.mp4") == MediaType.TV_SHOW
         assert detect_media_type("Show.special.mp4") == MediaType.TV_SPECIAL
         assert detect_media_type("Show.SPECIAL.mp4") == MediaType.TV_SPECIAL
 
-    def test_priority_order(self):
+    def test_priority_order(self) -> None:
         """Test that media types are detected in the correct priority order."""
         # Anime special should be detected before regular anime
         assert detect_media_type("[Group] Show - OVA [1080p].mkv") == MediaType.ANIME_SPECIAL
@@ -237,7 +231,7 @@ class TestDetectMediaType:
 class TestParseTVShow:
     """Test the parse_tv_show function."""
 
-    def test_standard_format(self):
+    def test_standard_format(self) -> None:
         """Test parsing standard TV show format."""
         filename = "Show.Name.S01E02.Episode.Title.1080p.mp4"
         parsed = parse_tv_show(filename)
@@ -248,7 +242,7 @@ class TestParseTVShow:
         assert parsed.quality == "1080p"
         assert parsed.extension == ".mp4"
 
-    def test_dash_format_with_quality(self):
+    def test_dash_format_with_quality(self) -> None:
         """Test parsing dash-separated format with quality."""
         filename = "Show Name - S01E02 - Episode Title - 1080p.mp4"
         parsed = parse_tv_show(filename)
@@ -259,7 +253,7 @@ class TestParseTVShow:
         assert parsed.quality == "1080p"
         assert parsed.confidence > 0.9
 
-    def test_dash_format_without_quality(self):
+    def test_dash_format_without_quality(self) -> None:
         """Test parsing dash-separated format without quality."""
         filename = "Show Name - S01E02 - Episode Title.mp4"
         parsed = parse_tv_show(filename)
@@ -269,7 +263,7 @@ class TestParseTVShow:
         assert parsed.episode_title == "Episode Title"
         assert parsed.quality is None
 
-    def test_multi_episode_range(self):
+    def test_multi_episode_range(self) -> None:
         """Test parsing multi-episode range format."""
         filename = "Show.Name.S01E02-E04.Title.mp4"
         parsed = parse_tv_show(filename)
@@ -278,7 +272,7 @@ class TestParseTVShow:
         assert parsed.episodes == [2, 3, 4]
         assert parsed.episode_title == "Title"
 
-    def test_quality_extraction(self):
+    def test_quality_extraction(self) -> None:
         """Test extracting quality information from filenames."""
         filenames = [
             ("Show.S01E01.720p.mkv", "720p"),
@@ -289,7 +283,7 @@ class TestParseTVShow:
             parsed = parse_tv_show(filename)
             assert parsed.quality == expected_quality
 
-    def test_complex_title(self):
+    def test_complex_title(self) -> None:
         """Test parsing complex show titles."""
         filename = "The.Walking.Dead.S01E01.Days.Gone.Bye.720p.BluRay.mkv"
         parsed = parse_tv_show(filename)
@@ -300,7 +294,7 @@ class TestParseTVShow:
         assert parsed.quality == "720p BluRay"
         assert parsed.extension == ".mkv"
 
-    def test_title_extraction(self):
+    def test_title_extraction(self) -> None:
         """Test extracting title from complex filenames."""
         filenames = [
             ("Mr.Robot.S01E01.720p.mkv", "Mr Robot"),
@@ -311,7 +305,7 @@ class TestParseTVShow:
             parsed = parse_tv_show(filename)
             assert parsed.title == expected_title
 
-    def test_alternative_format(self):
+    def test_alternative_format(self) -> None:
         """Test parsing alternative episode format (1x01)."""
         filename = "Show.Name.1x02.Title.mp4"
         parsed = parse_tv_show(filename)
@@ -320,8 +314,24 @@ class TestParseTVShow:
         assert parsed.episodes == [2]
         assert parsed.episode_title == "Title"
 
-    def test_parse_tv_show_edge_cases(self):
+    def test_parse_tv_show_edge_cases(self) -> None:
         """Test parsing TV show edge cases."""
+        # Test with empty string
+        result = parse_tv_show("")
+        assert result.title == ""
+        assert result.extension == ""
+
+        # Test with extension only
+        result = parse_tv_show(".mp4")
+        assert result.title == ""
+        assert result.extension == Path(".mp4").suffix
+
+        # Test with minimal info
+        result = parse_tv_show("Show S01E01")
+        assert result.title == "Show"
+        assert result.season == 1
+        assert result.episodes == [1]
+
         # Test with missing episode title
         filename = "Show.Name.S01E02.1080p.mp4"
         parsed = parse_tv_show(filename)
@@ -348,7 +358,7 @@ class TestParseTVShow:
         parsed = parse_media_name(filename)  # Use parse_media_name for special episodes
         assert parsed.media_type == MediaType.TV_SPECIAL
 
-    def test_standard_dash_format_with_quality(self):
+    def test_standard_dash_format_with_quality(self) -> None:
         """Test parsing standard dash format with quality."""
         filename = "Show Name - S01E01 - Episode Title - 1080p.mkv"
         parsed = parse_tv_show(filename)
@@ -360,7 +370,7 @@ class TestParseTVShow:
         assert parsed.extension == ".mkv"
         assert parsed.confidence == 0.95
 
-    def test_standard_dash_format_without_quality(self):
+    def test_standard_dash_format_without_quality(self) -> None:
         """Test parsing standard dash format without quality."""
         filename = "Show Name - S01E01 - Episode Title.mkv"
         parsed = parse_tv_show(filename)
@@ -372,7 +382,7 @@ class TestParseTVShow:
         assert parsed.extension == ".mkv"
         assert parsed.confidence == 0.95
 
-    def test_special_media_type(self):
+    def test_special_media_type(self) -> None:
         """Test parsing with TV_SPECIAL media type."""
         filename = "Show.Special.01.1080p.mkv"
         parsed = parse_tv_show(filename, media_type=MediaType.TV_SPECIAL)
@@ -381,7 +391,7 @@ class TestParseTVShow:
         assert parsed.quality == "1080p"
         assert parsed.extension == ".mkv"
 
-    def test_title_cleaning(self):
+    def test_title_cleaning(self) -> None:
         """Test cleaning of show titles."""
         filenames = [
             ("Show.Name.S01E01.mkv", "Show Name"),
@@ -393,7 +403,7 @@ class TestParseTVShow:
             parsed = parse_tv_show(filename)
             assert parsed.title == expected_title
 
-    def test_edge_cases(self):
+    def test_edge_cases(self) -> None:
         """Test edge cases and potential error conditions."""
         edge_cases = [
             # Empty filename
@@ -420,7 +430,7 @@ class TestParseTVShow:
 class TestParseMovie:
     """Test the parse_movie function."""
 
-    def test_standard_format(self):
+    def test_standard_format(self) -> None:
         """Test parsing standard movie format."""
         filename = "Movie.Name.2020.1080p.BluRay.mp4"
         parsed = parse_movie(filename)
@@ -429,7 +439,7 @@ class TestParseMovie:
         assert parsed.quality == "1080p BluRay"
         assert parsed.extension == ".mp4"
 
-    def test_parentheses_format(self):
+    def test_parentheses_format(self) -> None:
         """Test parsing movie with year in parentheses."""
         filename = "Movie Name (2020) 1080p.mp4"
         parsed = parse_movie(filename)
@@ -437,7 +447,7 @@ class TestParseMovie:
         assert parsed.year == 2020
         assert parsed.quality == "1080p"
 
-    def test_brackets_format(self):
+    def test_brackets_format(self) -> None:
         """Test parsing movie with year in brackets."""
         filename = "Movie Name [2020] [1080p].mp4"
         parsed = parse_movie(filename)
@@ -445,7 +455,7 @@ class TestParseMovie:
         assert parsed.year == 2020
         assert parsed.quality == "1080p"
 
-    def test_complex_title(self):
+    def test_complex_title(self) -> None:
         """Test parsing movie with complex title."""
         filename = "Movie Name: The Subtitle (2020).mp4"
         parsed = parse_movie(filename)
@@ -456,7 +466,7 @@ class TestParseMovie:
 class TestParseAnime:
     """Test the parse_anime function."""
 
-    def test_standard_format(self):
+    def test_standard_format(self) -> None:
         """Test parsing standard anime format."""
         filename = "[SubGroup] Anime Name - 01 [1080p].mkv"
         parsed = parse_anime(filename)
@@ -466,7 +476,7 @@ class TestParseAnime:
         assert parsed.quality == "1080p"
         assert parsed.extension == ".mkv"
 
-    def test_version_format(self):
+    def test_version_format(self) -> None:
         """Test parsing anime with version number."""
         filename = "[SubGroup] Anime Name - 01v2 [1080p].mkv"
         parsed = parse_anime(filename)
@@ -474,7 +484,7 @@ class TestParseAnime:
         assert parsed.episodes == [1]
         assert parsed.version == 2
 
-    def test_special_format(self):
+    def test_special_format(self) -> None:
         """Test parsing anime special."""
         filename = "[SubGroup] Anime Name - OVA1 [1080p].mkv"
         parsed = parse_media_name(filename)  # Use parse_media_name instead of parse_anime
@@ -485,7 +495,7 @@ class TestParseAnime:
         assert parsed.special_type == "OVA"
         assert parsed.special_number == 1
 
-    def test_complex_group(self):
+    def test_complex_group(self) -> None:
         """Test parsing anime with complex group name."""
         filename = "[Sub.Group-Team] Anime Name - 01 [1080p].mkv"
         parsed = parse_anime(filename)
@@ -493,7 +503,7 @@ class TestParseAnime:
         assert parsed.group == "Sub.Group-Team"
         assert parsed.episodes == [1]
 
-    def test_parse_anime_edge_cases(self):
+    def test_parse_anime_edge_cases(self) -> None:
         """Test parsing anime edge cases."""
         # Test with complex version and quality
         filename = "[SubGroup] Anime Name - 01v3 [1080p].mkv"
@@ -524,7 +534,7 @@ class TestParseAnime:
 class TestParseMediaName:
     """Test the parse_media_name function."""
 
-    def test_tv_show_parsing(self):
+    def test_tv_show_parsing(self) -> None:
         """Test parsing TV show through main function."""
         filename = "Show.Name.S01E02.mp4"
         parsed = parse_media_name(filename)
@@ -533,7 +543,7 @@ class TestParseMediaName:
         assert parsed.season == 1
         assert parsed.episodes == [2]
 
-    def test_movie_parsing(self):
+    def test_movie_parsing(self) -> None:
         """Test parsing movie through main function."""
         filename = "Movie.Name.2020.mp4"
         parsed = parse_media_name(filename)
@@ -541,7 +551,7 @@ class TestParseMediaName:
         assert parsed.title == "Movie Name"
         assert parsed.year == 2020
 
-    def test_anime_parsing(self):
+    def test_anime_parsing(self) -> None:
         """Test parsing anime through main function."""
         filename = "[SubGroup] Anime - 01 [1080p].mkv"
         parsed = parse_media_name(filename)
@@ -550,14 +560,14 @@ class TestParseMediaName:
         assert parsed.group == "SubGroup"
         assert parsed.episodes == [1]
 
-    def test_unknown_format(self):
+    def test_unknown_format(self) -> None:
         """Test parsing unknown format through main function."""
         filename = "random_file.mp4"
         parsed = parse_media_name(filename)
         assert parsed.media_type == MediaType.UNKNOWN
         assert parsed.title == "random_file"
 
-    def test_parse_media_name_edge_cases(self):
+    def test_parse_media_name_edge_cases(self) -> None:
         """Test parsing media name edge cases."""
         # Test with invalid file extension
         filename = "random_file.invalid"

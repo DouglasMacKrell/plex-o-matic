@@ -13,7 +13,7 @@ class TestTMDBClient:
         self.client = TMDBClient(api_key=self.api_key)
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_get_configuration(self, mock_get):
+    def test_get_configuration(self, mock_get) -> None:
         """Test retrieving API configuration."""
         # Mock successful configuration response
         mock_response = MagicMock()
@@ -37,7 +37,7 @@ class TestTMDBClient:
         mock_get.assert_called_once()
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_search_movie(self, mock_get):
+    def test_search_movie(self, mock_get) -> None:
         """Test searching for movies."""
         # Mock successful movie search response
         mock_response = MagicMock()
@@ -72,7 +72,7 @@ class TestTMDBClient:
         assert results == []
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_search_tv(self, mock_get):
+    def test_search_tv(self, mock_get) -> None:
         """Test searching for TV shows."""
         # Mock successful TV search response
         mock_response = MagicMock()
@@ -100,7 +100,7 @@ class TestTMDBClient:
         mock_get.assert_called_once()
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_get_movie_details(self, mock_get):
+    def test_get_movie_details(self, mock_get) -> None:
         """Test retrieving movie details."""
         # Mock successful movie details response
         mock_response = MagicMock()
@@ -136,7 +136,7 @@ class TestTMDBClient:
             self.client.get_movie_details(99999)
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_get_tv_details(self, mock_get):
+    def test_get_tv_details(self, mock_get) -> None:
         """Test retrieving TV show details."""
         # Mock successful TV details response
         mock_response = MagicMock()
@@ -161,7 +161,7 @@ class TestTMDBClient:
         mock_get.assert_called_once()
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_get_tv_season(self, mock_get):
+    def test_get_tv_season(self, mock_get) -> None:
         """Test retrieving TV show season details."""
         # Mock successful season details response
         mock_response = MagicMock()
@@ -187,7 +187,7 @@ class TestTMDBClient:
         mock_get.assert_called_once()
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_rate_limiting(self, mock_get):
+    def test_rate_limiting(self, mock_get) -> None:
         """Test handling of rate limiting."""
         # Mock rate limit exceeded response
         mock_response = MagicMock()
@@ -201,7 +201,7 @@ class TestTMDBClient:
 
     @patch("plexomatic.api.tmdb_client.requests.get")
     @patch("time.sleep")
-    def test_automatic_retry_after_rate_limit(self, mock_sleep, mock_get):
+    def test_automatic_retry_after_rate_limit(self, mock_sleep, mock_get) -> None:
         """Test automatic retry after rate limit with backoff."""
         # Setup mock responses for rate limit then success
         rate_limit_response = MagicMock()
@@ -226,7 +226,7 @@ class TestTMDBClient:
         assert results[0]["id"] == 12345
 
     @patch("plexomatic.api.tmdb_client.requests.get")
-    def test_cache_mechanism(self, mock_get):
+    def test_cache_mechanism(self, mock_get) -> None:
         """Test that responses are properly cached."""
         # Setup mock for first call
         mock_response = MagicMock()

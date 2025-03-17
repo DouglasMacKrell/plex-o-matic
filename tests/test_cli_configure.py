@@ -7,7 +7,7 @@ from click.testing import CliRunner
 from plexomatic.cli import cli
 
 
-def test_configure_command_help():
+def test_configure_command_help() -> None:
     """Test that the configure command exists and has help text."""
     runner = CliRunner()
     result = runner.invoke(cli, ["configure", "--help"])
@@ -16,7 +16,7 @@ def test_configure_command_help():
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_initial_setup(mock_config):
+def test_configure_command_initial_setup(mock_config) -> None:
     """Test that the configure command works for initial setup."""
     # Set up mock config
     mock_config.config = {
@@ -62,7 +62,7 @@ def test_configure_command_initial_setup(mock_config):
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_skip_optional(mock_config):
+def test_configure_command_skip_optional(mock_config) -> None:
     """Test that the configure command allows skipping optional sections."""
     # Set up mock config
     mock_config.config = {
@@ -104,7 +104,7 @@ def test_configure_command_skip_optional(mock_config):
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_create_api_section(mock_config):
+def test_configure_command_create_api_section(mock_config) -> None:
     """Test that the configure command creates API section if it doesn't exist."""
     # Set up mock config without API section
     mock_config.config = {

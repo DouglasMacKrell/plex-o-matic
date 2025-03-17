@@ -32,14 +32,14 @@ class TestMetadataManager:
             "tvmaze": self.tvmaze_fetcher,
         }
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test initializing the metadata manager."""
         # Assert that the manager has the expected attributes
         assert hasattr(self.manager, "fetchers")
         assert len(self.manager.fetchers) == 4
         assert hasattr(self.manager, "cache")
 
-    def test_search_tv_show(self):
+    def test_search_tv_show(self) -> None:
         """Test searching for TV shows."""
         query = "Breaking Bad"
         media_type = MediaType.TV_SHOW
@@ -62,7 +62,7 @@ class TestMetadataManager:
             # Verify that _search_uncached was called with the correct parameters
             mock_search.assert_called_once_with(query, media_type)
 
-    def test_search_movie(self):
+    def test_search_movie(self) -> None:
         """Test searching for movies."""
         query = "Inception"
         media_type = MediaType.MOVIE
@@ -83,7 +83,7 @@ class TestMetadataManager:
             # Verify that _search_uncached was called with the correct parameters
             mock_search.assert_called_once_with(query, media_type)
 
-    def test_search_anime(self):
+    def test_search_anime(self) -> None:
         """Test searching for anime."""
         query = "Naruto"
         media_type = MediaType.ANIME
@@ -104,7 +104,7 @@ class TestMetadataManager:
             # Verify that _search_uncached was called with the correct parameters
             mock_search.assert_called_once_with(query, media_type)
 
-    def test_search_all_sources(self):
+    def test_search_all_sources(self) -> None:
         """Test searching across all sources when the media type is unknown."""
         query = "Avatar"
         media_type = None
@@ -142,7 +142,7 @@ class TestMetadataManager:
         self.tmdb_fetcher.search_movie.assert_called_once_with(query)
         self.anidb_fetcher.search_anime.assert_called_once_with(query)
 
-    def test_match_tv_show(self):
+    def test_match_tv_show(self) -> None:
         """Test matching a TV show filename to the best metadata result."""
         filename = "Breaking.Bad.S01E01.720p.mkv"
 
@@ -178,7 +178,7 @@ class TestMetadataManager:
             # Verify that search was called with the correct parameters
             mock_search.assert_called_once_with("Breaking Bad", MediaType.TV_SHOW)
 
-    def test_match_movie(self):
+    def test_match_movie(self) -> None:
         """Test matching a movie filename to the best metadata result."""
         filename = "Inception.2010.1080p.BluRay.x264.mkv"
 
@@ -207,7 +207,7 @@ class TestMetadataManager:
             # Verify that search was called with the correct parameters
             mock_search.assert_called_once_with("Inception 1080p BluRay x264", MediaType.MOVIE)
 
-    def test_match_anime(self):
+    def test_match_anime(self) -> None:
         """Test matching an anime filename to the best metadata result."""
         filename = "[Group] Naruto - 001 [720p].mkv"
 
@@ -236,7 +236,7 @@ class TestMetadataManager:
             # Verify that search was called with the correct parameters
             mock_search.assert_called_once_with("Naruto", MediaType.ANIME)
 
-    def test_match_not_found(self):
+    def test_match_not_found(self) -> None:
         """Test matching when no good matches are found."""
         filename = "Some.Obscure.Show.S01E01.mkv"
 
@@ -254,7 +254,7 @@ class TestMetadataManager:
             # Verify that search was called with the correct parameters
             mock_search.assert_called_once_with("Some Obscure Show", MediaType.TV_SHOW)
 
-    def test_fetch_metadata(self):
+    def test_fetch_metadata(self) -> None:
         """Test fetching metadata for a specific ID."""
         # Mock the fetchers to return some data
         self.tvdb_fetcher.get_show_details.return_value = {
@@ -283,7 +283,7 @@ class TestMetadataManager:
         with pytest.raises(ValueError):
             self.manager.fetch_metadata("unknown-123")
 
-    def test_cache_mechanism(self):
+    def test_cache_mechanism(self) -> None:
         """Test that the manager caches search results."""
         query = "Breaking Bad"
         media_type = MediaType.TV_SHOW
@@ -302,7 +302,7 @@ class TestMetadataManager:
             # Verify that _search_uncached was called three times (since we're not using caching for testability)
             assert mock_search_uncached.call_count == 3
 
-    def test_clear_cache(self):
+    def test_clear_cache(self) -> None:
         """Test clearing the cache."""
         query = "Breaking Bad"
         media_type = MediaType.TV_SHOW

@@ -36,20 +36,20 @@ def mock_backup_system():
 class TestCalculateChecksum:
     """Test the calculate_file_checksum function."""
 
-    def test_calculate_checksum(self, temp_file):
+    def test_calculate_checksum(self, temp_file) -> None:
         """Test calculating checksum of a file with known content."""
         file_path, content = temp_file
         expected = hashlib.sha256(content).hexdigest()
         assert calculate_file_checksum(file_path) == expected
 
-    def test_empty_file(self, tmp_path):
+    def test_empty_file(self, tmp_path) -> None:
         """Test calculating checksum of an empty file."""
         file_path = tmp_path / "empty.txt"
         file_path.write_bytes(b"")
         expected = hashlib.sha256(b"").hexdigest()
         assert calculate_file_checksum(file_path) == expected
 
-    def test_large_file(self, tmp_path):
+    def test_large_file(self, tmp_path) -> None:
         """Test calculating checksum of a large file."""
         file_path = tmp_path / "large.txt"
         # Create a 10MB file with repeating pattern
@@ -58,7 +58,7 @@ class TestCalculateChecksum:
         expected = hashlib.sha256(content).hexdigest()
         assert calculate_file_checksum(file_path) == expected
 
-    def test_nonexistent_file(self, tmp_path):
+    def test_nonexistent_file(self, tmp_path) -> None:
         """Test calculating checksum of a nonexistent file."""
         file_path = tmp_path / "nonexistent.txt"
         with pytest.raises(FileNotFoundError):
@@ -68,7 +68,7 @@ class TestCalculateChecksum:
 class TestRenameFile:
     """Test the rename_file function."""
 
-    def test_basic_rename(self, temp_file):
+    def test_basic_rename(self, temp_file) -> None:
         """Test basic file renaming without backup."""
         file_path, _ = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -76,7 +76,7 @@ class TestRenameFile:
         assert not file_path.exists()
         assert new_path.exists()
 
-    def test_rename_with_backup(self, temp_file, mock_backup_system):
+    def test_rename_with_backup(self, temp_file, mock_backup_system) -> None:
         """Test file renaming with backup system."""
         file_path, _ = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -90,13 +90,13 @@ class TestRenameFile:
         mock_backup_system.record_operation.assert_called_once()
         mock_backup_system.mark_operation_complete.assert_called_once_with(1)
 
-    def test_rename_nonexistent_file(self, tmp_path):
+    def test_rename_nonexistent_file(self, tmp_path) -> None:
         """Test renaming a nonexistent file."""
         file_path = tmp_path / "nonexistent.txt"
         new_path = tmp_path / "renamed.txt"
         assert not rename_file(file_path, new_path)
 
-    def test_rename_to_existing_directory(self, temp_file):
+    def test_rename_to_existing_directory(self, temp_file) -> None:
         """Test renaming when target directory doesn't exist."""
         file_path, _ = temp_file
         new_path = file_path.parent / "subdir" / "renamed.txt"
@@ -105,7 +105,7 @@ class TestRenameFile:
         assert new_path.exists()
 
     @patch("shutil.move")
-    def test_rename_error_handling(self, mock_move, temp_file):
+    def test_rename_error_handling(self, mock_move, temp_file) -> None:
         """Test error handling during rename."""
         file_path, _ = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -117,7 +117,7 @@ class TestRenameFile:
 class TestRollback:
     """Test the rollback_operation function."""
 
-    def test_successful_rollback(self, temp_file, mock_backup_system):
+    def test_successful_rollback(self, temp_file, mock_backup_system) -> None:
         """Test successful rollback of a rename operation."""
         file_path, content = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -145,7 +145,7 @@ class TestRollback:
         # Verify backup system calls
         mock_backup_system.rollback_operation.assert_called_once_with(1)
 
-    def test_rollback_missing_file(self, mock_backup_system):
+    def test_rollback_missing_file(self, mock_backup_system) -> None:
         """Test rollback when renamed file is missing."""
         # Set up mock operation record
         mock_operation = MagicMock()
@@ -161,7 +161,7 @@ class TestRollback:
         assert not rollback_operation(1, mock_backup_system)
         mock_backup_system.rollback_operation.assert_not_called()
 
-    def test_rollback_invalid_operation(self, mock_backup_system):
+    def test_rollback_invalid_operation(self, mock_backup_system) -> None:
         """Test rollback with invalid operation ID."""
         # Set up mock database query to return None
         mock_backup_system.engine.connect.return_value.__enter__.return_value.execute.return_value.fetchone.return_value = (
@@ -171,7 +171,7 @@ class TestRollback:
         assert not rollback_operation(1, mock_backup_system)
         mock_backup_system.rollback_operation.assert_not_called()
 
-    def test_rollback_incomplete_operation(self, mock_backup_system):
+    def test_rollback_incomplete_operation(self, mock_backup_system) -> None:
         """Test rollback of incomplete operation."""
         # Set up mock operation record with incomplete status
         mock_operation = MagicMock()
@@ -185,7 +185,7 @@ class TestRollback:
         assert not rollback_operation(1, mock_backup_system)
         mock_backup_system.rollback_operation.assert_not_called()
 
-    def test_rollback_checksum_mismatch(self, temp_file, mock_backup_system):
+    def test_rollback_checksum_mismatch(self, temp_file, mock_backup_system) -> None:
         """Test rollback with checksum mismatch."""
         file_path, content = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -213,7 +213,7 @@ class TestRollback:
         # Verify backup system calls
         mock_backup_system.rollback_operation.assert_called_once_with(1)
 
-    def test_rollback_checksum_error(self, temp_file, mock_backup_system):
+    def test_rollback_checksum_error(self, temp_file, mock_backup_system) -> None:
         """Test rollback when checksum calculation fails."""
         file_path, content = temp_file
         new_path = file_path.parent / "renamed.txt"
@@ -244,7 +244,7 @@ class TestRollback:
         mock_backup_system.rollback_operation.assert_called_once_with(1)
 
     @patch("shutil.move")
-    def test_rollback_move_error(self, mock_move, temp_file, mock_backup_system):
+    def test_rollback_move_error(self, mock_move, temp_file, mock_backup_system) -> None:
         """Test rollback when move operation fails."""
         file_path, content = temp_file
         new_path = file_path.parent / "renamed.txt"

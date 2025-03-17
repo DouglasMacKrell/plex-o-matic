@@ -11,7 +11,7 @@ from plexomatic.utils.episode_handler import (
 class TestEpisodeIntegration:
     """Test class for integration between episode handler and name utils."""
 
-    def test_extract_and_detect_integration(self):
+    def test_extract_and_detect_integration(self) -> None:
         """Test that extract_show_info and detect_multi_episodes work together."""
         # Standard TV show filename
         filename = "Show.S01E01.Title.mp4"
@@ -36,7 +36,7 @@ class TestEpisodeIntegration:
         assert special_info["type"] == "special"
         assert special_info["number"] == 1
 
-    def test_generate_tv_filename_with_multi_episode(self):
+    def test_generate_tv_filename_with_multi_episode(self) -> None:
         """Test generating filenames for multi-episode files."""
         # Generate filename for single episode
         filename = generate_tv_filename("Show Name", 1, 5, "Episode Title")
@@ -57,13 +57,13 @@ class TestEpisodeIntegration:
         assert "Show_.A.Story" in filename
         assert "Episode_.Part.1" in filename
 
-    def test_preview_rename_with_multi_episode(self):
+    def test_preview_rename_with_multi_episode(self) -> None:
         """Test preview rename functionality with multi-episode files."""
         # Create a path with a multi-episode filename
         path = Path("/test/Some.Show.S01E01E02E03.mp4")
 
         # Generate a preview rename
-        result = get_preview_rename(path, "New Show", 1, [1, 2, 3], "Triple Episode")
+        result = get_preview_rename(path, "New Show", 1, episode=[1, 2, 3], title="Triple Episode")
 
         # Verify the preview shows correct information
         assert "New.Show.S01E01-E03.Triple.Episode.mp4" in result["new_name"]

@@ -18,17 +18,17 @@ class TestMetadataFetcher:
         """Set up test fixtures."""
         self.fetcher = MetadataFetcher()
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test initialization of the base fetcher."""
         assert hasattr(self.fetcher, "cache")
         assert hasattr(self.fetcher, "clear_cache")
 
-    def test_fetch_metadata_not_implemented(self):
+    def test_fetch_metadata_not_implemented(self) -> None:
         """Test that fetch_metadata raises NotImplementedError."""
         with pytest.raises(NotImplementedError):
             self.fetcher.fetch_metadata("test", MediaType.TV_SHOW)
 
-    def test_search_not_implemented(self):
+    def test_search_not_implemented(self) -> None:
         """Test that search raises NotImplementedError."""
         with pytest.raises(NotImplementedError):
             self.fetcher.search("test", MediaType.TV_SHOW)
@@ -42,7 +42,7 @@ class TestTVDBMetadataFetcher:
         self.mock_tvdb_client = MagicMock()
         self.fetcher = TVDBMetadataFetcher(client=self.mock_tvdb_client)
 
-    def test_search_tv_show(self):
+    def test_search_tv_show(self) -> None:
         """Test searching for TV shows."""
         # Mock TVDB client response
         self.mock_tvdb_client.get_series_by_name.return_value = [
@@ -64,12 +64,12 @@ class TestTVDBMetadataFetcher:
         assert results[0].media_type == MediaType.TV_SHOW
         assert results[0].source == "tvdb"
 
-    def test_search_movie_not_supported(self):
+    def test_search_movie_not_supported(self) -> None:
         """Test that searching for movies is not supported by TVDB fetcher."""
         with pytest.raises(ValueError, match="TVDB only supports TV shows"):
             self.fetcher.search("The Matrix", MediaType.MOVIE)
 
-    def test_fetch_tv_show_metadata(self):
+    def test_fetch_tv_show_metadata(self) -> None:
         """Test fetching TV show metadata."""
         # Mock responses
         self.mock_tvdb_client.get_series_by_id.return_value = {
@@ -105,7 +105,7 @@ class TestTVDBMetadataFetcher:
         assert result.extra_data["episodes"][0]["season"] == 1
         assert result.extra_data["episodes"][0]["episode"] == 1
 
-    def test_cache_mechanism(self):
+    def test_cache_mechanism(self) -> None:
         """Test that caching works properly."""
         # Set up mock
         self.mock_tvdb_client.get_series_by_id.return_value = {
@@ -139,7 +139,7 @@ class TestTMDBMetadataFetcher:
         self.mock_tmdb_client = MagicMock()
         self.fetcher = TMDBMetadataFetcher(client=self.mock_tmdb_client)
 
-    def test_search_movie(self):
+    def test_search_movie(self) -> None:
         """Test searching for movies."""
         # Mock TMDB client response
         self.mock_tmdb_client.search_movie.return_value = {
@@ -165,7 +165,7 @@ class TestTMDBMetadataFetcher:
         assert results[0].source == "tmdb"
         assert results[0].extra_data["release_date"] == "1999-03-31"
 
-    def test_search_tv_show(self):
+    def test_search_tv_show(self) -> None:
         """Test searching for TV shows using TMDB."""
         # Mock TMDB client response
         self.mock_tmdb_client.search_tv.return_value = {
@@ -190,7 +190,7 @@ class TestTMDBMetadataFetcher:
         assert results[0].source == "tmdb"
         assert results[0].extra_data["first_air_date"] == "2016-07-15"
 
-    def test_fetch_movie_metadata(self):
+    def test_fetch_movie_metadata(self) -> None:
         """Test fetching movie metadata."""
         # Mock responses
         self.mock_tmdb_client.get_movie_details.return_value = {
@@ -214,7 +214,7 @@ class TestTMDBMetadataFetcher:
         assert result.extra_data["runtime"] == 136
         assert "Action" in result.extra_data["genres"]
 
-    def test_fetch_tv_show_metadata(self):
+    def test_fetch_tv_show_metadata(self) -> None:
         """Test fetching TV show metadata."""
         # Mock responses
         self.mock_tmdb_client.get_tv_details.return_value = {
@@ -261,7 +261,7 @@ class TestAniDBMetadataFetcher:
         self.mock_anidb_client = MagicMock()
         self.fetcher = AniDBMetadataFetcher(client=self.mock_anidb_client)
 
-    def test_search_anime(self):
+    def test_search_anime(self) -> None:
         """Test searching for anime."""
         # Mock AniDB client response
         self.mock_anidb_client.get_anime_by_name.return_value = [
@@ -286,7 +286,7 @@ class TestAniDBMetadataFetcher:
         assert results[0].source == "anidb"
         assert results[0].extra_data["episodes"] == 26
 
-    def test_fetch_anime_metadata(self):
+    def test_fetch_anime_metadata(self) -> None:
         """Test fetching anime metadata."""
         # Mock responses
         self.mock_anidb_client.get_anime_details.return_value = {
@@ -323,7 +323,7 @@ class TestTVMazeMetadataFetcher:
         self.mock_tvmaze_client = MagicMock()
         self.fetcher = TVMazeMetadataFetcher(client=self.mock_tvmaze_client)
 
-    def test_search_tv_show(self):
+    def test_search_tv_show(self) -> None:
         """Test searching for TV shows."""
         # Mock TVMaze client response
         self.mock_tvmaze_client.search_shows.return_value = [
@@ -351,7 +351,7 @@ class TestTVMazeMetadataFetcher:
         assert results[0].source == "tvmaze"
         assert results[0].extra_data["premiered"] == "2008-01-20"
 
-    def test_fetch_tv_show_metadata(self):
+    def test_fetch_tv_show_metadata(self) -> None:
         """Test fetching TV show metadata."""
         # Mock responses
         self.mock_tvmaze_client.get_show_by_id.return_value = {

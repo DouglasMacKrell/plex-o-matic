@@ -101,7 +101,21 @@
 3. Create name formatter
 4. Add template system
 
-### 3.3 Name Parser Refactoring
+### 3.3 Preview System
+1. Create preview generator
+2. Implement diff display
+3. Add batch preview
+4. Create interactive approval
+
+## Pre-v2: Code Quality and Refactoring
+
+### Codebase Refactoring
+1. Identify areas of technical debt
+2. Profile codebase for performance bottlenecks
+3. Analyze code complexity and duplication
+4. Develop refactoring roadmap for v2
+
+### Name Parser Refactoring
 1. Data Model Simplification
    - Split into specific media type classes
    - Remove unnecessary optional fields
@@ -133,11 +147,11 @@
    - Optimize regex patterns
    - Add performance benchmarks
 
-### 3.4 Preview System
-1. Create preview generator
-2. Implement diff display
-3. Add batch preview
-4. Create interactive approval
+### Test Suite Improvements
+1. Improve test coverage to >90%
+2. Add property-based testing
+3. Enhance integration tests
+4. Add stress testing for edge cases
 
 ## Phase 4: UI & Polish (Sprint 7-8)
 
@@ -242,5 +256,7 @@
 - Phase 3: Weeks 9-12
 - Phase 4: Weeks 13-16
 - Testing & Documentation: Ongoing
-- First Release: Week 16
+- First Release (v1): Week 16
+- Pre-v2 Refactoring: Weeks 17-20
+- V2 Development: Weeks 21-28
 - Maintenance: Ongoing

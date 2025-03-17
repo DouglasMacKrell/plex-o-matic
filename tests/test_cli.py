@@ -48,14 +48,14 @@ def mock_backup_system():
     return backup_system
 
 
-def test_cli_entrypoint(runner):
+def test_cli_entrypoint(runner) -> None:
     """Test that the CLI entrypoint runs without error."""
     result = runner.invoke(cli, ["--help"])
     assert result.exit_code == 0
     assert "Plex-o-matic: Media file organization tool for Plex" in result.output
 
 
-def test_scan_command(runner, media_dir):
+def test_scan_command(runner, media_dir) -> None:
     """Test that the scan command runs without error."""
     result = runner.invoke(cli, ["scan", "--path", str(media_dir)])
     assert result.exit_code == 0
@@ -64,7 +64,7 @@ def test_scan_command(runner, media_dir):
     assert "Found 4 media files" in result.output
 
 
-def test_preview_command_with_path(runner, media_dir):
+def test_preview_command_with_path(runner, media_dir) -> None:
     """Test that the preview command runs with a path parameter."""
     result = runner.invoke(cli, ["preview", "--path", str(media_dir)])
     assert result.exit_code == 0
@@ -74,7 +74,7 @@ def test_preview_command_with_path(runner, media_dir):
 
 
 @patch("plexomatic.cli.get_preview_rename")
-def test_preview_command_no_changes(mock_preview, runner, media_dir):
+def test_preview_command_no_changes(mock_preview, runner, media_dir) -> None:
     """Test preview command when no changes are needed."""
     # Mock get_preview_rename to return no changes needed
     mock_preview.return_value = {
@@ -90,7 +90,7 @@ def test_preview_command_no_changes(mock_preview, runner, media_dir):
 
 
 @patch("plexomatic.cli.rename_file")
-def test_apply_command_with_path(mock_rename, runner, media_dir):
+def test_apply_command_with_path(mock_rename, runner, media_dir) -> None:
     """Test that the apply command runs with a path parameter."""
     # Mock rename_file to return success
     mock_rename.return_value = True
@@ -102,7 +102,7 @@ def test_apply_command_with_path(mock_rename, runner, media_dir):
 
 
 @patch("plexomatic.cli.rename_file")
-def test_apply_command_dry_run(mock_rename, runner, media_dir):
+def test_apply_command_dry_run(mock_rename, runner, media_dir) -> None:
     """Test the apply command in dry run mode."""
     result = runner.invoke(cli, ["apply", "--dry-run", "--path", str(media_dir)], input="y\n")
     assert result.exit_code == 0
@@ -114,7 +114,7 @@ def test_apply_command_dry_run(mock_rename, runner, media_dir):
 
 
 @patch("plexomatic.cli.rollback_operation")
-def test_rollback_command_with_id(mock_rollback, runner):
+def test_rollback_command_with_id(mock_rollback, runner) -> None:
     """Test the rollback command with a specific operation ID."""
     # Mock rollback_operation to return success
     mock_rollback.return_value = True
@@ -128,7 +128,7 @@ def test_rollback_command_with_id(mock_rollback, runner):
 
 
 @patch("plexomatic.cli.BackupSystem")
-def test_rollback_command_no_operations(mock_backup_system, runner):
+def test_rollback_command_no_operations(mock_backup_system, runner) -> None:
     """Test the rollback command when no operations are available."""
     # Mock the connection and cursor to return no results
     conn_mock = MagicMock()
@@ -141,14 +141,14 @@ def test_rollback_command_no_operations(mock_backup_system, runner):
         assert "No completed operations found to roll back" in result.output
 
 
-def test_version_flag(runner):
+def test_version_flag(runner) -> None:
     """Test that the version flag shows version info."""
     result = runner.invoke(cli, ["--version"])
     assert result.exit_code == 0
     assert "plex-o-matic, version" in result.output
 
 
-def test_scan_with_verbose_flag(runner, media_dir):
+def test_scan_with_verbose_flag(runner, media_dir) -> None:
     """Test that the verbose flag increases output detail."""
     result = runner.invoke(cli, ["scan", "--path", str(media_dir), "--verbose"])
     assert result.exit_code == 0

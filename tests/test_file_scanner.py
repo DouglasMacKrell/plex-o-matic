@@ -1,13 +1,13 @@
 """Tests for the file scanner module."""
 
 import os
-import pytest
 from pathlib import Path
 from plexomatic.core.file_scanner import FileScanner, MediaFile
+from tests.conftest import fixture
 
 
-@pytest.fixture
-def temp_media_dir(tmp_path):
+@fixture
+def temp_media_dir(tmp_path: Path) -> Path:
     """Create a temporary directory with test media files."""
     # Create test directory structure
     tv_dir = tmp_path / "TV Shows" / "Test Show" / "Season 01"
@@ -28,7 +28,7 @@ def temp_media_dir(tmp_path):
     return tmp_path
 
 
-def test_file_scanner_initialization():
+def test_file_scanner_initialization() -> None:
     """Test that FileScanner initializes with correct parameters."""
     scanner = FileScanner(
         base_path="/test/path",
@@ -41,7 +41,7 @@ def test_file_scanner_initialization():
     assert scanner.ignore_patterns == [r"^\.", r"Thumbs\.db$"]
 
 
-def test_file_scanner_finds_media_files(temp_media_dir):
+def test_file_scanner_finds_media_files(temp_media_dir: Path) -> None:
     """Test that FileScanner correctly identifies media files."""
     scanner = FileScanner(
         base_path=str(temp_media_dir), allowed_extensions=[".mp4", ".mkv", ".avi"]
@@ -60,7 +60,7 @@ def test_file_scanner_finds_media_files(temp_media_dir):
     assert extensions == {".mp4", ".mkv", ".avi"}
 
 
-def test_file_scanner_ignores_system_files(temp_media_dir):
+def test_file_scanner_ignores_system_files(temp_media_dir: Path) -> None:
     """Test that FileScanner correctly ignores system and hidden files."""
     scanner = FileScanner(
         base_path=str(temp_media_dir),
@@ -76,7 +76,7 @@ def test_file_scanner_ignores_system_files(temp_media_dir):
     assert "Thumbs.db" not in file_names
 
 
-def test_media_file_properties():
+def test_media_file_properties() -> None:
     """Test that MediaFile objects correctly parse file information."""
     file_path = Path("/TV Shows/Test Show/Season 01/Test.Show.S01E02E03.mkv")
     media_file = MediaFile(file_path)

@@ -18,7 +18,7 @@ def temp_config_path(tmp_path):
         del os.environ["PLEXOMATIC_CONFIG_PATH"]
 
 
-def test_config_manager_init(temp_config_path):
+def test_config_manager_init(temp_config_path) -> None:
     """Test configuration manager initialization."""
     config = ConfigManager()
     assert config is not None
@@ -37,7 +37,7 @@ def test_config_manager_init(temp_config_path):
     assert data["recursive_scan"] is True
 
 
-def test_config_manager_get_set(temp_config_path):
+def test_config_manager_get_set(temp_config_path) -> None:
     """Test getting and setting configuration values."""
     config = ConfigManager()
 
@@ -58,7 +58,7 @@ def test_config_manager_get_set(temp_config_path):
     assert new_config.get("test_key") == "test_value"
 
 
-def test_config_manager_helper_methods(temp_config_path):
+def test_config_manager_helper_methods(temp_config_path) -> None:
     """Test helper methods for common configuration values."""
     config = ConfigManager()
 
@@ -77,7 +77,7 @@ def test_config_manager_helper_methods(temp_config_path):
     assert "sample" in patterns
 
 
-def test_config_manager_invalid_file(tmp_path):
+def test_config_manager_invalid_file(tmp_path) -> None:
     """Test handling of invalid configuration files."""
     config_file = tmp_path / "invalid_config.json"
 

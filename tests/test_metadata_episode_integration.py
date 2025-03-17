@@ -28,7 +28,7 @@ class TestMetadataEpisodeIntegration:
 
         return manager
 
-    def test_match_with_special_episode_detection(self, mock_metadata_manager):
+    def test_match_with_special_episode_detection(self, mock_metadata_manager) -> None:
         """Test that match recognizes special episodes."""
         # Replace the real match method with our test implementation
         original_match = mock_metadata_manager.match
@@ -75,7 +75,7 @@ class TestMetadataEpisodeIntegration:
         assert result.metadata["special_type"] == "ova"
         assert result.metadata["special_number"] == 1
 
-    def test_match_with_multi_episode_detection(self, mock_metadata_manager):
+    def test_match_with_multi_episode_detection(self, mock_metadata_manager) -> None:
         """Test that match recognizes multi-episodes."""
         # Replace the real match method with our test implementation
         original_match = mock_metadata_manager.match
@@ -121,7 +121,7 @@ class TestMetadataEpisodeIntegration:
         assert "episodes" in result.metadata
         assert result.metadata["episodes"] == [5, 6, 7]
 
-    def test_metadata_fetching_for_special_episodes(self):
+    def test_metadata_fetching_for_special_episodes(self) -> None:
         """Test fetching metadata for special episodes."""
         # Create mocks for our clients
         mock_tvdb_client = MagicMock()
@@ -173,7 +173,7 @@ class TestMetadataEpisodeIntegration:
             ]
             assert len(specials) == 2
 
-    def test_fetch_episode_metadata(self):
+    def test_fetch_episode_metadata(self) -> None:
         """Test fetching metadata for specific episodes."""
         # Create a mock metadata manager
         manager = MetadataManager()
@@ -257,7 +257,7 @@ class TestMetadataEpisodeIntegration:
         assert result["multi_episodes"][0]["title"] == "Episode 1"
         assert result["multi_episodes"][1]["title"] == "Episode 2"
 
-    def test_filename_generation_for_special_episodes(self):
+    def test_filename_generation_for_special_episodes(self) -> None:
         """Test generating filenames for special episodes."""
         # Test generating a filename for a special episode
         special_info = detect_special_episodes("Show.Special.1.mp4")
@@ -295,7 +295,7 @@ class TestMetadataEpisodeIntegration:
         # Verify the results
         assert "Test.Show.S00E02.OVA.2.mp4" in filename
 
-    def test_filename_generation_for_multi_episodes(self):
+    def test_filename_generation_for_multi_episodes(self) -> None:
         """Test generating filenames for multi-episodes."""
         # Test detecting multi-episodes
         episodes = detect_multi_episodes("Show.S01E01E02E03.mp4")
@@ -330,7 +330,7 @@ class TestMetadataEpisodeIntegration:
         # Verify the results - non-sequential episodes should use concatenated format
         assert "Test.Show.S01E01+E03+E05.Non-Sequential.mp4" in filename
 
-    def test_generate_filename_from_metadata(self):
+    def test_generate_filename_from_metadata(self) -> None:
         """Test generating filenames from metadata for different episode types."""
         # Test with a regular episode
         regular_metadata = {

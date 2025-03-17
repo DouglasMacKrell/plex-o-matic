@@ -17,7 +17,7 @@ from plexomatic.utils.name_parser import ParsedMediaName, MediaType
 class TestNameTemplates:
     """Test class for the name templates functionality."""
 
-    def test_tv_show_template(self):
+    def test_tv_show_template(self) -> None:
         """Test applying templates to TV show names."""
         # Create a parsed media name object for testing
         show = ParsedMediaName(
@@ -46,7 +46,7 @@ class TestNameTemplates:
         result = apply_template(show, "quality")
         assert result == "Show.Name.S01E02.Episode.Title.720p.mp4"
 
-    def test_movie_template(self):
+    def test_movie_template(self) -> None:
         """Test applying templates to movie names."""
         # Create a parsed media name object for testing
         movie = ParsedMediaName(
@@ -73,7 +73,7 @@ class TestNameTemplates:
         result = apply_template(movie, "quality")
         assert result == "Movie.Name.2020.1080p.mp4"
 
-    def test_anime_template(self):
+    def test_anime_template(self) -> None:
         """Test applying templates to anime names."""
         # Create a parsed media name object for testing
         anime = ParsedMediaName(
@@ -97,7 +97,7 @@ class TestNameTemplates:
         result = apply_template(anime, "plex")
         assert result == "Anime Name - S01E01.mkv"
 
-    def test_custom_template_registration(self):
+    def test_custom_template_registration(self) -> None:
         """Test registering and using custom templates."""
         # Define a custom template format
         custom_format = "{title} - {year} - {quality}{extension}"
@@ -122,7 +122,7 @@ class TestNameTemplates:
         templates = get_available_templates(TemplateType.MOVIE)
         assert "custom_movie" in templates
 
-    def test_template_manager(self):
+    def test_template_manager(self) -> None:
         """Test the TemplateManager class."""
         # Create a template manager
         manager = TemplateManager()
@@ -156,7 +156,7 @@ class TestNameTemplates:
         assert "minimal_tv" in tv_templates
         assert "plex" in tv_templates  # Should include default templates too
 
-    def test_multi_episode_formatting(self):
+    def test_multi_episode_formatting(self) -> None:
         """Test different multi-episode formatting options."""
         # Test sequential episodes with range format
         assert _format_multi_episode([1, 2, 3], "range") == "E01-E03"
@@ -176,7 +176,7 @@ class TestNameTemplates:
         # Test empty list
         assert _format_multi_episode([]) == "E00"
 
-    def test_ensure_episode_list(self):
+    def test_ensure_episode_list(self) -> None:
         """Test episode list conversion function."""
         # Test None input
         assert _ensure_episode_list(None) == []
@@ -187,7 +187,7 @@ class TestNameTemplates:
         # Test list input
         assert _ensure_episode_list([1, 2, 3]) == [1, 2, 3]
 
-    def test_template_error_handling(self):
+    def test_template_error_handling(self) -> None:
         """Test error handling in template application."""
         # Test with missing required template values
         show = ParsedMediaName(
@@ -207,7 +207,7 @@ class TestNameTemplates:
         except ValueError:
             pass
 
-    def test_anime_special_handling(self):
+    def test_anime_special_handling(self) -> None:
         """Test handling of anime specials."""
         # Create an anime special
         special = ParsedMediaName(
@@ -235,7 +235,7 @@ class TestNameTemplates:
         result = apply_template(special, "fansub")
         assert "Anime Name" in result
 
-    def test_template_manager_fallbacks(self):
+    def test_template_manager_fallbacks(self) -> None:
         """Test template manager fallback behavior."""
         manager = TemplateManager()
 
@@ -253,7 +253,7 @@ class TestNameTemplates:
 
         # Test with unknown media type
         unknown = ParsedMediaName(
-            media_type="UNKNOWN",
+            media_type=MediaType.UNKNOWN,
             title="Unknown Media",
             extension=".mp4",
         )
@@ -261,7 +261,7 @@ class TestNameTemplates:
         result = manager.apply_template(unknown)
         assert result == "Unknown Media.mp4"  # Should use simple fallback
 
-    def test_default_formatter_edge_cases(self):
+    def test_default_formatter_edge_cases(self) -> None:
         """Test edge cases in the default formatter."""
         # Test with missing required values
         show = ParsedMediaName(
@@ -287,7 +287,7 @@ class TestNameTemplates:
         result = _default_formatter(movie, "{title}.{year}{extension}")
         assert result == "Test.Movie.mp4"  # Should handle missing year gracefully
 
-    def test_template_registration_edge_cases(self):
+    def test_template_registration_edge_cases(self) -> None:
         """Test edge cases in template registration."""
         # Test registering template with same name but different type
         register_template("test_template", TemplateType.TV_SHOW, "{title}{extension}")
@@ -304,7 +304,7 @@ class TestNameTemplates:
         templates = get_available_templates(TemplateType.GENERAL)
         assert "empty_template" in templates
 
-    def test_template_manager_initialization(self):
+    def test_template_manager_initialization(self) -> None:
         """Test template manager initialization and customization."""
         # Create a new manager
         manager = TemplateManager()

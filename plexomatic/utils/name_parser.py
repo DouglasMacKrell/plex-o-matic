@@ -162,6 +162,19 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
             episode_title=episode_title,
         )
 
+    # Special case for filenames that only contain an extension (e.g., ".mp4")
+    if filename.startswith(".") and "/" not in filename and "\\" not in filename:
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            extension=Path(filename).suffix,  # Use Path to extract the proper suffix
+            quality=quality,
+            confidence=confidence,
+            season=season,
+            episodes=episodes,
+            episode_title=episode_title,
+        )
+
     # Get extension and name part
     path = Path(filename)
     extension = path.suffix
@@ -172,7 +185,7 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
         return ParsedMediaName(
             media_type=media_type,
             title=title,
-            extension=extension,
+            extension=extension,  # This already contains the extension
             quality=quality,
             confidence=confidence,
             season=season,
@@ -353,7 +366,9 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
 
         # Set confidence based on available information
         confidence = 0.8  # Default confidence
-        if episode_title or quality:
+        if match_dict.get("alt_season") or match_dict.get("alt_episode"):
+            confidence = 0.85  # Higher confidence for alternative format (1x01)
+        elif episode_title or quality:
             confidence = 0.85  # Higher confidence when episode title or quality is present
 
         return ParsedMediaName(
@@ -413,6 +428,7 @@ def parse_movie(filename: str) -> ParsedMediaName:
     # Extract quality components
     quality_parts = []
     quality_patterns = [
+        r"(4K)",  # 4K resolution
         r"(\d{3,4}p)",  # 720p, 1080p, etc.
         r"(HDTV|WEB-DL|BluRay|BRRip)",  # Source
         r"(x264|x265|HEVC)",  # Codec
