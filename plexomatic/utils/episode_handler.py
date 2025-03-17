@@ -61,8 +61,12 @@ def detect_multi_episodes(filename: str) -> List[int]:
             if isinstance(show_info["episode"], str)
             else show_info["episode"]
         )
+        # Ensure episode is an int, not None or another type
+        if not isinstance(episode, int):
+            return []
+
         # Initialize the result with the first detected episode
-        result = [episode]
+        result: List[int] = [episode]
 
         # Check for multi-episode patterns
         for pattern in MULTI_EPISODE_PATTERNS:
@@ -76,7 +80,7 @@ def detect_multi_episodes(filename: str) -> List[int]:
                     start_ep = int(groups[1]) if groups[1] else None
                     end_ep = int(groups[2]) if groups[2] else None
 
-                    if start_ep and end_ep:
+                    if start_ep is not None and end_ep is not None:
                         return parse_episode_range(start_ep, end_ep)
 
                 # If there are multiple episode markers (E01E02E03...)
@@ -109,7 +113,9 @@ def detect_multi_episodes(filename: str) -> List[int]:
     if match:
         groups = match.groups()
         if len(groups) >= 3 and groups[2]:
-            return parse_episode_range(int(groups[1]), int(groups[2]))
+            start_ep = int(groups[1])
+            end_ep = int(groups[2])
+            return parse_episode_range(start_ep, end_ep)
         else:
             return [int(groups[1])]
 
@@ -287,7 +293,8 @@ def detect_special_episodes(filename: str) -> Optional[Dict[str, Union[str, int,
                     number = int(group)
                     break
 
-            return {"type": special_type, "number": number}
+            result: Dict[str, Union[str, int, None]] = {"type": special_type, "number": number}
+            return result
 
     return None
 
@@ -302,7 +309,7 @@ def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
     Returns:
         Dictionary with season folder names as keys and lists of files as values
     """
-    result = {"Specials": [], "Unknown": []}
+    result: Dict[str, List[Path]] = {"Specials": [], "Unknown": []}
 
     for file in files:
         filename = file.name

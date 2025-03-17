@@ -130,11 +130,11 @@ def detect_media_type(filename: str) -> MediaType:
 
 def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> ParsedMediaName:
     """
-    Parse a TV show filename into its components.
+    Parse a TV show filename into a structured format.
 
     Args:
         filename: The filename to parse
-        media_type: Optional media type to use (defaults to TV_SHOW)
+        media_type: The media type to set in the result (defaults to TV_SHOW)
 
     Returns:
         ParsedMediaName: Object containing parsed information
@@ -144,7 +144,7 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
     extension = ""
     title = ""
     season = 1  # Default to season 1 if not specified
-    episodes = []
+    episodes: List[int] = []  # Initialize as empty list of ints
     episode_title = None
     quality = None
     confidence = 0.8  # Default confidence

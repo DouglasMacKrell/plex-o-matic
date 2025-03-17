@@ -93,7 +93,7 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
 def generate_tv_filename(
     show_name: str,
     season: int,
-    episode: Union[int, List[int]],
+    episode: Optional[Union[int, str, List[int]]],
     title: Optional[str] = None,
     extension: str = ".mp4",
     concatenated: bool = False,
@@ -103,7 +103,7 @@ def generate_tv_filename(
     Args:
         show_name: Name of the show
         season: Season number
-        episode: Episode number or list of episode numbers
+        episode: Episode number (int or str) or list of episode numbers
         title: Episode title, if available
         extension: File extension (including dot)
         concatenated: If True, format as concatenated episodes using +, otherwise as a range
@@ -113,8 +113,18 @@ def generate_tv_filename(
     """
     from plexomatic.utils.episode_handler import format_multi_episode_filename
 
-    # Convert single episode to list format for consistency with multi-episode
-    episodes = [episode] if isinstance(episode, int) else episode
+    if episode is None:
+        # Default to episode 1 if None is provided
+        episodes = [1]
+    elif isinstance(episode, int):
+        # Convert single episode to list format for consistency with multi-episode
+        episodes = [episode]
+    elif isinstance(episode, str) and episode.isdigit():
+        # Convert string to int if it's a digit string
+        episodes = [int(episode)]
+    else:
+        # Assume it's already a list of episodes
+        episodes = episode  # type: ignore
 
     return format_multi_episode_filename(
         show_name, season, episodes, title, extension, concatenated
@@ -140,7 +150,7 @@ def get_preview_rename(
     path: Path,
     name: Optional[str] = None,
     season: Optional[int] = None,
-    episode: Optional[int] = None,
+    episode: Optional[Union[int, str, List[int]]] = None,
     title: Optional[str] = None,
     concatenated: bool = False,
 ) -> Dict[str, str]:
