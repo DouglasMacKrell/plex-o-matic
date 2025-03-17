@@ -46,6 +46,8 @@ For more detailed usage instructions, please refer to the [CLI Documentation](cl
 - [File Utilities](file-utils/README.md): Documentation on filename standardization and file operations.
 - [Backend Architecture](backend/README.md): Information about the backend design and components.
 - [Database Schema](database/README.md): Documentation on the database structure and schema.
+- [API Integration](api/README.md): Documentation on API clients and integration.
+- [Metadata Management](metadata/README.md): Information about the metadata management system.
 
 ## Features
 

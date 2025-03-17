@@ -29,6 +29,14 @@ Welcome to the Plex-o-matic documentation! This documentation provides comprehen
   - Local LLM Client (Ollama with Deepseek R1)
   - Usage Examples and Configuration
 
+### Metadata Management
+- [Metadata System](metadata/README.md)
+  - MetadataManager
+  - Multi-Source Aggregation
+  - Intelligent Filename Matching
+  - Confidence-Based Result Ranking
+  - Caching Mechanisms
+
 ## Quick Start
 
 1. Install the package:

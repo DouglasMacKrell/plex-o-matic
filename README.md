@@ -28,6 +28,14 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Metadata-enhanced filename analysis
   - AI-powered filename suggestions
 
+- **Metadata Management**:
+  - Unified interface for all metadata sources
+  - Intelligent filename matching to metadata
+  - Confidence-based result ranking
+  - Multi-source aggregation
+  - Efficient metadata caching
+  - Flexible ID format with source prefixes
+
 - **Robust Backup System**:
   - SQLite database integration for operation tracking
   - File checksum verification
