@@ -81,6 +81,19 @@
 2. Episode concatenation
 3. Special episode handling
 4. Season pack organization
+5. Anthology Show Support
+   - Configuration flag for anthology mode
+   - Title segment extraction and matching
+   - Episode range creation from multiple segments
+   - Confidence scoring system
+6. Title-Based Matching
+   - Implement title vs. episode number priority system
+   - Configurable match threshold settings
+   - Conflict resolution strategies
+7. Directory & Filename Inference
+   - Folder structure parsing for series detection
+   - Number-only file handling
+   - Fallback strategies for incomplete metadata
 
 ### 3.2 Name Processing
 1. Implement name parser

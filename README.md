@@ -21,6 +21,9 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Multi-episode file detection and handling
   - Special episode detection (OVAs, specials, movies)
   - Season pack organization
+  - Anthology show support with intelligent title matching
+  - Directory structure inference for incomplete metadata
+  - Configurable title vs. episode number priority
 
 - **API Integration**:
   - TVDB API client for TV show metadata
@@ -112,6 +115,12 @@ Key configuration options:
             "model_name": "deepseek-r1:8b",
             "base_url": "http://localhost:11434"
         }
+    },
+    "episode_handling": {
+        "anthology_mode": false,
+        "title_match_priority": 0.8,
+        "infer_from_directory": true,
+        "match_threshold": 0.7
     }
 }
 ```

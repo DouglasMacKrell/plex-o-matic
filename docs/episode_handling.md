@@ -13,6 +13,84 @@ The system can detect various multi-episode formats in filenames:
 - Space separator: `Show S01E01 E02.mp4`
 - Text separators: `Show S01E05 to E07.mp4`, `Show S01E05 & E06.mp4`, `Show S01E05+E06.mp4`
 
+## Anthology Show Handling
+
+Plex-o-matic provides special support for anthology shows where multiple episodes are combined into a single file but may be labeled with a single episode number. This is common in animated shows and certain TV series.
+
+### Configuration
+
+```python
+# In config.json or via CLI
+{
+    "episode_handling": {
+        "anthology_mode": true,
+        "title_match_priority": 0.8,  # Weight given to title matches vs episode numbers
+        "infer_from_directory": true,  # Enable directory structure inference
+        "match_threshold": 0.7  # Minimum confidence score for title matches
+    }
+}
+```
+
+### Example Usage
+
+```python
+from plexomatic.utils.episode_handler import process_anthology_episode
+
+# Example with multiple segments in title
+result = process_anthology_episode(
+    "Chip N Dale Park Life-S01E01-Thou Shall Nut Steal The Baby Whisperer It Takes Two To Tangle",
+    anthology_mode=True
+)
+# Result: {
+#   'episode_numbers': [1, 2, 3],
+#   'segments': [
+#       "Thou Shall Nut Steal",
+#       "The Baby Whisperer",
+#       "It Takes Two To Tangle"
+#   ]
+# }
+```
+
+### Title-Based Matching
+
+When anthology mode is enabled, the system will:
+1. Extract potential episode titles from the filename
+2. Query the metadata provider for official episode listings
+3. Use fuzzy matching to identify multiple episodes
+4. Generate appropriate episode ranges
+5. Apply confidence scoring to prevent false matches
+
+```python
+from plexomatic.utils.episode_handler import match_episode_titles
+
+matches = match_episode_titles(
+    ["Thou Shall Nut Steal", "The Baby Whisperer"],
+    show_id="12345",
+    season=1
+)
+# Returns matched episodes with confidence scores
+```
+
+### Directory Structure Inference
+
+When files lack complete information, the system can infer series names from directory structure:
+
+```python
+from plexomatic.utils.episode_handler import infer_series_info
+
+# Given a structure like:
+# Batman The Animated Series/
+#   S1/
+#     01.mp4
+#     02.mp4
+
+info = infer_series_info("/path/to/01.mp4")
+# Returns: {
+#   'series_name': "Batman The Animated Series",
+#   'season': 1
+# }
+```
+
 ## Special Episode Detection
 
 Special episodes are detected and handled appropriately:

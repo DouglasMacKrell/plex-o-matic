@@ -13,6 +13,9 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - Handle multi-episode file naming
 - Maintain directory structure according to Plex requirements
 - Support for TV Shows, Movies, and Music
+- Anthology mode for multi-segment episodes
+- Title-based episode matching
+- Directory structure inference
 
 ### 2. Metadata Integration
 - TVDB API integration for TV show verification
@@ -38,6 +41,17 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - Music album structure
 - Subtitle file matching
 - Extra features and behind-the-scenes content
+- Anthology show support with configurable mode
+- Title-based episode matching with confidence scoring
+- Directory structure inference for incomplete metadata
+
+## Configuration Options
+
+### Anthology Mode
+- `anthology_mode`: Enable special handling for anthology shows
+- `title_match_priority`: Weight for title vs episode number matching
+- `infer_from_directory`: Enable series name inference from directory structure
+- `match_threshold`: Confidence threshold for title matching
 
 ## Technical Requirements
 

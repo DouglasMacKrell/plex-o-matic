@@ -56,6 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Season pack organization functionality
   - Support for concatenated episodes (non-sequential episodes in one file)
   - Intelligent filename generation from metadata for all episode types
+  - Anthology show support with configurable mode
+    - Title-based episode matching with confidence scoring
+    - Directory structure inference for incomplete metadata
+    - Configurable title vs. episode number priority
+    - Enhanced metadata integration for anthology shows
+  - Improved episode title matching system
+    - Fuzzy matching for episode titles
+    - Configurable confidence thresholds
+    - Intelligent episode number override based on title matches
 - Updated filename generation to support multi-episode files
 - Preview rename functionality now supports multi-episode files
 
