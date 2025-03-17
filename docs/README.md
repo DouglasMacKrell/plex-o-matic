@@ -24,6 +24,9 @@ pip install plex-o-matic
 Once installed, you can use Plex-o-matic via the command line interface:
 
 ```bash
+# Set up your API keys and configuration
+plexomatic configure
+
 # Scan your media directory
 plexomatic scan --path /path/to/your/media
 
@@ -46,6 +49,8 @@ For more detailed usage instructions, please refer to the [CLI Documentation](cl
 - [File Utilities](file-utils/README.md): Documentation on filename standardization and file operations.
 - [Backend Architecture](backend/README.md): Information about the backend design and components.
 - [Database Schema](database/README.md): Documentation on the database structure and schema.
+- [API Integration](api/README.md): Documentation on API clients and integration.
+- [Metadata Management](metadata/README.md): Information about the metadata management system.
 
 ## Features
 
@@ -71,6 +76,7 @@ Plex-o-matic provides several powerful features:
 - JSON-based configuration
 - Environment variable support
 - Extensible options
+- Interactive configuration via CLI
 
 ## FAQs
 
@@ -110,4 +116,14 @@ Or specify a specific operation ID:
 
 ```bash
 plexomatic rollback --operation-id 42
-``` 
+```
+
+### How do I set up API keys for metadata sources?
+
+You can use the interactive configuration command:
+
+```bash
+plexomatic configure
+```
+
+This will guide you through setting up API keys for TVDB, TMDB, and other metadata sources. It's the recommended way to configure Plex-o-matic rather than editing the configuration file manually. 

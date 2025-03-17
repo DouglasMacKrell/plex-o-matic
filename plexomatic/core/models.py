@@ -1,9 +1,16 @@
 """Database models for the backup system."""
 from datetime import datetime, UTC
+from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
+class MediaType(Enum):
+    """Enum representing types of media."""
+    TV_SHOW = auto()
+    MOVIE = auto()
+    ANIME = auto()
 
 class FileRename(Base):
     """Model for tracking file rename operations."""
