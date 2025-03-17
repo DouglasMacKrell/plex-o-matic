@@ -4,14 +4,12 @@ repos:
     hooks:
     -   id: black
         language_version: python3
-        files: ^tests/(conftest|test_name_parser|test_name_parser_comprehensive|test_file_scanner).py$
 
 -   repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.3.0
     hooks:
     -   id: ruff
         args: [--fix]
-        files: ^tests/(conftest|test_name_parser|test_name_parser_comprehensive|test_file_scanner).py$
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.9.0
@@ -23,8 +21,7 @@ repos:
             types-setuptools,
             types-dataclasses
         ]
-        args: [--ignore-missing-imports, --config-file=pre-commit-mypy.ini]
-        files: ^tests/(conftest|test_name_parser|test_name_parser_comprehensive|test_file_scanner).py$
+        args: [--ignore-missing-imports]
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
