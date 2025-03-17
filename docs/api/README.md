@@ -8,6 +8,8 @@ Plex-o-matic integrates with external APIs to fetch metadata for media files and
 
 The TVDB client provides access to TV show metadata from thetvdb.com API.
 
+> **Note**: This product uses the TVDB API but is not endorsed or certified by TheTVDB.com or its affiliates. When using TVDB data in your application, you must include proper attribution as per their licensing requirements.
+
 ```python
 from plexomatic.api.tvdb_client import TVDBClient
 

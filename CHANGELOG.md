@@ -35,7 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Intelligent filename matching and metadata extraction
   - Confidence-based result ranking
   - Efficient caching mechanism
+  - Customizable match threshold
+  - Text similarity scoring for better matching
   - Comprehensive test coverage
+- Interactive CLI Configuration
+  - New `configure` command for interactive API key setup
+  - Securely stores API keys and other settings
+  - Guides users through setup process for all API services
+  - Support for optional services configuration
+  - Test coverage for all configuration scenarios
 
 ### Changed
 - None

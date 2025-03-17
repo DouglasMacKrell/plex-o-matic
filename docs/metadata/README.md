@@ -176,4 +176,20 @@ The metadata management system is configured through the application's configura
         }
     }
 }
-``` 
+```
+
+## Setting Up API Keys
+
+To use the metadata sources, you need to set up API keys for TVDB, TMDB, and other services. Plex-o-matic provides an interactive CLI command to help with this:
+
+```bash
+plexomatic configure
+```
+
+This command will walk you through:
+1. Entering your TVDB API key
+2. Entering your TMDB API key
+3. Configuring AniDB username and password (optional)
+4. Setting up local LLM integration (optional)
+
+The API keys will be saved in your configuration file at `~/.plexomatic/config.json` and used by the metadata management system when making API requests. 

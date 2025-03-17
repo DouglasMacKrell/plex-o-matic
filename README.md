@@ -121,6 +121,9 @@ export PLEXOMATIC_CONFIG_PATH="/path/to/your/config.json"
 Plex-o-matic provides a simple workflow for organizing your media files:
 
 ```bash
+# Configure your API keys and settings
+plexomatic configure
+
 # Scan a directory for media files
 plexomatic scan --path /path/to/media
 
@@ -213,6 +216,13 @@ Comprehensive documentation is available in the [docs](docs/) directory:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Acknowledgements
+
+### TheTVDB
+This product uses the TVDB API but is not endorsed or certified by TheTVDB.com or its affiliates.
+
+![TheTVDB](https://thetvdb.com/images/attribution/logo2.png)
 
 ## License
 

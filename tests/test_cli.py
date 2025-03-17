@@ -12,6 +12,12 @@ def runner():
     """Fixture that creates a CLI runner for testing commands."""
     return CliRunner()
 
+@pytest.fixture(autouse=True)
+def mock_config_db_path():
+    """Fixture that mocks the config.get_db_path method to return a test path."""
+    with patch('plexomatic.cli.config.get_db_path', return_value=Path("/tmp/test-plexomatic.db")):
+        yield
+
 @pytest.fixture
 def media_dir(tmp_path):
     """Fixture that creates a temporary directory with media files."""

@@ -96,6 +96,23 @@ config.set("allowed_extensions", [".mp4", ".mkv"])
 log_level = config.get("log_level")
 ```
 
+## CLI Configuration Tool
+
+Plex-o-matic provides an interactive CLI command to set up your configuration easily:
+
+```bash
+plexomatic configure
+```
+
+This interactive tool will guide you through setting up your API keys and other configuration settings. It will:
+
+1. Prompt you for TVDB and TMDB API keys
+2. Ask if you want to configure optional services like AniDB
+3. Set up local LLM settings if desired
+4. Save the configuration to the default location (`~/.plexomatic/config.json`)
+
+This is the recommended way to set up your initial configuration and update API keys rather than editing the JSON file directly.
+
 ## Helper Methods
 
 The `ConfigManager` class provides helper methods for common configuration values:

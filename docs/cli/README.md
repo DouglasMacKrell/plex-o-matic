@@ -138,6 +138,35 @@ Rolling back operation 42
 Successfully rolled back operation 42
 ```
 
+### Configure Command
+
+Configure API keys and application settings interactively.
+
+```bash
+plexomatic configure [OPTIONS]
+```
+
+**Options:**
+- `--help`: Show help message and exit.
+
+**Example:**
+```bash
+plexomatic configure
+```
+
+**Output:**
+```
+Configuring Plex-o-matic
+------------------------
+Enter TVDB API key []: your_tvdb_api_key
+Enter TMDB API key []: your_tmdb_api_key
+Configure AniDB? (y/n) [n]: y
+Enter AniDB username []: your_anidb_username
+Enter AniDB password []: your_anidb_password
+Configure Local LLM settings? (y/n) [n]: n
+Configuration saved successfully!
+```
+
 ## Workflow Examples
 
 ### Basic Media Scan and Organization
