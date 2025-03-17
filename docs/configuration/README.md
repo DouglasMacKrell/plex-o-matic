@@ -13,7 +13,33 @@ The default configuration includes:
     "allowed_extensions": [".mp4", ".mkv", ".avi", ".mov", ".m4v"],
     "ignore_patterns": ["sample", "trailer", "extra"],
     "recursive_scan": true,
-    "backup_enabled": true
+    "backup_enabled": true,
+    "api": {
+        "tvdb": {
+            "api_key": "",
+            "cache_size": 100,
+            "auto_retry": true
+        },
+        "tmdb": {
+            "api_key": "",
+            "cache_size": 100
+        },
+        "anidb": {
+            "username": "",
+            "password": "",
+            "client_name": "plexomatic",
+            "client_version": 1,
+            "rate_limit_wait": 2.5
+        },
+        "tvmaze": {
+            "cache_size": 100
+        },
+        "llm": {
+            "model_name": "deepseek-r1:8b",
+            "base_url": "http://localhost:11434",
+            "temperature": 0.7
+        }
+    }
 }
 ```
 
@@ -39,6 +65,19 @@ export PLEXOMATIC_CONFIG_PATH="/path/to/your/config.json"
 | `ignore_patterns` | List | Filename patterns to ignore when scanning |
 | `recursive_scan` | Boolean | Whether to scan directories recursively by default |
 | `backup_enabled` | Boolean | Whether to enable the backup system |
+| `api.tvdb.api_key` | String | Your API key for TVDB |
+| `api.tvdb.cache_size` | Integer | Number of cached items for TVDB client |
+| `api.tmdb.api_key` | String | Your API key for TMDB |
+| `api.tmdb.cache_size` | Integer | Number of cached items for TMDB client |
+| `api.anidb.username` | String | Your AniDB username |
+| `api.anidb.password` | String | Your AniDB password |
+| `api.anidb.client_name` | String | Registered client name for AniDB |
+| `api.anidb.client_version` | Integer | Client version for AniDB |
+| `api.anidb.rate_limit_wait` | Float | Time to wait between requests in seconds |
+| `api.tvmaze.cache_size` | Integer | Number of cached items for TVMaze client |
+| `api.llm.model_name` | String | Name of the Ollama model to use |
+| `api.llm.base_url` | String | Base URL for the Ollama API |
+| `api.llm.temperature` | Float | Temperature parameter for text generation |
 
 ## Modifying Configuration
 

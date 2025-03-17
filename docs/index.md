@@ -24,6 +24,8 @@ Welcome to the Plex-o-matic documentation! This documentation provides comprehen
 - [API Clients](api/README.md)
   - TVDB API Client
   - TMDB API Client
+  - AniDB API Client
+  - TVMaze API Client
   - Local LLM Client (Ollama with Deepseek R1)
   - Usage Examples and Configuration
 

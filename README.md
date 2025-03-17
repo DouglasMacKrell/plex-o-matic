@@ -23,6 +23,7 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - TVDB API client for TV show metadata
   - TMDB API client for movie and TV metadata
   - AniDB API client for anime metadata
+  - TVMaze API client for comprehensive TV show data
   - Local LLM integration with Ollama and Deepseek
   - Metadata-enhanced filename analysis
   - AI-powered filename suggestions
@@ -177,6 +178,8 @@ mypy .
   - `api/`: API integrations
     - `tvdb_client.py`: TVDB API client
     - `tmdb_client.py`: TMDB API client
+    - `anidb_client.py`: AniDB API client
+    - `tvmaze_client.py`: TVMaze API client
     - `llm_client.py`: Local LLM client
   - `core/`: Core functionality
     - `file_scanner.py`: Media file detection
