@@ -24,8 +24,18 @@ Welcome to the Plex-o-matic documentation! This documentation provides comprehen
 - [API Clients](api/README.md)
   - TVDB API Client
   - TMDB API Client
+  - AniDB API Client
+  - TVMaze API Client
   - Local LLM Client (Ollama with Deepseek R1)
   - Usage Examples and Configuration
+
+### Metadata Management
+- [Metadata System](metadata/README.md)
+  - MetadataManager
+  - Multi-Source Aggregation
+  - Intelligent Filename Matching
+  - Confidence-Based Result Ranking
+  - Caching Mechanisms
 
 ## Quick Start
 
@@ -34,16 +44,14 @@ Welcome to the Plex-o-matic documentation! This documentation provides comprehen
    pip install plex-o-matic
    ```
 
-2. Create a configuration file:
+2. Configure your API keys and settings:
    ```bash
-   plexomatic init
+   plexomatic configure
    ```
 
-3. Edit the configuration file at `~/.plexomatic/config.yaml`
-
-4. Run a scan:
+3. Run a scan:
    ```bash
-   plexomatic scan
+   plexomatic scan --path /path/to/media
    ```
 
 ## Contributing
@@ -59,4 +67,4 @@ If you encounter any issues or have questions:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details. 
+This project is licensed under the GPL-2.0 License - see the [LICENSE](../LICENSE) file for details. 

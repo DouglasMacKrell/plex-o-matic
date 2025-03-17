@@ -10,10 +10,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - API Integration Package
   - TVDB API client with authentication, caching, and rate limiting
+    - Supports search for TV series by name
+    - Retrieves series details and episode information
+    - Token management and automatic refresh
+    - Request caching for better performance
   - TMDB API client with configuration, search, and details functionality
+  - AniDB API client with UDP/HTTP combined access for anime metadata
+    - Combined UDP and HTTP API access
+    - Anime search and metadata retrieval
+    - Episode information with titles
+    - Rate limiting and session management
+  - TVMaze API client with comprehensive show and person data
+    - Show search by name and retrieval by ID
+    - Episode information and specific episode lookup
+    - Cast information for shows
+    - People search functionality
+    - Efficient caching and rate limiting
   - Local LLM client using Ollama with Deepseek R1 8b
   - Media metadata analysis and filename suggestions
   - Comprehensive test suite for all API clients
+- Metadata Management System
+  - MetadataManager for aggregating results from multiple sources
+  - Unified search interface across all metadata providers
+  - Intelligent filename matching and metadata extraction
+  - Confidence-based result ranking
+  - Efficient caching mechanism
+  - Customizable match threshold
+  - Text similarity scoring for better matching
+  - Comprehensive test coverage
+- Interactive CLI Configuration
+  - New `configure` command for interactive API key setup
+  - Securely stores API keys and other settings
+  - Guides users through setup process for all API services
+  - Support for optional services configuration
+  - Test coverage for all configuration scenarios
 
 ### Changed
 - None

@@ -17,8 +17,13 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 ### 2. Metadata Integration
 - TVDB API integration for TV show verification
 - TMDB API integration for movie verification
+- AniDB API integration for anime verification
+- TVMaze API integration for additional TV data
 - Local LLM integration for complex name parsing
+- Metadata Manager system for aggregating multiple sources
+- Unified search interface across all providers
 - Confidence scoring for matches
+- Customizable match threshold
 
 ### 3. Safety Systems
 - Database-backed rename history
@@ -107,7 +112,8 @@ CREATE TABLE file_renames (
 
 ## User Interface
 - Command Line Interface (CLI)
-- Configuration via YAML
+- Configuration via JSON
+- Interactive configure command for API setup
 - Interactive preview system
 - Batch operation support
 

@@ -22,9 +22,19 @@ An intelligent media file organization tool for Plex that helps automate the pro
 - **API Integration**:
   - TVDB API client for TV show metadata
   - TMDB API client for movie and TV metadata
+  - AniDB API client for anime metadata
+  - TVMaze API client for comprehensive TV show data
   - Local LLM integration with Ollama and Deepseek
   - Metadata-enhanced filename analysis
   - AI-powered filename suggestions
+
+- **Metadata Management**:
+  - Unified interface for all metadata sources
+  - Intelligent filename matching to metadata
+  - Confidence-based result ranking
+  - Multi-source aggregation
+  - Efficient metadata caching
+  - Flexible ID format with source prefixes
 
 - **Robust Backup System**:
   - SQLite database integration for operation tracking
@@ -111,6 +121,9 @@ export PLEXOMATIC_CONFIG_PATH="/path/to/your/config.json"
 Plex-o-matic provides a simple workflow for organizing your media files:
 
 ```bash
+# Configure your API keys and settings
+plexomatic configure
+
 # Scan a directory for media files
 plexomatic scan --path /path/to/media
 
@@ -176,6 +189,8 @@ mypy .
   - `api/`: API integrations
     - `tvdb_client.py`: TVDB API client
     - `tmdb_client.py`: TMDB API client
+    - `anidb_client.py`: AniDB API client
+    - `tvmaze_client.py`: TVMaze API client
     - `llm_client.py`: Local LLM client
   - `core/`: Core functionality
     - `file_scanner.py`: Media file detection
@@ -201,6 +216,13 @@ Comprehensive documentation is available in the [docs](docs/) directory:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Acknowledgements
+
+### TheTVDB
+This product uses the TVDB API but is not endorsed or certified by TheTVDB.com or its affiliates.
+
+![TheTVDB](https://thetvdb.com/images/attribution/logo2.png)
 
 ## License
 
