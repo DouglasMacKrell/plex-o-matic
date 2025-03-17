@@ -170,12 +170,14 @@ def preview_command(
     previews = []
     for media_file in media_files:
         original_path = media_file.path
-        original_path, new_path = get_preview_rename(original_path)
+        result = get_preview_rename(original_path)
         
-        if new_path:
-            previews.append((original_path, new_path))
+        if result['new_name'] != result['original_name']:
+            original = original_path
+            new = Path(result['new_path'])
+            previews.append((original, new))
             if verbose or len(previews) <= 10:  # Show at most 10 changes by default
-                click.echo(f"{original_path.name} → {new_path.name}")
+                click.echo(f"{result['original_name']} → {result['new_name']}")
     
     if not previews:
         click.echo("No changes needed. All files are already properly named.")

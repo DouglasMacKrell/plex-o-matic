@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Guides users through setup process for all API services
   - Support for optional services configuration
   - Test coverage for all configuration scenarios
+- Enhanced episode handling:
+  - Multi-episode detection with support for various formats (S01E01E02, S01E01-E02, etc.)
+  - Episode range parsing with limits for very large ranges
+  - Special episode detection (OVAs, specials, movies)
+  - Season pack organization functionality
+  - Support for concatenated episodes (non-sequential episodes in one file)
+- Updated filename generation to support multi-episode files
+- Preview rename functionality now supports multi-episode files
 
 ### Changed
 - None

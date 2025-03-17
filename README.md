@@ -18,6 +18,9 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Plex-compatible naming conventions
   - Pattern-based filename parsing
   - Standardized output format
+  - Multi-episode file detection and handling
+  - Special episode detection (OVAs, specials, movies)
+  - Season pack organization
 
 - **API Integration**:
   - TVDB API client for TV show metadata
@@ -209,6 +212,7 @@ Comprehensive documentation is available in the [docs](docs/) directory:
 - [CLI Documentation](docs/cli/README.md)
 - [Configuration System](docs/configuration/README.md)
 - [File Utilities](docs/file-utils/README.md)
+- [Episode Handling](docs/episode_handling.md)
 - [Backend Architecture](docs/backend/README.md)
 - [Database Schema](docs/database/README.md)
 - [API Integration](docs/api/README.md)

@@ -70,7 +70,12 @@ def test_preview_command_with_path(runner, media_dir):
 def test_preview_command_no_changes(mock_preview, runner, media_dir):
     """Test preview command when no changes are needed."""
     # Mock get_preview_rename to return no changes needed
-    mock_preview.return_value = (Path("dummy"), None)
+    mock_preview.return_value = {
+        'original_name': 'file.mp4',
+        'new_name': 'file.mp4',  # Same name means no change needed
+        'original_path': '/path/to/file.mp4',
+        'new_path': '/path/to/file.mp4'
+    }
     
     result = runner.invoke(cli, ['preview', '--path', str(media_dir)])
     assert result.exit_code == 0
