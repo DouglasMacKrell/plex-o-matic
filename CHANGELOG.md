@@ -38,6 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Customizable match threshold
   - Text similarity scoring for better matching
   - Comprehensive test coverage
+  - Enhanced metadata-episode integration
+    - Special episode metadata retrieval and formatting
+    - Multi-episode metadata handling for sequential and non-sequential episodes
+    - Improved match detection for episode types
+    - Support for various episode naming conventions
 - Interactive CLI Configuration
   - New `configure` command for interactive API key setup
   - Securely stores API keys and other settings
@@ -50,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Special episode detection (OVAs, specials, movies)
   - Season pack organization functionality
   - Support for concatenated episodes (non-sequential episodes in one file)
+  - Intelligent filename generation from metadata for all episode types
 - Updated filename generation to support multi-episode files
 - Preview rename functionality now supports multi-episode files
 

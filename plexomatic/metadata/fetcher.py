@@ -205,6 +205,82 @@ class TVDBMetadataFetcher(MetadataFetcher):
             logger.error(f"Error fetching TVDB metadata for ID {id}: {e}")
             raise
     
+    def get_special_episodes(self, series_id: int) -> List[Dict[str, Any]]:
+        """Get special episodes (season 0) for a series.
+        
+        Args:
+            series_id: TVDB series ID
+            
+        Returns:
+            List of special episodes
+        """
+        try:
+            # Get all episodes
+            all_episodes = self.client.get_episodes_by_series_id(series_id=series_id)
+            
+            # Filter for special episodes (season 0)
+            special_episodes = [
+                episode for episode in all_episodes
+                if episode.get("airedSeason") == 0
+            ]
+            
+            # Format the special episodes
+            formatted_specials = []
+            for episode in special_episodes:
+                formatted_specials.append({
+                    "id": episode.get("id"),
+                    "title": episode.get("episodeName"),
+                    "overview": episode.get("overview"),
+                    "special_number": episode.get("airedEpisodeNumber"),
+                    "air_date": episode.get("firstAired")
+                })
+            
+            return formatted_specials
+        
+        except Exception as e:
+            logger.error(f"Error fetching special episodes for series {series_id}: {e}")
+            return []
+    
+    def get_episodes_by_numbers(self, series_id: int, episode_numbers: List[int], season: int = 1) -> List[Dict[str, Any]]:
+        """Get specific episodes by their numbers.
+        
+        Args:
+            series_id: TVDB series ID
+            episode_numbers: List of episode numbers to fetch
+            season: Season number (default: 1)
+            
+        Returns:
+            List of episodes matching the specified numbers
+        """
+        try:
+            # Get all episodes
+            all_episodes = self.client.get_episodes_by_series_id(series_id=series_id)
+            
+            # Filter for the requested episodes
+            matching_episodes = [
+                episode for episode in all_episodes
+                if episode.get("airedSeason") == season and 
+                   episode.get("airedEpisodeNumber") in episode_numbers
+            ]
+            
+            # Format the episodes
+            formatted_episodes = []
+            for episode in matching_episodes:
+                formatted_episodes.append({
+                    "id": episode.get("id"),
+                    "title": episode.get("episodeName"),
+                    "overview": episode.get("overview"),
+                    "season": episode.get("airedSeason"),
+                    "episode": episode.get("airedEpisodeNumber"),
+                    "air_date": episode.get("firstAired")
+                })
+            
+            return formatted_episodes
+        
+        except Exception as e:
+            logger.error(f"Error fetching episodes {episode_numbers} for series {series_id}: {e}")
+            return []
+    
     def search(self, query: str, media_type: MediaType) -> List[MetadataResult]:
         """Search for TV shows by name.
         

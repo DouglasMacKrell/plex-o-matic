@@ -188,7 +188,7 @@ class MetadataManager:
         """Fetch metadata for a specific ID.
         
         Args:
-            metadata_id: ID in the format "source-id" (e.g. "tvdb-12345")
+            metadata_id: ID in the format "source:id" or "source-id" (e.g. "tvdb:12345" or "tvdb-12345")
             
         Returns:
             Metadata dictionary
@@ -196,10 +196,13 @@ class MetadataManager:
         Raises:
             ValueError: If the source is not recognized
         """
-        if '-' not in metadata_id:
-            raise ValueError(f"Invalid metadata ID format: {metadata_id}")
-        
-        source, source_id = metadata_id.split('-', 1)
+        # Handle both "source:id" and "source-id" formats
+        if ':' in metadata_id:
+            source, source_id = metadata_id.split(':', 1)
+        elif '-' in metadata_id:
+            source, source_id = metadata_id.split('-', 1)
+        else:
+            raise ValueError(f"Invalid metadata ID format: {metadata_id}, expected source:id or source-id")
         
         if source not in self.fetchers:
             raise ValueError(f"Unknown metadata source: {source}")
@@ -216,6 +219,90 @@ class MetadataManager:
         else:
             raise ValueError(f"No fetch method available for source: {source}")
     
+    def fetch_episode_metadata(self, metadata_id: str, episode_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Fetch metadata for specific episodes.
+        
+        Args:
+            metadata_id: ID in the format "source:id" or "source-id" (e.g. "tvdb:12345" or "tvdb-12345")
+            episode_info: Dictionary containing episode information:
+                - For special episodes: {'special_type': str, 'special_number': Optional[int]}
+                - For multi-episodes: {'episodes': List[int], 'season': Optional[int]}
+            
+        Returns:
+            Metadata dictionary with episode-specific information
+            
+        Raises:
+            ValueError: If the source is not recognized or doesn't support episode fetching
+        """
+        # Handle both "source:id" and "source-id" formats
+        if ':' in metadata_id:
+            source, source_id = metadata_id.split(':', 1)
+        elif '-' in metadata_id:
+            source, source_id = metadata_id.split('-', 1)
+        else:
+            raise ValueError(f"Invalid metadata ID format: {metadata_id}, expected source:id or source-id")
+        
+        if source not in self.fetchers:
+            raise ValueError(f"Unknown metadata source: {source}")
+        
+        fetcher = self.fetchers[source]
+        
+        # Only TVDB and TVMaze support episode fetching
+        if source not in ['tvdb', 'tvmaze']:
+            raise ValueError(f"Source {source} does not support episode fetching")
+        
+        # Get the base metadata first
+        base_metadata = self.fetch_metadata(metadata_id)
+        
+        # Handle special episodes
+        if 'special_type' in episode_info:
+            if source == 'tvdb':
+                # Get special episodes from TVDB
+                special_episodes = fetcher.get_special_episodes(int(source_id))
+                
+                # Find the matching special episode
+                special_number = episode_info.get('special_number')
+                matching_episode = None
+                
+                if special_number is not None:
+                    # Find by number
+                    for episode in special_episodes:
+                        if episode.get('special_number') == special_number:
+                            matching_episode = episode
+                            break
+                elif special_episodes:
+                    # Just take the first one if no number specified
+                    matching_episode = special_episodes[0]
+                
+                if matching_episode:
+                    # Add the special episode info to the metadata
+                    base_metadata['special_episode'] = matching_episode
+            
+            # Add the special type to the metadata
+            base_metadata['special_type'] = episode_info['special_type']
+            
+        # Handle multi-episodes
+        elif 'episodes' in episode_info:
+            if source == 'tvdb':
+                # Get the episodes by their numbers
+                season = episode_info.get('season', 1)
+                episode_numbers = episode_info['episodes']
+                
+                episodes = fetcher.get_episodes_by_numbers(
+                    int(source_id), 
+                    episode_numbers, 
+                    season
+                )
+                
+                if episodes:
+                    # Add the episodes to the metadata
+                    base_metadata['multi_episodes'] = episodes
+            
+            # Add the episode numbers to the metadata
+            base_metadata['episode_numbers'] = episode_info['episodes']
+        
+        return base_metadata
+    
     def match(self, filename: str, media_type: Optional[MediaType] = None) -> MetadataMatchResult:
         """
         Match a filename to the best metadata result.
@@ -227,6 +314,47 @@ class MetadataManager:
         Returns:
             MetadataMatchResult object
         """
+        # Check for special episodes if it's a TV show
+        if media_type == MediaType.TV_SHOW or media_type is None:
+            from plexomatic.utils.episode_handler import detect_special_episodes, detect_multi_episodes
+            
+            # Check for special episodes
+            special_info = detect_special_episodes(filename)
+            if special_info:
+                # Extract title for the special episode
+                title, _ = self._extract_title_and_year(filename)
+                if title:
+                    # Create a match result with special episode info
+                    return MetadataMatchResult(
+                        matched=True,
+                        title=title,
+                        media_type=MediaType.TV_SHOW,
+                        confidence=0.9,  # High confidence for special episode detection
+                        metadata={
+                            "title": title,
+                            "special_type": special_info['type'],
+                            "special_number": special_info['number']
+                        }
+                    )
+            
+            # Check for multi-episodes
+            episodes = detect_multi_episodes(filename)
+            if len(episodes) > 1:
+                # Extract title for the multi-episode
+                title, _ = self._extract_title_and_year(filename)
+                if title:
+                    # Create a match result with multi-episode info
+                    return MetadataMatchResult(
+                        matched=True,
+                        title=title,
+                        media_type=MediaType.TV_SHOW,
+                        confidence=0.9,  # High confidence for multi-episode detection
+                        metadata={
+                            "title": title,
+                            "episodes": episodes
+                        }
+                    )
+        
         # Extract title and year from filename
         title, year = self._extract_title_and_year(filename)
         

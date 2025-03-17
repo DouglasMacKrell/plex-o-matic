@@ -1,8 +1,8 @@
 """Utilities for handling TV show episodes, including multi-episode detection and special episode handling."""
 import re
 from pathlib import Path
-from typing import List, Dict, Union, Optional
-from plexomatic.utils.name_utils import sanitize_filename, extract_show_info
+from typing import List, Dict, Union, Optional, Any
+from plexomatic.utils.name_utils import sanitize_filename, extract_show_info, generate_tv_filename
 
 # Regular expressions for detecting various episode formats
 MULTI_EPISODE_PATTERNS = [
@@ -336,3 +336,91 @@ def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
             result["Unknown"].append(file)
     
     return result 
+
+def generate_filename_from_metadata(
+    original_filename: str,
+    metadata: Dict[str, Any]
+) -> str:
+    """
+    Generate a standardized filename based on metadata and episode information.
+    
+    This function handles different types of episodes:
+    - Regular episodes
+    - Special episodes (season 0)
+    - Multi-episodes
+    
+    Args:
+        original_filename: The original filename
+        metadata: The metadata dictionary containing show information
+        
+    Returns:
+        A standardized filename
+    """
+    # Get the file extension
+    extension = Path(original_filename).suffix
+    
+    # Extract basic show information
+    show_name = metadata.get("title", "Unknown")
+    
+    # Handle special episodes
+    if "special_type" in metadata:
+        # Get the special number or default to 1
+        special_number = metadata.get("special_number", 1)
+        
+        # Get the special title if available
+        special_title = None
+        if "special_episode" in metadata and "title" in metadata["special_episode"]:
+            special_title = metadata["special_episode"]["title"]
+        else:
+            # Generate a title based on the special type
+            special_type = metadata["special_type"].capitalize()
+            special_title = f"{special_type} {special_number}" if special_number else special_type
+        
+        # Generate a special episode filename (use season 0 for specials)
+        return generate_tv_filename(
+            show_name=show_name,
+            season=0,
+            episode=special_number,
+            title=special_title,
+            extension=extension
+        )
+    
+    # Handle multi-episodes
+    elif "episode_numbers" in metadata:
+        episodes = metadata["episode_numbers"]
+        season = metadata.get("season", 1)
+        
+        # Get the episode title
+        title = None
+        if "multi_episodes" in metadata and metadata["multi_episodes"]:
+            # Use the first episode's title or join multiple titles
+            if len(metadata["multi_episodes"]) == 1:
+                title = metadata["multi_episodes"][0].get("title")
+            else:
+                # Join the episode titles if available
+                titles = [ep.get("title") for ep in metadata["multi_episodes"] if ep.get("title")]
+                if titles:
+                    title = " & ".join(titles)
+        
+        # Generate a multi-episode filename
+        return format_multi_episode_filename(
+            show_name=show_name,
+            season=season,
+            episodes=episodes,
+            title=title,
+            extension=extension
+        )
+    
+    # Handle regular episodes
+    else:
+        season = metadata.get("season", 1)
+        episode = metadata.get("episode", 1)
+        title = metadata.get("episode_title")
+        
+        return generate_tv_filename(
+            show_name=show_name,
+            season=season,
+            episode=episode,
+            title=title,
+            extension=extension
+        ) 
