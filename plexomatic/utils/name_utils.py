@@ -71,27 +71,27 @@ def extract_show_info(filename: str) -> Dict[str, Optional[str]]:
     }
 
 def generate_tv_filename(show_name: str, season: int, episode: int, 
-                         title: Optional[str] = None, extension: str = '.mp4') -> str:
+                         title: Optional[str] = None, extension: str = '.mp4', 
+                         concatenated: bool = False) -> str:
     """Generate a standardized TV show filename.
     
     Args:
         show_name: Name of the show
         season: Season number
-        episode: Episode number
+        episode: Episode number or list of episode numbers
         title: Episode title, if available
         extension: File extension (including dot)
+        concatenated: If True, format as concatenated episodes using +, otherwise as a range
         
     Returns:
         str: Standardized filename
     """
-    show_part = sanitize_filename(show_name.replace(' ', '.'))
-    episode_part = f'S{season:02d}E{episode:02d}'
+    from plexomatic.utils.episode_handler import format_multi_episode_filename
     
-    if title:
-        title_part = sanitize_filename(title.replace(' ', '.'))
-        return f"{show_part}.{episode_part}.{title_part}{extension}"
-    else:
-        return f"{show_part}.{episode_part}{extension}"
+    # Convert single episode to list format for consistency with multi-episode
+    episodes = [episode] if isinstance(episode, int) else episode
+    
+    return format_multi_episode_filename(show_name, season, episodes, title, extension, concatenated)
 
 def generate_movie_filename(movie_name: str, year: int, 
                            extension: str = '.mp4') -> str:
@@ -108,51 +108,65 @@ def generate_movie_filename(movie_name: str, year: int,
     movie_part = sanitize_filename(movie_name.replace(' ', '.'))
     return f"{movie_part}.{year}{extension}"
 
-def get_preview_rename(original_path: Path) -> Tuple[Path, Optional[Path]]:
-    """Generate a preview of a proposed rename.
+def get_preview_rename(path: Path, name: Optional[str] = None, 
+                       season: Optional[int] = None, episode: Optional[int] = None,
+                       title: Optional[str] = None, concatenated: bool = False) -> Dict[str, str]:
+    """Generate a preview of a proposed rename based on the original file path.
     
     Args:
-        original_path: Original path of the file
+        path: Original file path
+        name: New name for the show/movie (if None, uses existing)
+        season: New season number (if None, uses existing)
+        episode: New episode number or list of episode numbers (if None, uses existing)
+        title: New episode title (if None, uses existing)
+        concatenated: Whether to format multi-episodes as concatenated
         
     Returns:
-        tuple: (original_path, new_path) or (original_path, None) if no rename needed
+        dict: Contains 'original_name', 'new_name', 'original_path', 'new_path'
     """
-    # Extract file info
-    stem = original_path.stem  # Just the filename without extension
-    info = extract_show_info(stem)
+    from plexomatic.utils.episode_handler import detect_multi_episodes
     
-    # Get the original extension
-    extension = original_path.suffix
+    original_name = path.name
+    info = extract_show_info(original_name)
+    extension = path.suffix
     
-    # Determine if it's a TV show or movie
-    if info.get('show_name') and info.get('season') and info.get('episode'):
-        # It's a TV show
-        new_filename = generate_tv_filename(
-            info['show_name'],
-            int(info['season']),
-            int(info['episode']),
-            info.get('title'),
-            extension
-        )
+    # TV Show
+    if 'show_name' in info and info['show_name']:
+        show_name = name if name else info['show_name']
+        show_season = season if season is not None else int(info['season']) if info['season'] else 1
         
-        # Create new path in the same directory
-        new_path = original_path.parent / new_filename
-    elif info.get('movie_name') and info.get('year'):
-        # It's a movie
-        new_filename = generate_movie_filename(
-            info['movie_name'],
-            int(info['year']),
-            extension
-        )
+        # Handle multi-episode files
+        if episode is not None:
+            # If episode is provided, use it directly
+            episodes = [episode] if isinstance(episode, int) else episode
+        else:
+            # Otherwise, try to detect multi-episodes from the filename
+            episodes = detect_multi_episodes(original_name)
+            # If no multi-episodes detected, use the single episode from info
+            if not episodes and info['episode']:
+                episodes = [int(info['episode'])]
+            # If still no episodes found, default to episode 1
+            if not episodes:
+                episodes = [1]
+                
+        show_title = title if title else info.get('title')
         
-        # Create new path in the same directory
-        new_path = original_path.parent / new_filename
+        new_name = generate_tv_filename(show_name, show_season, episodes, show_title, extension, concatenated)
+    
+    # Movie
+    elif 'movie_name' in info and info['movie_name']:
+        movie_name = name if name else info['movie_name']
+        movie_year = season if season else int(info['year']) if info['year'] else 2020
+        
+        new_name = generate_movie_filename(movie_name, movie_year, extension)
+    
+    # Unrecognized format - no rename
     else:
-        # Can't determine a good rename
-        return (original_path, None)
+        new_name = original_name
     
-    # If the new path is the same as the original, no rename needed
-    if new_path.name == original_path.name:
-        return (original_path, None)
-    
-    return (original_path, new_path) 
+    return {
+        'original_name': original_name,
+        'new_name': new_name,
+        'original_path': str(path),
+        'new_path': str(path.parent / new_name)
+    } 

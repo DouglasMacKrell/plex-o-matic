@@ -95,26 +95,49 @@ def test_get_preview_rename():
     """Test generating preview renames."""
     # TV show that needs renaming
     original = Path("/tmp/The Show S1E2 Episode.mp4")
-    original_path, new_path = get_preview_rename(original)
-    assert original_path == original
-    assert new_path is not None
-    assert new_path.name == "The.Show.S01E02.Episode.mp4"
+    result = get_preview_rename(original)
+    
+    assert result['original_name'] == "The Show S1E2 Episode.mp4"
+    assert "The.Show.S01E02" in result['new_name']
+    assert result['original_path'] == str(original)
+    assert result['new_path'] != result['original_path']
     
     # Movie that needs renaming
-    original = Path("/tmp/The Movie 2020 1080p.mp4")
-    original_path, new_path = get_preview_rename(original)
-    assert original_path == original
-    assert new_path is not None
-    assert new_path.name == "The.Movie.2020.mp4"
+    original = Path("/tmp/Movie Name 2020.mp4")
+    result = get_preview_rename(original)
     
-    # File that doesn't need renaming
-    original = Path("/tmp/The.Show.S01E02.mp4")
-    original_path, new_path = get_preview_rename(original)
-    assert original_path == original
-    assert new_path is None
+    assert result['original_name'] == "Movie Name 2020.mp4"
+    assert "Movie.Name.2020" in result['new_name']
     
-    # Unrecognized file
-    original = Path("/tmp/random_file.mp4")
-    original_path, new_path = get_preview_rename(original)
-    assert original_path == original
-    assert new_path is None 
+    # File that wouldn't be renamed
+    original = Path("/tmp/unknown_file.txt")
+    result = get_preview_rename(original)
+    
+    assert result['original_name'] == "unknown_file.txt"
+    assert result['new_name'] == "unknown_file.txt"
+    assert result['original_path'] == str(original)
+    assert result['new_path'] == str(original.parent / "unknown_file.txt")
+    
+    # Test with custom name and season/episode
+    original = Path("/tmp/Wrong.Show.S01E05.mp4")
+    result = get_preview_rename(original, name="Correct Show", season=2, episode=10, title="Better Title")
+    
+    assert "Correct.Show.S02E10.Better.Title.mp4" in result['new_name']
+    
+    # Test with multi-episode
+    original = Path("/tmp/Show.S01E01E02.mp4")
+    result = get_preview_rename(original)
+    
+    assert "S01E01-E02" in result['new_name']
+    
+    # Test with multi-episode and custom episodes
+    original = Path("/tmp/Show.S01E01.mp4")
+    result = get_preview_rename(original, episode=[1, 2, 3], title="Triple Episode")
+    
+    assert "S01E01-E03.Triple.Episode" in result['new_name']
+    
+    # Test with concatenated
+    original = Path("/tmp/Show.S01E01.mp4")
+    result = get_preview_rename(original, episode=[1, 3, 5], concatenated=True)
+    
+    assert "S01E01+E03+E05" in result['new_name'] 
