@@ -5,6 +5,7 @@ import enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
+import unicodedata
 
 
 class MediaType(enum.Enum):
@@ -46,6 +47,9 @@ class ParsedMediaName:
 
     # Additional metadata that doesn't fit elsewhere
     additional_info: Dict[str, Any] = field(default_factory=dict)
+
+    # New fields for season packs
+    is_season_pack: bool = False
 
     def __post_init__(self) -> None:
         """Validate and initialize any derived fields after initialization."""
@@ -180,6 +184,10 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
     extension = path.suffix
     name_part = path.stem
 
+    # Handle Unicode normalization for international titles
+    # This ensures consistent handling of accented characters
+    name_part = unicodedata.normalize("NFKC", name_part)
+
     # If filename is just an extension, return minimal info
     if not name_part:
         return ParsedMediaName(
@@ -260,6 +268,39 @@ def parse_tv_show(filename: str, media_type: Optional[MediaType] = None) -> Pars
             extension=extension,
             quality=quality,
             confidence=confidence,
+        )
+
+    # Check for season pack format (ShowName.S01.Complete or ShowName.Season.01)
+    season_pack_match = re.search(
+        r"(?P<show_name>.*?)(?:[. _-]+[sS](?P<season>\d{1,2})(?:[. _-]+(?:Complete|COMPLETE|complete))|[. _-]+[sS]eason[. _-]+(?P<season2>\d{1,2}))",
+        name_part,
+    )
+
+    if season_pack_match:
+        match_dict = season_pack_match.groupdict()
+        title_part = match_dict["show_name"]
+        title = title_part.replace(".", " ").replace("_", " ").replace("-", " ").strip()
+        # Remove multiple spaces
+        title = " ".join(title.split())
+
+        # Get season number
+        season = int(match_dict["season"] or match_dict["season2"] or 1)
+
+        # Season packs don't have specific episodes
+        episodes = []
+
+        confidence = 0.85  # Higher confidence for season packs
+
+        return ParsedMediaName(
+            media_type=media_type,
+            title=title,
+            season=season,
+            episodes=episodes,
+            episode_title=None,
+            extension=extension,
+            quality=quality,
+            confidence=confidence,
+            is_season_pack=True,  # Mark as season pack
         )
 
     # Check for multi-episode range format

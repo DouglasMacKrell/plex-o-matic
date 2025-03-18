@@ -403,6 +403,30 @@ class TestParseTVShow:
             parsed = parse_tv_show(filename)
             assert parsed.title == expected_title
 
+    def test_season_pack(self) -> None:
+        """Test parsing season packs."""
+        # Test various season pack formats
+        season_packs = [
+            ("Show.Name.S01.Complete.mkv", "Show Name", 1),
+            ("Show.Name.S02.COMPLETE.mkv", "Show Name", 2),
+            ("Show Name - Season 03.mkv", "Show Name", 3),
+            ("Show.Name.Season.04.mkv", "Show Name", 4),
+        ]
+
+        for filename, expected_title, expected_season in season_packs:
+            parsed = parse_tv_show(filename)
+            assert parsed.title == expected_title
+            assert parsed.is_season_pack is True
+            assert parsed.season == expected_season
+            assert parsed.episodes == []
+
+        # Test Unicode handling
+        unicode_filename = "Café.S01.Complete.mkv"
+        parsed = parse_tv_show(unicode_filename)
+        assert parsed.title == "Café"
+        assert parsed.is_season_pack is True
+        assert parsed.season == 1
+
     def test_edge_cases(self) -> None:
         """Test edge cases and potential error conditions."""
         edge_cases = [
