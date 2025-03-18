@@ -4,7 +4,7 @@ import time
 import json
 import requests
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, cast
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class TMDBClient:
         self.api_key = api_key
         self.cache_size = cache_size
         self.auto_retry = auto_retry
-        self._config = None
+        self._config: Optional[Dict[str, Any]] = None
 
     def _get_params(self, additional_params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Get base parameters for API requests including API key.
@@ -80,7 +80,8 @@ class TMDBClient:
             response = requests.get(url, params=full_params)
 
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                return cast(Dict[str, Any], data)
             elif response.status_code == 429:
                 retry_after = int(response.headers.get("Retry-After", 60))
                 logger.warning(f"TMDB rate limit exceeded, retry after {retry_after} seconds")
@@ -126,7 +127,7 @@ class TMDBClient:
         """
         if self._config is None:
             self._config = self._get(CONFIGURATION_URL)
-        return self._config
+        return self._config if self._config is not None else {}
 
     def search_movie(self, query: str, year: Optional[int] = None) -> List[Dict[str, Any]]:
         """Search for movies by title.
@@ -138,21 +139,24 @@ class TMDBClient:
         Returns:
             A list of matching movies, or an empty list if none found.
         """
-        params = {"query": query}
-        if year:
-            params["year"] = year
+        params: Dict[str, Any] = {"query": query}
+        if year is not None:
+            params["year"] = str(year)
 
         cache_key = f"{SEARCH_MOVIE_URL}::{json.dumps(params, sort_keys=True)}"
 
         try:
             response = self._get_cached_key(cache_key)
-            return response.get("results", [])
+            results = response.get("results", [])
+            return cast(List[Dict[str, Any]], results)
         except TMDBRateLimitError:
             if self.auto_retry:
                 # Clear the cache for this query
                 self._get_cached_key.cache_clear()
                 # Retry directly with non-cached method
-                return self._get(SEARCH_MOVIE_URL, params).get("results", [])
+                response = self._get(SEARCH_MOVIE_URL, params)
+                results = response.get("results", [])
+                return cast(List[Dict[str, Any]], results)
             else:
                 raise
 
@@ -168,21 +172,24 @@ class TMDBClient:
         Returns:
             A list of matching TV shows, or an empty list if none found.
         """
-        params = {"query": query}
-        if first_air_date_year:
-            params["first_air_date_year"] = first_air_date_year
+        params: Dict[str, Any] = {"query": query}
+        if first_air_date_year is not None:
+            params["first_air_date_year"] = str(first_air_date_year)
 
         cache_key = f"{SEARCH_TV_URL}::{json.dumps(params, sort_keys=True)}"
 
         try:
             response = self._get_cached_key(cache_key)
-            return response.get("results", [])
+            results = response.get("results", [])
+            return cast(List[Dict[str, Any]], results)
         except TMDBRateLimitError:
             if self.auto_retry:
                 # Clear the cache for this query
                 self._get_cached_key.cache_clear()
                 # Retry directly with non-cached method
-                return self._get(SEARCH_TV_URL, params).get("results", [])
+                response = self._get(SEARCH_TV_URL, params)
+                results = response.get("results", [])
+                return cast(List[Dict[str, Any]], results)
             else:
                 raise
 
@@ -248,22 +255,23 @@ class TMDBClient:
 
         Args:
             poster_path: The poster path from TMDB (e.g., "/abc123.jpg").
-            size: The desired size (default: "original").
+            size: The size of the image (e.g., "original", "w500").
 
         Returns:
             The full URL to the poster image.
         """
         config = self.get_configuration()
-        base_url = config["images"]["secure_base_url"]
-        available_sizes = config["images"]["poster_sizes"]
+        base_url = config.get("images", {}).get("secure_base_url", "")
 
-        # Use the requested size if available, otherwise use original
-        if size not in available_sizes:
-            size = "original"
-            logger.warning(
-                f"Requested poster size '{size}' not available, using 'original' instead"
-            )
+        if not base_url:
+            logger.warning("No secure base URL found in configuration, using default")
+            base_url = "https://image.tmdb.org/t/p/"
 
+        # If the poster path already includes the base URL, return it as is
+        if poster_path.startswith(("http://", "https://")):
+            return poster_path
+
+        # Otherwise, construct the full URL
         return f"{base_url}{size}{poster_path}"
 
     def clear_cache(self) -> None:
