@@ -29,21 +29,46 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - Customizable match threshold
 
 ### 3. Safety Systems
-- Database-backed rename history
-- Rollback capability for any rename operation
-- Preview system for pre-verification
-- Checksum verification for file integrity
-- Detailed logging of all operations
+- Backup system for all file operations
+- Operation tracking with SQLite database
+- Rollback capability for any operation
+- File checksum verification for integrity
+- Preview mode for seeing changes before applying
+- Confirmation prompts for sensitive operations
+- Support for dry run mode in all commands
+- Comprehensive logging of all operations
 
-### 4. Special Handling
+### 4. Quality Assurance
+- Strict type checking with mypy
+  - Comprehensive type annotations throughout codebase
+  - `--disallow-untyped-defs` enforcement for test files
+  - Gradual typing roadmap for continued improvement
+- Comprehensive test suite
+  - Unit tests for all components
+  - Integration tests for complex interactions
+  - Mock-based testing for external API dependencies
+  - 80%+ code coverage target
+- Code quality tools
+  - Black for code formatting
+  - Ruff for linting and static analysis
+  - Pre-commit hooks for automated checks
+
+### 5. Special Handling
 - Multi-episode concatenation
 - Season pack organization
-- Music album structure
-- Subtitle file matching
-- Extra features and behind-the-scenes content
-- Anthology show support with configurable mode
-- Title-based episode matching with confidence scoring
-- Directory structure inference for incomplete metadata
+- Special episode handling (OVAs, specials)
+- Anthology show support
+- Title-based episode matching for complex scenarios
+- Directory structure inference for better organization
+
+### 6. User Interface
+- Command Line Interface (CLI)
+- Interactive configuration wizard
+- Batch operations for efficiency
+- Progress indicators for long operations
+- Verbose output mode for diagnostics
+- Color coding for better readability
+- Interactive mode for complex operations
 
 ## Configuration Options
 
@@ -52,6 +77,29 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - `title_match_priority`: Weight for title vs episode number matching
 - `infer_from_directory`: Enable series name inference from directory structure
 - `match_threshold`: Confidence threshold for title matching
+
+## Technical Specifications
+
+### 1. Language and Dependencies
+- Python 3.8+
+- SQLite for database storage
+- SQLAlchemy for ORM
+- Requests for API interaction
+- Click for CLI interface
+- Pyyaml for configuration
+
+### 2. API Integration
+- TVDB API for TV show data
+- TMDB API for movie data
+- AniDB UDP/HTTP API for anime data
+- TVMaze API for additional TV data
+- Local LLM integration for complex scenarios
+
+### 3. File System Operations
+- Safe file rename operations
+- Directory creation and management
+- File checksum verification
+- File backup and restore
 
 ## Technical Requirements
 
@@ -123,13 +171,6 @@ CREATE TABLE file_renames (
     status TEXT
 );
 ```
-
-## User Interface
-- Command Line Interface (CLI)
-- Configuration via JSON
-- Interactive configure command for API setup
-- Interactive preview system
-- Batch operation support
 
 ## Error Handling
 - Detailed error messages
