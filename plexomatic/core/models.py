@@ -1,10 +1,11 @@
 """Database models for the backup system."""
 
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
 
+# Create the declarative base
 Base = declarative_base()
 
 
@@ -16,7 +17,8 @@ class MediaType(Enum):
     ANIME = auto()
 
 
-class FileRename(Base):
+# Adding this type to help mypy understand the class hierarchy
+class FileRename(Base):  # type: ignore
     """Model for tracking file rename operations."""
 
     __tablename__ = "file_renames"
@@ -27,10 +29,10 @@ class FileRename(Base):
     operation_type = Column(String(50), nullable=False)
     checksum = Column(String(64), nullable=False)
     status = Column(String(20), nullable=False, default="pending")
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
     rolled_back_at = Column(DateTime, nullable=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """String representation of the model."""
         return f"<FileRename(id={self.id}, original_path='{self.original_path}', status='{self.status}')>"

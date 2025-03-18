@@ -2,8 +2,8 @@
 
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List
-from datetime import datetime, UTC
+from typing import List, cast
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from .models import Base, FileRename
@@ -54,7 +54,7 @@ class BackupSystem:
             )
             session.add(rename)
             session.commit()
-            return rename.id
+            return cast(int, rename.id)
 
     def mark_operation_complete(self, operation_id: int) -> None:
         """Mark an operation as completed.
@@ -65,8 +65,9 @@ class BackupSystem:
         with Session(self.engine) as session:
             operation = session.get(FileRename, operation_id)
             if operation:
-                operation.status = "completed"
-                operation.completed_at = datetime.now(UTC)
+                # Access the operation attributes through setattr to avoid typing issues
+                setattr(operation, "status", "completed")
+                setattr(operation, "completed_at", datetime.now(timezone.utc))
                 session.commit()
 
     def rollback_operation(self, operation_id: int) -> None:
@@ -77,10 +78,13 @@ class BackupSystem:
         """
         with Session(self.engine) as session:
             operation = session.get(FileRename, operation_id)
-            if operation and operation.status == "completed":
-                operation.status = "rolled_back"
-                operation.rolled_back_at = datetime.now(UTC)
-                session.commit()
+            if operation:
+                status = getattr(operation, "status", "")
+                if status == "completed":
+                    # Access the operation attributes through setattr to avoid typing issues
+                    setattr(operation, "status", "rolled_back")
+                    setattr(operation, "rolled_back_at", datetime.now(timezone.utc))
+                    session.commit()
 
     def get_pending_operations(self) -> List[FileRename]:
         """Get all pending operations.
@@ -104,4 +108,6 @@ class BackupSystem:
         """
         with Session(self.engine) as session:
             operation = session.get(FileRename, operation_id)
-            return operation is not None and operation.checksum == checksum
+            if operation is None:
+                return False
+            return cast(str, operation.checksum) == checksum
