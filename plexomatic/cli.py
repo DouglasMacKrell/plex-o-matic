@@ -1,7 +1,7 @@
 import click
 import logging
 import sys
-from typing import Optional
+from typing import Optional, List, Tuple, Any
 from pathlib import Path
 
 from plexomatic import __version__
@@ -29,7 +29,7 @@ verbose_option = click.option("--verbose", "-v", is_flag=True, help="Enable verb
 @click.version_option(version=__version__, message="plex-o-matic, version %(version)s")
 @verbose_option
 @click.pass_context
-def cli(ctx: click.Context, verbose: bool):
+def cli(ctx: click.Context, verbose: bool) -> None:
     """Main CLI entry point for Plex-o-matic."""
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
@@ -65,7 +65,9 @@ def cli(ctx: click.Context, verbose: bool):
 )
 @verbose_option
 @click.pass_context
-def scan_command(ctx: click.Context, path: Path, recursive: bool, extensions: str, verbose: bool):
+def scan_command(
+    ctx: click.Context, path: Path, recursive: bool, extensions: str, verbose: bool
+) -> List[Any]:
     """Scan a directory for media files."""
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -80,7 +82,7 @@ def scan_command(ctx: click.Context, path: Path, recursive: bool, extensions: st
 
     # Initialize file scanner
     scanner = FileScanner(
-        base_path=path,
+        base_path=str(path),  # Convert Path to str
         allowed_extensions=allowed_extensions,
         ignore_patterns=config.get_ignore_patterns(),
         recursive=recursive,
@@ -119,7 +121,7 @@ def scan_command(ctx: click.Context, path: Path, recursive: bool, extensions: st
 @click.pass_context
 def preview_command(
     ctx: click.Context, path: Optional[Path], recursive: bool, extensions: str, verbose: bool
-):
+) -> List[Tuple[Path, Path]]:
     """Preview changes that would be made to media files."""
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -143,7 +145,7 @@ def preview_command(
         return []
 
     # Generate previews for each file
-    previews = []
+    previews: List[Tuple[Path, Path]] = []
     for media_file in media_files:
         original_path = media_file.path
         result = get_preview_rename(original_path)
@@ -179,7 +181,7 @@ def preview_command(
 @click.confirmation_option(prompt="Are you sure you want to apply changes to your media files?")
 @verbose_option
 @click.pass_context
-def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbose: bool):
+def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbose: bool) -> bool:
     """Apply changes to media files."""
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -239,7 +241,7 @@ def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbo
 @click.confirmation_option(prompt="Are you sure you want to rollback the last operation?")
 @verbose_option
 @click.pass_context
-def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: bool):
+def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: bool) -> bool:
     """Rollback the last operation."""
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -285,17 +287,19 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
 @cli.command(name="configure", help="Configure API keys and application settings")
 @verbose_option
 @click.pass_context
-def configure_command(ctx: click.Context, verbose: bool):
+def configure_command(ctx: click.Context, verbose: bool) -> None:
     """Configure API keys and application settings.
 
     This command provides an interactive interface to set up API keys
     for TVDB, TMDB, AniDB, and configure the local LLM.
     """
-    # Use existing config as a base
     if verbose:
-        click.echo("Loading existing configuration...")
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Verbose mode enabled")
+        # Also output to console for test capture
+        click.echo("Verbose mode enabled")
 
-    # Make sure we're working with the most current config
+    # Use existing config as a base
     config_data = config.config
 
     # Initialize API section if it doesn't exist

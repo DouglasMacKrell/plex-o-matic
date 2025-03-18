@@ -19,6 +19,7 @@ These files already have proper type annotations and pass mypy checks:
 - `plexomatic/api/anidb_client.py`
 - `plexomatic/metadata/fetcher.py`
 - `plexomatic/metadata/manager.py`
+- `plexomatic/cli.py`
 - `tests/test_name_parser.py`
 - `tests/test_name_parser_comprehensive.py`
 - `tests/test_file_scanner.py`
@@ -27,11 +28,10 @@ These files already have proper type annotations and pass mypy checks:
 
 The following files should be typed next, in priority order:
 
-1. **CLI Interface**
-   - `plexomatic/cli.py`
-
-2. **Test Files**
-   - Prioritize test files for components that have been typed
+1. **Test Files**
+   - `tests/test_backup_system.py`
+   - `tests/test_config_manager.py`
+   - `tests/test_cli.py`
 
 ## Common Issues
 
@@ -44,6 +44,7 @@ The following files should be typed next, in priority order:
 7. Type narrowing for list and dictionary access requires careful handling
 8. Incompatible type checking paths can lead to "unreachable code" errors
 9. Union types need careful type checking with isinstance() before attribute access
+10. Path vs str type mismatches, especially in third-party library interfaces
 
 ## Migration Strategy
 
