@@ -13,6 +13,7 @@ dependencies = [
     "pyyaml>=6.0.1",         # YAML configuration
     "sqlalchemy>=2.0.0",     # Database ORM
     "python-dotenv>=1.0.0",  # Environment variable management
+    "typing_extensions>=4.0.0", # Backported typing features for Python 3.8
 ]
 requires-python = ">=3.8"
 readme = "README.md"

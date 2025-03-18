@@ -2,7 +2,13 @@
 
 from pathlib import Path
 from dataclasses import dataclass
-from typing import List, cast
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import List, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import List, cast
 from datetime import datetime, timezone
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -94,6 +100,19 @@ class BackupSystem:
         """
         with Session(self.engine) as session:
             stmt = select(FileRename).where(FileRename.status == "pending")
+            return list(session.scalars(stmt))
+
+    def get_backup_items_by_operation(self, operation_id: int) -> List[FileRename]:
+        """Get all backup items related to a specific operation.
+
+        Args:
+            operation_id: ID of the operation to get items for
+
+        Returns:
+            List[FileRename]: List of file rename operations
+        """
+        with Session(self.engine) as session:
+            stmt = select(FileRename).where(FileRename.id == operation_id)
             return list(session.scalars(stmt))
 
     def verify_operation_checksum(self, operation_id: int, checksum: str) -> bool:

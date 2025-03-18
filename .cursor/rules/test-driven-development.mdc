@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+For each new feature, you will adhere to a test driven development workflow. 
+
+- You can @ files here
+- You can use markdown but dont have to

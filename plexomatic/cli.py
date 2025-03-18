@@ -1,7 +1,13 @@
 import click
 import logging
 import sys
-from typing import Optional, List, Tuple, Any
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Optional, List, Tuple, Any
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Optional, List, Tuple, Any
 from pathlib import Path
 
 from plexomatic import __version__
@@ -9,6 +15,7 @@ from plexomatic.core.file_scanner import FileScanner
 from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
 from plexomatic.utils import rename_file, rollback_operation, get_preview_rename
+from plexomatic import cli_ui
 
 # Initialize configuration
 config = ConfigManager()
@@ -45,7 +52,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
 
 
 @cli.command(name="scan", help="Scan media directories for files to organize")
@@ -73,9 +80,9 @@ def scan_command(
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
 
-    click.echo(f"Scanning directory: {path}")
+    cli_ui.print_heading(f"Scanning directory: {path}")
 
     # Parse extensions
     allowed_extensions = [ext.strip() for ext in extensions.split(",")]
@@ -88,17 +95,34 @@ def scan_command(
         recursive=recursive,
     )
 
-    # Perform scan
-    media_files = list(scanner.scan())
+    # Perform scan with progress bar
+    with cli_ui.progress_bar("Scanning for media files...") as progress_tuple:
+        progress, task_id = progress_tuple
+        media_files = []
+        file_count = 0
 
-    click.echo(f"Found {len(media_files)} media files")
+        for media_file in scanner.scan():
+            media_files.append(media_file)
+            file_count += 1
+            progress.update(task_id, advance=1)
+
+            if verbose and file_count % 10 == 0:
+                # Update occasionally for large scans
+                logger.debug(f"Found {file_count} files so far...")
+
+        # Mark as complete when done
+        progress.update(task_id, completed=True)
+
+    # Show results
+    cli_ui.print_status(f"Found {len(media_files)} media files", status="success")
 
     # Store scan results in context
     ctx.obj["media_files"] = media_files
 
     if verbose:
+        cli_ui.console.print("\n[bold]Files found:[/bold]")
         for media_file in media_files:
-            click.echo(f"  - {media_file.path}")
+            cli_ui.console.print(f"  - {media_file.path}", style=cli_ui.STYLES["filename"])
 
     return media_files
 
@@ -127,9 +151,9 @@ def preview_command(
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
 
-    click.echo("Previewing changes")
+    cli_ui.print_heading("Previewing changes")
 
     # If no files in context, scan for files first
     media_files = ctx.obj.get("media_files")
@@ -141,10 +165,14 @@ def preview_command(
         media_files = ctx.obj.get("media_files", [])
 
     if not media_files:
-        click.echo("No media files found. Run 'scan' command first or specify a path.")
+        cli_ui.print_status(
+            "No media files found. Run 'scan' command first or specify a path.", status="warning"
+        )
         return []
 
     # Generate previews for each file
+    cli_ui.console.print("\n[bold]Rename Preview:[/bold]")
+
     previews: List[Tuple[Path, Path]] = []
     for media_file in media_files:
         original_path = media_file.path
@@ -155,14 +183,26 @@ def preview_command(
             new = Path(result["new_path"])
             previews.append((original, new))
             if verbose or len(previews) <= 10:  # Show at most 10 changes by default
-                click.echo(f"{result['original_name']} → {result['new_name']}")
+                cli_ui.print_file_change(original, new)
 
     if not previews:
-        click.echo("No changes needed. All files are already properly named.")
+        cli_ui.print_status(
+            "No changes needed. All files are already properly named.", status="success"
+        )
     else:
         if len(previews) > 10 and not verbose:
-            click.echo(f"... and {len(previews) - 10} more. Use --verbose to see all.")
-        click.echo(f"\nTotal: {len(previews)} file(s) to rename")
+            cli_ui.console.print(
+                f"... and {len(previews) - 10} more. Use --verbose to see all.", style="yellow"
+            )
+
+        cli_ui.print_summary(
+            "Rename Summary",
+            {
+                "Total files": len(media_files),
+                "Files to rename": len(previews),
+                "Files already correct": len(media_files) - len(previews),
+            },
+        )
 
     # Store previews in context
     ctx.obj["previews"] = previews
@@ -187,9 +227,9 @@ def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbo
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
 
-    click.echo("Applying changes")
+    cli_ui.print_heading("Applying changes")
 
     # Get or generate previews
     previews = ctx.obj.get("previews")
@@ -199,37 +239,71 @@ def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbo
         previews = ctx.obj.get("previews", [])
 
     if not previews:
-        click.echo("No changes to apply.")
+        cli_ui.print_status("No changes to apply.", status="info")
         return True
 
     # Get backup system
     backup_system = ctx.obj.get("backup_system")
     if not backup_system and not dry_run:
-        click.echo("Error: Backup system not initialized. This is a bug.")
+        cli_ui.format_error("Backup system not initialized. This is a bug.")
         return False
 
-    # Apply changes
-    success_count = 0
-    error_count = 0
+    # Apply changes with progress bar
+    with cli_ui.progress_bar("Renaming files...", total=len(previews)) as progress_tuple:
+        progress, task_id = progress_tuple
+        success_count = 0
+        error_count = 0
 
-    for original_path, new_path in previews:
-        if dry_run:
-            click.echo(f"Would rename: {original_path} → {new_path}")
-            success_count += 1
-        else:
-            click.echo(f"Renaming: {original_path} → {new_path}")
-            success = rename_file(original_path, new_path, backup_system)
-
-            if success:
+        for i, (original_path, new_path) in enumerate(previews):
+            if dry_run:
+                cli_ui.print_file_change(original_path, new_path)
+                cli_ui.console.print("  [yellow](dry run - no changes made)[/yellow]")
                 success_count += 1
             else:
-                error_count += 1
-                click.echo(f"Error renaming {original_path}")
+                progress.update(task_id, description=f"Renaming file {i+1}/{len(previews)}")
+                try:
+                    success = rename_file(original_path, new_path, backup_system)
 
+                    if success:
+                        if verbose:
+                            cli_ui.print_status(
+                                f"Renamed: {original_path.name} → {new_path.name}", status="success"
+                            )
+                        success_count += 1
+                    else:
+                        cli_ui.print_status(f"Error renaming {original_path}", status="error")
+                        error_count += 1
+                except Exception as e:
+                    cli_ui.print_status(f"Exception during rename: {str(e)}", status="error")
+                    error_count += 1
+
+            # Update progress bar
+            progress.update(task_id, advance=1)
+
+    # Show summary
     if dry_run:
-        click.echo(f"\nDry run complete. {success_count} file(s) would be renamed.")
+        cli_ui.print_status(
+            f"Dry run complete. {success_count} file(s) would be renamed.", status="info"
+        )
     else:
-        click.echo(f"\nApplied changes to {success_count} file(s). {error_count} error(s).")
+        cli_ui.print_summary(
+            "Rename Results",
+            {
+                "Total files": len(previews),
+                "Successfully renamed": success_count,
+                "Errors": error_count,
+            },
+        )
+
+        if error_count == 0:
+            cli_ui.print_status("All files renamed successfully!", status="success")
+        elif success_count > 0:
+            cli_ui.print_status(
+                f"Partially successful: {success_count} renamed, {error_count} errors",
+                status="warning",
+            )
+        else:
+            cli_ui.print_status("All renames failed. See logs for details.", status="error")
 
     return success_count > 0 and error_count == 0
 
@@ -247,14 +321,14 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
 
-    click.echo("Rolling back changes")
+    cli_ui.print_heading("Rolling back changes")
 
     # Get backup system
     backup_system = ctx.obj.get("backup_system")
     if not backup_system:
-        click.echo("Error: Backup system not initialized. This is a bug.")
+        cli_ui.format_error("Backup system not initialized. This is a bug.")
         return False
 
     # If no operation ID provided, find the last completed operation
@@ -265,22 +339,34 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
             )
             row = result.fetchone()
             if not row:
-                click.echo("No completed operations found to roll back.")
+                cli_ui.print_status("No completed operations found to roll back.", status="warning")
                 return False
             operation_id = row[0]
 
     if operation_id:
-        click.echo(f"Rolling back operation {operation_id}")
-        success = rollback_operation(operation_id, backup_system)
+        cli_ui.print_status(f"Rolling back operation {operation_id}", status="info")
+
+        # Perform rollback with progress indicator
+        rollback_items = backup_system.get_backup_items_by_operation(operation_id)
+        if not rollback_items:
+            cli_ui.print_status(f"No items found for operation {operation_id}", status="warning")
+            return False
+
+        with cli_ui.progress_bar(f"Rolling back operation {operation_id}...") as progress_tuple:
+            progress, task_id = progress_tuple
+            success = rollback_operation(operation_id, backup_system)
+            progress.update(task_id, completed=True)
 
         if success:
-            click.echo(f"Successfully rolled back operation {operation_id}")
+            cli_ui.print_status(
+                f"Successfully rolled back operation {operation_id}", status="success"
+            )
         else:
-            click.echo(f"Failed to roll back operation {operation_id}")
+            cli_ui.print_status(f"Failed to roll back operation {operation_id}", status="error")
 
         return success
     else:
-        click.echo("No operation to roll back.")
+        cli_ui.print_status("No operation to roll back.", status="warning")
         return False
 
 
@@ -297,7 +383,9 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
-        click.echo("Verbose mode enabled")
+        cli_ui.print_status("Verbose mode enabled", status="info")
+
+    cli_ui.print_heading("Configuration", "Set up API keys and application settings")
 
     # Use existing config as a base
     config_data = config.config
@@ -391,32 +479,34 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
 
     # Save the updated configuration
     if verbose:
-        click.echo("Saving configuration...")
+        cli_ui.print_status("Saving configuration...", status="info")
     config.save()
-    click.echo("Configuration saved successfully.")
+    cli_ui.print_status("Configuration saved successfully.", status="success")
 
     # Display API connection status if verbose
     if verbose:
-        click.echo("\nAPI connection status:")
+        cli_ui.console.print("\n[bold]API connection status:[/bold]")
+
         if api_config["tvdb"]["api_key"]:
-            click.echo("✓ TVDB API key is set")
+            cli_ui.print_status("TVDB API key is set", status="success")
         else:
-            click.echo("✗ TVDB API key is not set")
+            cli_ui.print_status("TVDB API key is not set", status="error")
 
         if api_config["tmdb"]["api_key"]:
-            click.echo("✓ TMDB API key is set")
+            cli_ui.print_status("TMDB API key is set", status="success")
         else:
-            click.echo("✗ TMDB API key is not set")
+            cli_ui.print_status("TMDB API key is not set", status="error")
 
         if api_config["anidb"]["username"] and api_config["anidb"]["password"]:
-            click.echo("✓ AniDB credentials are set")
+            cli_ui.print_status("AniDB credentials are set", status="success")
         else:
-            click.echo("✗ AniDB credentials are not fully set")
+            cli_ui.print_status("AniDB credentials are not fully set", status="warning")
 
-        click.echo("✓ TVMaze API does not require authentication")
+        cli_ui.print_status("TVMaze API does not require authentication", status="success")
 
-        click.echo(
-            f"✓ LLM configured to use {api_config['llm']['model_name']} at {api_config['llm']['base_url']}"
+        cli_ui.print_status(
+            f"LLM configured to use {api_config['llm']['model_name']} at {api_config['llm']['base_url']}",
+            status="success",
         )
 
 
