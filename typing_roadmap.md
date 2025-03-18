@@ -17,6 +17,7 @@ These files already have proper type annotations and pass mypy checks:
 - `plexomatic/api/tmdb_client.py`
 - `plexomatic/api/llm_client.py`
 - `plexomatic/api/anidb_client.py`
+- `plexomatic/metadata/fetcher.py`
 - `tests/test_name_parser.py`
 - `tests/test_name_parser_comprehensive.py`
 - `tests/test_file_scanner.py`
@@ -26,7 +27,6 @@ These files already have proper type annotations and pass mypy checks:
 The following files should be typed next, in priority order:
 
 1. **Metadata System**
-   - `plexomatic/metadata/fetcher.py`
    - `plexomatic/metadata/manager.py`
 
 2. **CLI Interface**
@@ -43,6 +43,8 @@ The following files should be typed next, in priority order:
 4. Incorrect handling of Optional/None types
 5. SQLAlchemy typing issues (Column vs value)
 6. Datetime module usage issues (`datetime.UTC` vs `datetime.timezone.UTC`)
+7. Type narrowing for list and dictionary access requires careful handling
+8. Incompatible type checking paths can lead to "unreachable code" errors
 
 ## Migration Strategy
 
@@ -50,3 +52,4 @@ The following files should be typed next, in priority order:
 2. Add to pre-commit config after fixing
 3. Run test suite after each file to ensure functionality
 4. Prioritize core components that other parts depend on
+5. Use helper functions for common type checking operations

@@ -5,8 +5,9 @@ This module contains classes for fetching metadata from different sources like T
 
 import logging
 import re
+import os
 from enum import Enum, auto
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TypeVar, Type
 from functools import lru_cache
 
 from plexomatic.api.tvdb_client import TVDBClient
@@ -17,6 +18,46 @@ from plexomatic.api.tvmaze_client import TVMazeClient
 logger = logging.getLogger(__name__)
 
 CACHE_SIZE = 100  # Default size for the LRU caches
+
+# Default API keys and credentials from environment variables
+DEFAULT_TVDB_API_KEY = os.environ.get("TVDB_API_KEY", "")
+DEFAULT_TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
+DEFAULT_ANIDB_USERNAME = os.environ.get("ANIDB_USERNAME", "")
+DEFAULT_ANIDB_PASSWORD = os.environ.get("ANIDB_PASSWORD", "")
+
+
+# Type helpers
+T = TypeVar("T")
+
+
+def safe_cast(obj: Any, target_type: Type[T]) -> Optional[T]:
+    """Safely cast an object to the specified type, returning None if not possible."""
+    return obj if isinstance(obj, target_type) else None
+
+
+def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
+    """Safely extract a list of dictionaries from an object."""
+    result: List[Dict[str, Any]] = []
+
+    # Check if data is a dict with a results key
+    data_dict = safe_cast(data, dict)
+    if data_dict is not None:
+        results = data_dict.get("results")
+        if results is not None:
+            results_list = safe_cast(results, list)
+            if results_list is not None:
+                for item in results_list:
+                    item_dict = safe_cast(item, dict)
+                    if item_dict is not None:
+                        result.append(item_dict)
+    # Check if data is a list directly
+    elif isinstance(data, list):
+        for item in data:
+            item_dict = safe_cast(item, dict)
+            if item_dict is not None:
+                result.append(item_dict)
+
+    return result
 
 
 class MediaType(Enum):
@@ -83,10 +124,10 @@ class MetadataFetcher:
             cache_size: Size of the LRU cache for metadata results
         """
         self.cache_size = cache_size
-        self.cache = {}  # Initialize an empty cache dictionary
+        self.cache: Dict[str, Any] = {}  # Initialize an empty cache dictionary
         self._setup_cache()
 
-    def _setup_cache(self):
+    def _setup_cache(self) -> None:
         """Set up the cache with the specified size."""
         # Apply the lru_cache decorator to the appropriate method
         self._fetch_metadata_cached = lru_cache(maxsize=self.cache_size)(
@@ -121,7 +162,7 @@ class MetadataFetcher:
         """
         raise NotImplementedError("Subclasses must implement search")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the metadata cache."""
         self._fetch_metadata_cached.cache_clear()
         logger.info(f"{self.__class__.__name__} cache cleared")
@@ -130,15 +171,21 @@ class MetadataFetcher:
 class TVDBMetadataFetcher(MetadataFetcher):
     """Metadata fetcher for TVDB."""
 
-    def __init__(self, client: Optional[TVDBClient] = None, cache_size: int = CACHE_SIZE):
+    def __init__(
+        self,
+        client: Optional[TVDBClient] = None,
+        api_key: str = DEFAULT_TVDB_API_KEY,
+        cache_size: int = CACHE_SIZE,
+    ):
         """Initialize the TVDB metadata fetcher.
 
         Args:
             client: TVDBClient instance, or None to create a new one
+            api_key: TVDB API key (defaults to environment variable)
             cache_size: Size of the LRU cache for metadata results
         """
         super().__init__(cache_size=cache_size)
-        self.client = client or TVDBClient()
+        self.client = client or TVDBClient(api_key=api_key)
 
         # Extract ID from prefixed ID (e.g., "tvdb:12345" -> 12345)
         self._extract_id = lambda id: int(id.split(":")[1]) if ":" in id else int(id)
@@ -349,15 +396,21 @@ class TVDBMetadataFetcher(MetadataFetcher):
 class TMDBMetadataFetcher(MetadataFetcher):
     """Metadata fetcher for TMDB."""
 
-    def __init__(self, client: Optional[TMDBClient] = None, cache_size: int = CACHE_SIZE):
+    def __init__(
+        self,
+        client: Optional[TMDBClient] = None,
+        api_key: str = DEFAULT_TMDB_API_KEY,
+        cache_size: int = CACHE_SIZE,
+    ):
         """Initialize the TMDB metadata fetcher.
 
         Args:
             client: TMDBClient instance, or None to create a new one
+            api_key: TMDB API key (defaults to environment variable)
             cache_size: Size of the LRU cache for metadata results
         """
         super().__init__(cache_size=cache_size)
-        self.client = client or TMDBClient()
+        self.client = client or TMDBClient(api_key=api_key)
 
         # Extract ID from prefixed ID (e.g., "tmdb:12345" -> 12345)
         self._extract_id = lambda id: int(id.split(":")[1]) if ":" in id else int(id)
@@ -498,70 +551,72 @@ class TMDBMetadataFetcher(MetadataFetcher):
             if media_type == MediaType.MOVIE:
                 # Search for movies
                 search_results = self.client.search_movie(query=query)
+                movie_results = extract_dict_list(search_results)
 
-                metadata_results = []
-                if "results" in search_results and isinstance(search_results["results"], list):
-                    for result in search_results["results"]:
-                        movie_id = result.get("id")
+                metadata_results: List[MetadataResult] = []
+                for result in movie_results:
+                    movie_id = result.get("id")
 
-                        # Extract year from release date
-                        year = None
-                        if "release_date" in result and result["release_date"]:
-                            year_match = re.match(r"(\d{4})", result["release_date"])
-                            if year_match:
-                                year = int(year_match.group(1))
+                    # Extract year from release date
+                    year = None
+                    release_date = result.get("release_date")
+                    if isinstance(release_date, str):
+                        year_match = re.match(r"(\d{4})", release_date)
+                        if year_match:
+                            year = int(year_match.group(1))
 
-                        metadata_results.append(
-                            MetadataResult(
-                                id=f"tmdb:{movie_id}",
-                                title=result.get("title", "Unknown"),
-                                overview=result.get("overview"),
-                                media_type=MediaType.MOVIE,
-                                source="tmdb",
-                                year=year,
-                                extra_data={
-                                    "release_date": result.get("release_date"),
-                                    "vote_average": result.get("vote_average"),
-                                    "original_language": result.get("original_language"),
-                                },
-                            )
+                    metadata_results.append(
+                        MetadataResult(
+                            id=f"tmdb:{movie_id}",
+                            title=result.get("title", "Unknown"),
+                            overview=result.get("overview"),
+                            media_type=MediaType.MOVIE,
+                            source="tmdb",
+                            year=year,
+                            extra_data={
+                                "release_date": result.get("release_date"),
+                                "vote_average": result.get("vote_average"),
+                                "original_language": result.get("original_language"),
+                            },
                         )
+                    )
 
                 return metadata_results
 
             elif media_type == MediaType.TV_SHOW:
                 # Search for TV shows
                 search_results = self.client.search_tv(query=query)
+                tv_results = extract_dict_list(search_results)
 
-                metadata_results = []
-                if "results" in search_results and isinstance(search_results["results"], list):
-                    for result in search_results["results"]:
-                        tv_id = result.get("id")
+                tv_metadata_results: List[MetadataResult] = []
+                for result in tv_results:
+                    tv_id = result.get("id")
 
-                        # Extract year from first air date
-                        year = None
-                        if "first_air_date" in result and result["first_air_date"]:
-                            year_match = re.match(r"(\d{4})", result["first_air_date"])
-                            if year_match:
-                                year = int(year_match.group(1))
+                    # Extract year from first air date
+                    year = None
+                    first_air_date = result.get("first_air_date")
+                    if isinstance(first_air_date, str):
+                        year_match = re.match(r"(\d{4})", first_air_date)
+                        if year_match:
+                            year = int(year_match.group(1))
 
-                        metadata_results.append(
-                            MetadataResult(
-                                id=f"tmdb:{tv_id}",
-                                title=result.get("name", "Unknown"),
-                                overview=result.get("overview"),
-                                media_type=MediaType.TV_SHOW,
-                                source="tmdb",
-                                year=year,
-                                extra_data={
-                                    "first_air_date": result.get("first_air_date"),
-                                    "vote_average": result.get("vote_average"),
-                                    "original_language": result.get("original_language"),
-                                },
-                            )
+                    tv_metadata_results.append(
+                        MetadataResult(
+                            id=f"tmdb:{tv_id}",
+                            title=result.get("name", "Unknown"),
+                            overview=result.get("overview"),
+                            media_type=MediaType.TV_SHOW,
+                            source="tmdb",
+                            year=year,
+                            extra_data={
+                                "first_air_date": result.get("first_air_date"),
+                                "vote_average": result.get("vote_average"),
+                                "original_language": result.get("original_language"),
+                            },
                         )
+                    )
 
-                return metadata_results
+                return tv_metadata_results
 
             else:
                 raise ValueError(f"Unsupported media type: {media_type}")
@@ -574,15 +629,23 @@ class TMDBMetadataFetcher(MetadataFetcher):
 class AniDBMetadataFetcher(MetadataFetcher):
     """Metadata fetcher for AniDB."""
 
-    def __init__(self, client: Optional[AniDBClient] = None, cache_size: int = CACHE_SIZE):
+    def __init__(
+        self,
+        client: Optional[AniDBClient] = None,
+        username: str = DEFAULT_ANIDB_USERNAME,
+        password: str = DEFAULT_ANIDB_PASSWORD,
+        cache_size: int = CACHE_SIZE,
+    ):
         """Initialize the AniDB metadata fetcher.
 
         Args:
             client: AniDBClient instance, or None to create a new one
+            username: AniDB username (defaults to environment variable)
+            password: AniDB password (defaults to environment variable)
             cache_size: Size of the LRU cache for metadata results
         """
         super().__init__(cache_size=cache_size)
-        self.client = client or AniDBClient()
+        self.client = client or AniDBClient(username=username, password=password)
 
         # Extract ID from prefixed ID (e.g., "anidb:12345" -> 12345)
         self._extract_id = lambda id: int(id.split(":")[1]) if ":" in id else int(id)
@@ -668,20 +731,29 @@ class AniDBMetadataFetcher(MetadataFetcher):
             raise ValueError("AniDB only supports anime")
 
         try:
-            results = self.client.get_anime_by_name(name=query)
+            # Get anime results and ensure they're the right type
+            raw_results = self.client.get_anime_by_name(name=query)
+            anime_results = extract_dict_list(raw_results)
 
-            metadata_results = []
-            for result in results:
+            if not anime_results:
+                logger.warning(f"No valid anime results found for query: {query}")
+                return []
+
+            anime_metadata_results: List[MetadataResult] = []
+
+            # Process results
+            for result in anime_results:
                 anime_id = result.get("aid")
 
                 # Extract year from start date if available
                 year = None
-                if "startdate" in result and result["startdate"]:
-                    year_match = re.match(r"(\d{4})", result["startdate"])
+                start_date = result.get("startdate")
+                if isinstance(start_date, str):
+                    year_match = re.match(r"(\d{4})", start_date)
                     if year_match:
                         year = int(year_match.group(1))
 
-                metadata_results.append(
+                anime_metadata_results.append(
                     MetadataResult(
                         id=f"anidb:{anime_id}",
                         title=result.get("title", "Unknown"),
@@ -693,7 +765,7 @@ class AniDBMetadataFetcher(MetadataFetcher):
                     )
                 )
 
-            return metadata_results
+            return anime_metadata_results
 
         except Exception as e:
             logger.error(f"Error searching AniDB for '{query}': {e}")
