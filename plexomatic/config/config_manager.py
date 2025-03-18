@@ -3,7 +3,7 @@
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, cast
 
 
 class ConfigManager:
@@ -24,9 +24,13 @@ class ConfigManager:
         Args:
             config_path: Path to the configuration file, or None to use default
         """
-        self.config_path = Path(
-            config_path or os.environ.get("PLEXOMATIC_CONFIG_PATH", "~/.plexomatic/config.json")
-        ).expanduser()
+        # Handle Optional[str] correctly for Path conversion
+        config_path_str: str = (
+            config_path
+            if config_path is not None
+            else os.environ.get("PLEXOMATIC_CONFIG_PATH", "~/.plexomatic/config.json")
+        )
+        self.config_path = Path(config_path_str).expanduser()
         self.config: Dict[str, Any] = dict(self.DEFAULT_CONFIG)
         self.load()
 
@@ -91,20 +95,23 @@ class ConfigManager:
         Returns:
             Path: Path to the database file
         """
-        return Path(self.get("db_path", "~/.plexomatic/plexomatic.db")).expanduser()
+        db_path_str = cast(str, self.get("db_path", "~/.plexomatic/plexomatic.db"))
+        return Path(db_path_str).expanduser()
 
-    def get_allowed_extensions(self) -> list:
+    def get_allowed_extensions(self) -> List[str]:
         """Get allowed file extensions.
 
         Returns:
-            list: List of allowed file extensions
+            List[str]: List of allowed file extensions
         """
-        return self.get("allowed_extensions", [".mp4", ".mkv", ".avi", ".mov", ".m4v"])
+        extensions = self.get("allowed_extensions", [".mp4", ".mkv", ".avi", ".mov", ".m4v"])
+        return cast(List[str], extensions)
 
-    def get_ignore_patterns(self) -> list:
+    def get_ignore_patterns(self) -> List[str]:
         """Get patterns to ignore.
 
         Returns:
-            list: List of patterns to ignore
+            List[str]: List of patterns to ignore
         """
-        return self.get("ignore_patterns", ["sample", "trailer", "extra"])
+        patterns = self.get("ignore_patterns", ["sample", "trailer", "extra"])
+        return cast(List[str], patterns)
