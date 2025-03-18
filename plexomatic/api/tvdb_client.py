@@ -4,7 +4,7 @@ import time
 import requests
 import logging
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, cast
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
@@ -48,8 +48,8 @@ class TVDBClient:
             auto_retry: Whether to automatically retry requests when rate limited.
         """
         self.api_key = api_key
-        self.token = None
-        self.token_expires_at = None
+        self.token: Optional[str] = None
+        self.token_expires_at: Optional[datetime] = None
         self.auto_retry = auto_retry
         self.cache_size = cache_size
 
@@ -80,7 +80,9 @@ class TVDBClient:
 
     def _ensure_authenticated(self) -> None:
         """Ensure the client is authenticated, re-authenticating if necessary."""
-        if self.token is None or (
+        if self.token is None:
+            self.authenticate()
+        elif (
             self.token_expires_at is not None
             and datetime.now(timezone.utc) >= self.token_expires_at
         ):
@@ -117,7 +119,8 @@ class TVDBClient:
             response = requests.get(url, headers=headers, params=params)
 
             if response.status_code == 200:
-                return response.json()
+                data = response.json()
+                return cast(Dict[str, Any], data)
             elif response.status_code == 401:
                 # Token may have expired, try to re-authenticate
                 self.token = None
@@ -127,7 +130,8 @@ class TVDBClient:
                 response = requests.get(url, headers=headers, params=params)
 
                 if response.status_code == 200:
-                    return response.json()
+                    data = response.json()
+                    return cast(Dict[str, Any], data)
                 else:
                     logger.error(
                         f"TVDB request failed after re-auth: {response.status_code} - {response.text}"
@@ -186,14 +190,17 @@ class TVDBClient:
 
         try:
             response = self._get_cached_key(cache_key)
-            return response.get("data", [])
+            result = response.get("data", [])
+            return cast(List[Dict[str, Any]], result)
         except TVDBRateLimitError:
             # If cached function raises rate limit error and auto_retry is enabled
             if self.auto_retry:
                 # Clear the cache for this query
                 self._get_cached_key.cache_clear()
                 # Retry directly with non-cached method
-                return self._get(SEARCH_SERIES_URL, params).get("data", [])
+                response = self._get(SEARCH_SERIES_URL, params)
+                result = response.get("data", [])
+                return cast(List[Dict[str, Any]], result)
             else:
                 raise
 
@@ -210,7 +217,8 @@ class TVDBClient:
         cache_key = url
 
         response = self._get_cached_key(cache_key)
-        return response.get("data", {})
+        result = response.get("data", {})
+        return cast(Dict[str, Any], result)
 
     def get_episodes_by_series_id(self, series_id: int) -> List[Dict[str, Any]]:
         """Get all episodes for a TV series.
@@ -225,7 +233,8 @@ class TVDBClient:
         cache_key = url
 
         response = self._get_cached_key(cache_key)
-        return response.get("data", [])
+        result = response.get("data", [])
+        return cast(List[Dict[str, Any]], result)
 
     def clear_cache(self) -> None:
         """Clear the request cache."""
