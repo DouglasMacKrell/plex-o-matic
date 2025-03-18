@@ -3,7 +3,7 @@
 import json
 import logging
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, cast
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +73,7 @@ class LLMClient:
             logger.error(f"Error checking model availability: {e}")
             return False
 
-    def generate_text(self, prompt: str, system: Optional[str] = None, **kwargs) -> str:
+    def generate_text(self, prompt: str, system: Optional[str] = None, **kwargs: Any) -> str:
         """Generate text from the local LLM using Ollama.
 
         Args:
@@ -116,7 +116,7 @@ class LLMClient:
                 raise LLMRequestError(f"Request failed: {response.status_code} - {response.text}")
 
             result = response.json()
-            return result.get("response", "")
+            return cast(str, result.get("response", ""))
 
         except requests.exceptions.RequestException as e:
             logger.error(f"LLM request failed: {e}")
@@ -152,7 +152,7 @@ class LLMClient:
 
             # Try to parse the response as JSON
             result = json.loads(response)
-            return result
+            return cast(Dict[str, Any], result)
 
         except json.JSONDecodeError:
             # If the model didn't return valid JSON, try to extract it
@@ -162,7 +162,7 @@ class LLMClient:
                 json_end = response.rfind("}") + 1
                 if json_start >= 0 and json_end > json_start:
                     json_str = response[json_start:json_end]
-                    return json.loads(json_str)
+                    return cast(Dict[str, Any], json.loads(json_str))
             except (json.JSONDecodeError, IndexError):
                 pass
 

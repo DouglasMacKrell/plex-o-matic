@@ -10,7 +10,7 @@ import logging
 import time
 import difflib
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree as ET
 from functools import lru_cache
@@ -67,19 +67,19 @@ class AniDBUDPClient:
         self.password = password
         self.client_name = client_name
         self.client_version = client_version
-        self.socket = None
-        self.session = None
-        self.session_expires_at = None
-        self.last_command_time = 0
-        self._banned_until = None
+        self.socket: Optional[socket.socket] = None
+        self.session: Optional[str] = None
+        self.session_expires_at: Optional[datetime] = None
+        self.last_command_time: float = 0
+        self._banned_until: Optional[datetime] = None
 
-    def _connect(self):
+    def _connect(self) -> None:
         """Connect to the AniDB UDP API."""
         if self.socket is None:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             self.socket.settimeout(10)  # 10 seconds timeout
 
-    def _disconnect(self):
+    def _disconnect(self) -> None:
         """Disconnect from the AniDB UDP API."""
         if self.socket:
             try:
@@ -139,7 +139,7 @@ class AniDBUDPClient:
             # Remove the status line
             data_line = response_str.split("\n", 1)[1]
             if "|" in data_line:
-                data = {}
+                data: Dict[str, Any] = {}
                 parts = data_line.split("|")
                 for i in range(0, len(parts), 2):
                     if i + 1 < len(parts):
@@ -177,6 +177,9 @@ class AniDBUDPClient:
         try:
             self._connect()
 
+            if self.socket is None:
+                raise AniDBError("Socket not connected")
+
             encoded_cmd = self._encode_command(command)
             self.socket.sendto(encoded_cmd, (ANIDB_UDP_HOST, ANIDB_UDP_PORT))
             self.last_command_time = time.time()
@@ -204,7 +207,7 @@ class AniDBUDPClient:
         if (
             self.session
             and self.session_expires_at
-            and datetime.now(timezone.utc) < self.session_expires_at
+            and self.session_expires_at > datetime.now(timezone.utc)
         ):
             return
 
@@ -231,9 +234,10 @@ class AniDBUDPClient:
 
     def _ensure_authenticated(self) -> None:
         """Ensure the client is authenticated, re-authenticating if necessary."""
-        if not self.session or (
-            self.session_expires_at is not None
-            and datetime.now(timezone.utc) >= self.session_expires_at
+        if (
+            not self.session
+            or not self.session_expires_at
+            or self.session_expires_at <= datetime.now(timezone.utc)
         ):
             self.authenticate()
 
@@ -284,14 +288,14 @@ class AniDBUDPClient:
 
             # Handle the case where there are multiple episodes
             # This might need adjustment based on actual response format
-            episodes = []
+            episodes: List[Dict[str, Any]] = []
             if isinstance(data, dict) and "raw" in data:
                 # Parse the raw data if it's returned as a single string
                 episode_lines = data["raw"].split("\n")
                 for line in episode_lines:
                     if not line.strip():
                         continue
-                    episode_data = {}
+                    episode_data: Dict[str, Any] = {}
                     parts = line.split("|")
                     for i in range(0, len(parts), 2):
                         if i + 1 < len(parts):
@@ -309,13 +313,15 @@ class AniDBUDPClient:
             try:
                 # Send logout command
                 cmd = f"LOGOUT s={self.session}"
-                self._send_cmd(cmd)
-            except Exception:
-                pass
+                self.socket.sendto(self._encode_command(cmd), (ANIDB_UDP_HOST, ANIDB_UDP_PORT))
+                logger.info("Sent logout command to AniDB")
+            except Exception as e:
+                logger.warning(f"Error during logout: {e}")
             finally:
                 self._disconnect()
                 self.session = None
                 self.session_expires_at = None
+                logger.info("Closed AniDB connection")
 
 
 class AniDBHTTPClient:
@@ -392,10 +398,10 @@ class AniDBHTTPClient:
             # Parse XML
             root = ET.fromstring(response.content)
 
-            anime_data = {"id": root.get("id")}
+            anime_data: Dict[str, Any] = {"id": root.get("id")}
 
             # Extract titles
-            titles = []
+            titles: List[Dict[str, Optional[str]]] = []
             titles_elem = root.find("titles")
             if titles_elem is not None:
                 for title_elem in titles_elem.findall("title"):
@@ -536,11 +542,11 @@ class AniDBClient:
         for anime in anime_list:
             for t in anime["titles"]:
                 if t["title"].lower() == search_title:
-                    return anime["aid"]
+                    return cast(str, anime["aid"])
 
         # If no exact match, try fuzzy matching
-        best_match = None
-        best_score = 0
+        best_match: Optional[str] = None
+        best_score: float = 0.0
 
         for anime in anime_list:
             for t in anime["titles"]:
@@ -549,7 +555,7 @@ class AniDBClient:
                     score = difflib.SequenceMatcher(None, search_title, t["title"].lower()).ratio()
                     if score > best_score and score >= threshold:
                         best_score = score
-                        best_match = anime["aid"]
+                        best_match = cast(str, anime["aid"])
 
         return best_match
 
