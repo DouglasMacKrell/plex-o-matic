@@ -9,6 +9,11 @@ These files already have proper type annotations and pass mypy checks:
 - `plexomatic/utils/name_parser.py`
 - `plexomatic/utils/name_utils.py`
 - `plexomatic/core/file_scanner.py`
+- `plexomatic/core/models.py`
+- `plexomatic/core/backup_system.py`
+- `plexomatic/config/config_manager.py`
+- `plexomatic/api/tvmaze_client.py`
+- `plexomatic/api/tvdb_client.py`
 - `tests/test_name_parser.py`
 - `tests/test_name_parser_comprehensive.py`
 - `tests/test_file_scanner.py`
@@ -17,36 +22,19 @@ These files already have proper type annotations and pass mypy checks:
 
 The following files should be typed next, in priority order:
 
-1. **Core Models & Data Structures**
-   - `plexomatic/core/models.py`
-     - Issues: `datetime.UTC` usage, need to import from `datetime.timezone`
-     - Base class issue needs resolution
-
-2. **Backup System**
-   - `plexomatic/core/backup_system.py`
-     - Fix return type issues (SQLAlchemy Column types vs Python types)
-     - Fix datetime.UTC issue
-
-3. **Config Management**
-   - `plexomatic/config/config_manager.py`
-     - Fix Optional[str] to Path conversion
-     - Fix Any return types
-
-4. **API Clients**
-   - `plexomatic/api/tvmaze_client.py`
-   - `plexomatic/api/tvdb_client.py`
+1. **API Clients**
    - `plexomatic/api/tmdb_client.py`
    - `plexomatic/api/llm_client.py`
    - `plexomatic/api/anidb_client.py`
 
-5. **Metadata System**
+2. **Metadata System**
    - `plexomatic/metadata/fetcher.py`
    - `plexomatic/metadata/manager.py`
 
-6. **CLI Interface**
+3. **CLI Interface**
    - `plexomatic/cli.py`
 
-7. **Test Files**
+4. **Test Files**
    - Prioritize test files for components that have been typed
 
 ## Common Issues
