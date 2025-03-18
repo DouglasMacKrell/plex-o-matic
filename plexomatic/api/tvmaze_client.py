@@ -5,11 +5,14 @@ This module provides a client for interacting with the TVMaze API to retrieve TV
 
 import logging
 import json
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast, TypeVar
 from functools import lru_cache
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Type variables for return types
+T = TypeVar("T")
 
 # TVMaze API endpoints
 BASE_URL = "https://api.tvmaze.com"
@@ -45,7 +48,7 @@ class TVMazeClient:
         self.cache_size = cache_size
         self.setup_cache()
 
-    def setup_cache(self):
+    def setup_cache(self) -> None:
         """Set up the cache with the specified size."""
         # Apply the lru_cache decorator to the appropriate method
         self._request_cached = lru_cache(maxsize=self.cache_size)(self._request_uncached)
@@ -87,7 +90,7 @@ class TVMazeClient:
             logger.error(f"TVMaze request failed: {e}")
             raise TVMazeRequestError(f"Request failed: {e}")
 
-    def _get(self, url: str, params: Optional[Dict] = None) -> Any:
+    def _get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Any:
         """Make a cached request to the TVMaze API.
 
         Args:
@@ -114,7 +117,7 @@ class TVMazeClient:
             logger.error(f"Error in cached request: {e}")
             raise TVMazeRequestError(f"Request error: {e}")
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the request cache."""
         self._request_cached.cache_clear()
         logger.info("TVMaze client cache cleared")
@@ -129,7 +132,8 @@ class TVMazeClient:
             A list of matching shows with scores.
         """
         params = {"q": query}
-        return self._get(SEARCH_SHOWS_URL, params)
+        result = self._get(SEARCH_SHOWS_URL, params)
+        return cast(List[Dict[str, Any]], result)
 
     def get_show_by_id(self, show_id: int) -> Dict[str, Any]:
         """Get detailed information about a show by ID.
@@ -144,7 +148,8 @@ class TVMazeClient:
             TVMazeRequestError: If the show is not found.
         """
         url = f"{SHOW_URL}/{show_id}"
-        return self._get(url)
+        result = self._get(url)
+        return cast(Dict[str, Any], result)
 
     def get_show_by_imdb_id(self, imdb_id: str) -> Dict[str, Any]:
         """Get show information using an IMDB ID.
@@ -159,7 +164,8 @@ class TVMazeClient:
             TVMazeRequestError: If the show is not found.
         """
         params = {"imdb": imdb_id}
-        return self._get(LOOKUP_SHOWS_URL, params)
+        result = self._get(LOOKUP_SHOWS_URL, params)
+        return cast(Dict[str, Any], result)
 
     def get_episodes(self, show_id: int) -> List[Dict[str, Any]]:
         """Get all episodes for a show.
@@ -174,7 +180,8 @@ class TVMazeClient:
             TVMazeRequestError: If the show is not found.
         """
         url = f"{SHOW_URL}/{show_id}/episodes"
-        return self._get(url)
+        result = self._get(url)
+        return cast(List[Dict[str, Any]], result)
 
     def get_episode_by_number(self, show_id: int, season: int, episode: int) -> Dict[str, Any]:
         """Get a specific episode by season and episode number.
@@ -192,7 +199,8 @@ class TVMazeClient:
         """
         url = f"{SHOW_URL}/{show_id}/episodebynumber"
         params = {"season": season, "number": episode}
-        return self._get(url, params)
+        result = self._get(url, params)
+        return cast(Dict[str, Any], result)
 
     def search_people(self, query: str) -> List[Dict[str, Any]]:
         """Search for people by name.
@@ -204,7 +212,8 @@ class TVMazeClient:
             A list of matching people with scores.
         """
         params = {"q": query}
-        return self._get(SEARCH_PEOPLE_URL, params)
+        result = self._get(SEARCH_PEOPLE_URL, params)
+        return cast(List[Dict[str, Any]], result)
 
     def get_show_cast(self, show_id: int) -> List[Dict[str, Any]]:
         """Get the cast for a show.
@@ -219,4 +228,5 @@ class TVMazeClient:
             TVMazeRequestError: If the show is not found.
         """
         url = f"{SHOW_URL}/{show_id}/cast"
-        return self._get(url)
+        result = self._get(url)
+        return cast(List[Dict[str, Any]], result)
