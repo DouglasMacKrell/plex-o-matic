@@ -13,7 +13,7 @@ from plexomatic.api.tvdb_client import (
 class TestTVDBClient:
     """Tests for the TVDB API client."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures before each test method."""
         self.api_key = "test_api_key"
         self.client = TVDBClient(api_key=self.api_key)
@@ -22,34 +22,40 @@ class TestTVDBClient:
         self.client.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
     @patch("plexomatic.api.tvdb_client.requests.post")
-    def test_authentication(self, mock_post) -> None:
-        """Test the authentication process."""
+    def test_authentication_success(self, mock_post: MagicMock) -> None:
+        """Test successful authentication process."""
         # Reset the token for authentication testing
         self.client.token = None
         self.client.token_expires_at = None
 
-        # Mock successful authentication response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"data": {"token": "mock_token"}}
-        mock_post.return_value = mock_response
-
         # Test successful authentication
+        mock_success_response = MagicMock()
+        mock_success_response.status_code = 200
+        mock_success_response.json.return_value = {"data": {"token": "mock_token"}}
+        mock_post.return_value = mock_success_response
+
         self.client.authenticate()
+        mock_post.assert_called_once()
         assert self.client.token == "mock_token"
         assert self.client.token_expires_at is not None
-        mock_post.assert_called_once()
 
-        # Test authentication failure
-        mock_response.status_code = 401
-        mock_response.json.return_value = {"error": "Invalid credentials"}
-        mock_post.reset_mock()
+    @patch("plexomatic.api.tvdb_client.requests.post")
+    def test_authentication_failure(self, mock_post: MagicMock) -> None:
+        """Test authentication failure."""
+        # Reset the token for authentication testing
         self.client.token = None
+        self.client.token_expires_at = None
+
+        mock_failure_response = MagicMock()
+        mock_failure_response.status_code = 401
+        mock_failure_response.json.return_value = {"error": "Invalid credentials"}
+        mock_post.return_value = mock_failure_response
+
         with pytest.raises(TVDBAuthenticationError):
             self.client.authenticate()
 
     @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_get_series_by_name(self, mock_get) -> None:
+    def test_get_series_by_name(self, mock_get: MagicMock) -> None:
         """Test retrieving series by name."""
         # Mock successful series search response
         mock_response = MagicMock()
@@ -81,7 +87,7 @@ class TestTVDBClient:
         assert result == []
 
     @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_get_series_by_id(self, mock_get) -> None:
+    def test_get_series_by_id(self, mock_get: MagicMock) -> None:
         """Test retrieving series details by ID."""
         # Mock successful series details response
         mock_response = MagicMock()
@@ -113,7 +119,7 @@ class TestTVDBClient:
             self.client.get_series_by_id(99999)
 
     @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_get_episodes_by_series_id(self, mock_get) -> None:
+    def test_get_episodes_by_series_id(self, mock_get: MagicMock) -> None:
         """Test retrieving episodes for a series."""
         # Mock successful episodes response
         mock_response = MagicMock()
@@ -146,7 +152,7 @@ class TestTVDBClient:
         mock_get.assert_called_once()
 
     @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_rate_limiting(self, mock_get) -> None:
+    def test_rate_limiting(self, mock_get: MagicMock) -> None:
         """Test handling of rate limiting."""
         # Mock rate limit exceeded response
         mock_response = MagicMock()
@@ -159,7 +165,9 @@ class TestTVDBClient:
 
     @patch("plexomatic.api.tvdb_client.requests.get")
     @patch("time.sleep")
-    def test_automatic_retry_after_rate_limit(self, mock_sleep, mock_get) -> None:
+    def test_automatic_retry_after_rate_limit(
+        self, mock_sleep: MagicMock, mock_get: MagicMock
+    ) -> None:
         """Test automatic retry after rate limit with backoff."""
         # Setup mock responses for rate limit then success
         rate_limit_response = MagicMock()
@@ -184,7 +192,7 @@ class TestTVDBClient:
         assert result[0]["id"] == 12345
 
     @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_cache_mechanism(self, mock_get) -> None:
+    def test_cache_mechanism(self, mock_get: MagicMock) -> None:
         """Test that responses are properly cached."""
         # Setup mock for first call
         mock_response = MagicMock()

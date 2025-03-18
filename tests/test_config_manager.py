@@ -2,13 +2,14 @@
 
 import os
 import json
+from typing import Generator
 import pytest
 from pathlib import Path
 from plexomatic.config import ConfigManager
 
 
 @pytest.fixture
-def temp_config_path(tmp_path):
+def temp_config_path(tmp_path: Path) -> Generator[Path, None, None]:
     """Fixture to create a temporary config file path."""
     config_file = tmp_path / "config.json"
     os.environ["PLEXOMATIC_CONFIG_PATH"] = str(config_file)
@@ -18,7 +19,7 @@ def temp_config_path(tmp_path):
         del os.environ["PLEXOMATIC_CONFIG_PATH"]
 
 
-def test_config_manager_init(temp_config_path) -> None:
+def test_config_manager_init(temp_config_path: Path) -> None:
     """Test configuration manager initialization."""
     config = ConfigManager()
     assert config is not None
@@ -37,7 +38,7 @@ def test_config_manager_init(temp_config_path) -> None:
     assert data["recursive_scan"] is True
 
 
-def test_config_manager_get_set(temp_config_path) -> None:
+def test_config_manager_get_set(temp_config_path: Path) -> None:
     """Test getting and setting configuration values."""
     config = ConfigManager()
 
@@ -58,7 +59,7 @@ def test_config_manager_get_set(temp_config_path) -> None:
     assert new_config.get("test_key") == "test_value"
 
 
-def test_config_manager_helper_methods(temp_config_path) -> None:
+def test_config_manager_helper_methods(temp_config_path: Path) -> None:
     """Test helper methods for common configuration values."""
     config = ConfigManager()
 
@@ -77,7 +78,7 @@ def test_config_manager_helper_methods(temp_config_path) -> None:
     assert "sample" in patterns
 
 
-def test_config_manager_invalid_file(tmp_path) -> None:
+def test_config_manager_invalid_file(tmp_path: Path) -> None:
     """Test handling of invalid configuration files."""
     config_file = tmp_path / "invalid_config.json"
 

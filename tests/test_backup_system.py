@@ -2,19 +2,20 @@
 
 import os
 import pytest
+from pathlib import Path
 from sqlalchemy.orm import Session
 from plexomatic.core.backup_system import BackupSystem, FileOperation
 from plexomatic.core.models import FileRename
 
 
 @pytest.fixture
-def db_path(tmp_path):
+def db_path(tmp_path: Path) -> Path:
     """Create a temporary database file."""
     return tmp_path / "test.db"
 
 
 @pytest.fixture
-def backup_system(db_path):
+def backup_system(db_path: Path) -> BackupSystem:
     """Create a backup system instance for testing."""
     system = BackupSystem(db_path)
     system.initialize_database()
@@ -22,7 +23,7 @@ def backup_system(db_path):
 
 
 @pytest.fixture
-def sample_operation(backup_system):
+def sample_operation(backup_system: BackupSystem) -> FileOperation:
     """Create a sample file operation."""
     operation = FileOperation(
         original_path="/test/path/old_name.mp4",
@@ -33,7 +34,7 @@ def sample_operation(backup_system):
     return operation
 
 
-def test_backup_system_initialization(db_path) -> None:
+def test_backup_system_initialization(db_path: Path) -> None:
     """Test that BackupSystem initializes correctly."""
     system = BackupSystem(db_path)
     system.initialize_database()
@@ -42,7 +43,9 @@ def test_backup_system_initialization(db_path) -> None:
     assert os.path.exists(db_path)
 
 
-def test_file_operation_creation(backup_system, sample_operation) -> None:
+def test_file_operation_creation(
+    backup_system: BackupSystem, sample_operation: FileOperation
+) -> None:
     """Test creating a new file operation."""
     operation_id = backup_system.record_operation(sample_operation)
 
@@ -57,18 +60,19 @@ def test_file_operation_creation(backup_system, sample_operation) -> None:
         assert stored_op.status == "pending"
 
 
-def test_operation_completion(backup_system, sample_operation) -> None:
+def test_operation_completion(backup_system: BackupSystem, sample_operation: FileOperation) -> None:
     """Test marking an operation as complete."""
     operation_id = backup_system.record_operation(sample_operation)
     backup_system.mark_operation_complete(operation_id)
 
     with Session(backup_system.engine) as session:
         stored_op = session.query(FileRename).filter_by(id=operation_id).first()
+        assert stored_op is not None  # Add a check to ensure it's not None
         assert stored_op.status == "completed"
         assert stored_op.completed_at is not None
 
 
-def test_operation_rollback(backup_system, sample_operation) -> None:
+def test_operation_rollback(backup_system: BackupSystem, sample_operation: FileOperation) -> None:
     """Test rolling back an operation."""
     operation_id = backup_system.record_operation(sample_operation)
     backup_system.mark_operation_complete(operation_id)
@@ -78,11 +82,12 @@ def test_operation_rollback(backup_system, sample_operation) -> None:
 
     with Session(backup_system.engine) as session:
         stored_op = session.query(FileRename).filter_by(id=operation_id).first()
+        assert stored_op is not None  # Add a check to ensure it's not None
         assert stored_op.status == "rolled_back"
         assert stored_op.rolled_back_at is not None
 
 
-def test_get_pending_operations(backup_system) -> None:
+def test_get_pending_operations(backup_system: BackupSystem) -> None:
     """Test retrieving pending operations."""
     # Create multiple operations
     ops = [
@@ -98,13 +103,14 @@ def test_get_pending_operations(backup_system) -> None:
     assert len(pending) == 3
 
     # Complete one operation
-    backup_system.mark_operation_complete(pending[0].id)
+    operation_id = int(pending[0].id)  # Explicitly cast to int
+    backup_system.mark_operation_complete(operation_id)
 
     pending = backup_system.get_pending_operations()
     assert len(pending) == 2
 
 
-def test_verify_checksum(backup_system, sample_operation) -> None:
+def test_verify_checksum(backup_system: BackupSystem, sample_operation: FileOperation) -> None:
     """Test checksum verification for operations."""
     operation_id = backup_system.record_operation(sample_operation)
 

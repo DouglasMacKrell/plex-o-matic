@@ -1,7 +1,7 @@
 """Tests for the configure command in the CLI."""
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 
 from plexomatic.cli import cli
@@ -16,7 +16,7 @@ def test_configure_command_help() -> None:
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_initial_setup(mock_config) -> None:
+def test_configure_command_initial_setup(mock_config: MagicMock) -> None:
     """Test that the configure command works for initial setup."""
     # Set up mock config
     mock_config.config = {
@@ -62,7 +62,7 @@ def test_configure_command_initial_setup(mock_config) -> None:
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_skip_optional(mock_config) -> None:
+def test_configure_command_skip_optional(mock_config: MagicMock) -> None:
     """Test that the configure command allows skipping optional sections."""
     # Set up mock config
     mock_config.config = {
@@ -104,7 +104,7 @@ def test_configure_command_skip_optional(mock_config) -> None:
 
 
 @patch("plexomatic.cli.config")
-def test_configure_command_create_api_section(mock_config) -> None:
+def test_configure_command_create_api_section(mock_config: MagicMock) -> None:
     """Test that the configure command creates API section if it doesn't exist."""
     # Set up mock config without API section
     mock_config.config = {

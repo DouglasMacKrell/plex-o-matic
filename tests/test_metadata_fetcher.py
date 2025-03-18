@@ -14,7 +14,7 @@ from plexomatic.metadata.fetcher import (
 class TestMetadataFetcher:
     """Test the base MetadataFetcher class and its functionality."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.fetcher = MetadataFetcher()
 
@@ -37,7 +37,7 @@ class TestMetadataFetcher:
 class TestTVDBMetadataFetcher:
     """Test the TVDB metadata fetcher."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.mock_tvdb_client = MagicMock()
         self.fetcher = TVDBMetadataFetcher(client=self.mock_tvdb_client)
@@ -134,7 +134,7 @@ class TestTVDBMetadataFetcher:
 class TestTMDBMetadataFetcher:
     """Test the TMDB metadata fetcher."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.mock_tmdb_client = MagicMock()
         self.fetcher = TMDBMetadataFetcher(client=self.mock_tmdb_client)
@@ -256,7 +256,7 @@ class TestTMDBMetadataFetcher:
 class TestAniDBMetadataFetcher:
     """Test the AniDB metadata fetcher."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.mock_anidb_client = MagicMock()
         self.fetcher = AniDBMetadataFetcher(client=self.mock_anidb_client)
@@ -318,7 +318,7 @@ class TestAniDBMetadataFetcher:
 class TestTVMazeMetadataFetcher:
     """Test the TVMaze metadata fetcher."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test fixtures."""
         self.mock_tvmaze_client = MagicMock()
         self.fetcher = TVMazeMetadataFetcher(client=self.mock_tvmaze_client)
