@@ -14,6 +14,7 @@ These files already have proper type annotations and pass mypy checks:
 - `plexomatic/config/config_manager.py`
 - `plexomatic/api/tvmaze_client.py`
 - `plexomatic/api/tvdb_client.py`
+- `plexomatic/api/tmdb_client.py`
 - `tests/test_name_parser.py`
 - `tests/test_name_parser_comprehensive.py`
 - `tests/test_file_scanner.py`
@@ -23,7 +24,6 @@ These files already have proper type annotations and pass mypy checks:
 The following files should be typed next, in priority order:
 
 1. **API Clients**
-   - `plexomatic/api/tmdb_client.py`
    - `plexomatic/api/llm_client.py`
    - `plexomatic/api/anidb_client.py`
 
