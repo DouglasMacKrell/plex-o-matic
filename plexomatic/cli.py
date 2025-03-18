@@ -333,9 +333,13 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
 
     # If no operation ID provided, find the last completed operation
     if not operation_id:
+        from sqlalchemy import text
+
         with backup_system.engine.connect() as conn:
             result = conn.execute(
-                "SELECT id FROM file_renames WHERE status = 'completed' ORDER BY completed_at DESC LIMIT 1"
+                text(
+                    "SELECT id FROM file_renames WHERE status = 'completed' ORDER BY completed_at DESC LIMIT 1"
+                )
             )
             row = result.fetchone()
             if not row:

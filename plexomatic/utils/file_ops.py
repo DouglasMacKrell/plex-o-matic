@@ -80,7 +80,13 @@ def rollback_operation(operation_id: int, backup_system: BackupSystem) -> bool:
         bool: True if successful, False otherwise
     """
     with backup_system.engine.connect() as conn:
-        result = conn.execute(f"SELECT * FROM file_renames WHERE id = {operation_id}")
+        # Use parameterized query instead of string interpolation for security and compatibility
+        from sqlalchemy import text
+
+        result = conn.execute(
+            text("SELECT * FROM file_renames WHERE id = :operation_id"),
+            {"operation_id": operation_id},
+        )
         operation = result.fetchone()
 
         if not operation or operation.status != "completed":
