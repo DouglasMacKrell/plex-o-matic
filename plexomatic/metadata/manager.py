@@ -6,7 +6,7 @@ from various sources like TVDB, TMDB, AniDB, and TVMaze.
 
 import logging
 import re
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union, cast
 from functools import lru_cache
 from dataclasses import dataclass
 
@@ -58,6 +58,12 @@ class MetadataMatchResult:
         return self.metadata.get("source") if self.metadata else None
 
 
+# Type for all fetcher types
+FetcherType = Union[
+    TVDBMetadataFetcher, TMDBMetadataFetcher, AniDBMetadataFetcher, TVMazeMetadataFetcher
+]
+
+
 class MetadataManager:
     """Manager for coordinating metadata operations across multiple sources."""
 
@@ -76,7 +82,7 @@ class MetadataManager:
             anidb_fetcher: AniDBMetadataFetcher instance, or None to create a new one
             tvmaze_fetcher: TVMazeMetadataFetcher instance, or None to create a new one
         """
-        self.fetchers = {}
+        self.fetchers: Dict[str, FetcherType] = {}
 
         # Store fetchers if provided
         if tvdb_fetcher:
@@ -89,7 +95,7 @@ class MetadataManager:
             self.fetchers["tvmaze"] = tvmaze_fetcher
 
         # Initialize cache (will be decorated with lru_cache below)
-        self.cache = {}
+        self.cache: Dict[str, Any] = {}
 
     def _search_uncached(self, query: str, media_type: Optional[MediaType]) -> List[Dict[str, Any]]:
         """
@@ -204,14 +210,21 @@ class MetadataManager:
         fetcher = self.fetchers[source]
 
         # Call the appropriate method based on the source
-        if source == "tvdb" or source == "tvmaze":
-            return fetcher.get_show_details(source_id)
+        if source == "tvdb":
+            if isinstance(fetcher, TVDBMetadataFetcher) and hasattr(fetcher, "get_show_details"):
+                return cast(Dict[str, Any], fetcher.get_show_details(source_id))
+        elif source == "tvmaze":
+            if isinstance(fetcher, TVMazeMetadataFetcher) and hasattr(fetcher, "get_show_details"):
+                return cast(Dict[str, Any], fetcher.get_show_details(source_id))
         elif source == "tmdb":
-            return fetcher.get_movie_details(source_id)
+            if isinstance(fetcher, TMDBMetadataFetcher) and hasattr(fetcher, "get_movie_details"):
+                return cast(Dict[str, Any], fetcher.get_movie_details(source_id))
         elif source == "anidb":
-            return fetcher.get_anime_details(source_id)
-        else:
-            raise ValueError(f"No fetch method available for source: {source}")
+            if isinstance(fetcher, AniDBMetadataFetcher) and hasattr(fetcher, "get_anime_details"):
+                return cast(Dict[str, Any], fetcher.get_anime_details(source_id))
+
+        # If we get here, either the source is not supported or the method doesn't exist
+        raise ValueError(f"No fetch method available for source: {source}")
 
     def fetch_episode_metadata(
         self, metadata_id: str, episode_info: Dict[str, Any]
@@ -254,43 +267,49 @@ class MetadataManager:
 
         # Handle special episodes
         if "special_type" in episode_info:
-            if source == "tvdb":
-                # Get special episodes from TVDB
-                special_episodes = fetcher.get_special_episodes(int(source_id))
+            if source == "tvdb" and isinstance(fetcher, TVDBMetadataFetcher):
+                # Check if the method exists
+                if hasattr(fetcher, "get_special_episodes"):
+                    # Get special episodes from TVDB
+                    special_episodes = fetcher.get_special_episodes(int(source_id))
 
-                # Find the matching special episode
-                special_number = episode_info.get("special_number")
-                matching_episode = None
+                    # Find the matching special episode
+                    special_number = episode_info.get("special_number")
+                    matching_episode = None
 
-                if special_number is not None:
-                    # Find by number
-                    for episode in special_episodes:
-                        if episode.get("special_number") == special_number:
-                            matching_episode = episode
-                            break
-                elif special_episodes:
-                    # Just take the first one if no number specified
-                    matching_episode = special_episodes[0]
+                    if special_number is not None:
+                        # Find by number
+                        for episode in special_episodes:
+                            if episode.get("special_number") == special_number:
+                                matching_episode = episode
+                                break
+                    elif special_episodes:
+                        # Just take the first one if no number specified
+                        matching_episode = special_episodes[0]
 
-                if matching_episode:
-                    # Add the special episode info to the metadata
-                    base_metadata["special_episode"] = matching_episode
+                    if matching_episode:
+                        # Add the special episode info to the metadata
+                        base_metadata["special_episode"] = matching_episode
 
             # Add the special type to the metadata
             base_metadata["special_type"] = episode_info["special_type"]
 
         # Handle multi-episodes
         elif "episodes" in episode_info:
-            if source == "tvdb":
-                # Get the episodes by their numbers
-                season = episode_info.get("season", 1)
-                episode_numbers = episode_info["episodes"]
+            if source == "tvdb" and isinstance(fetcher, TVDBMetadataFetcher):
+                # Check if the method exists
+                if hasattr(fetcher, "get_episodes_by_numbers"):
+                    # Get the episodes by their numbers
+                    season = episode_info.get("season", 1)
+                    episode_numbers = episode_info["episodes"]
 
-                episodes = fetcher.get_episodes_by_numbers(int(source_id), episode_numbers, season)
+                    episodes = fetcher.get_episodes_by_numbers(
+                        int(source_id), episode_numbers, season
+                    )
 
-                if episodes:
-                    # Add the episodes to the metadata
-                    base_metadata["multi_episodes"] = episodes
+                    if episodes:
+                        # Add the episodes to the metadata
+                        base_metadata["multi_episodes"] = episodes
 
             # Add the episode numbers to the metadata
             base_metadata["episode_numbers"] = episode_info["episodes"]
@@ -496,14 +515,7 @@ class MetadataManager:
 
         return similarity
 
-    def clear_cache(self):
-        """Clear all metadata caches."""
-        # Clear this manager's cache
-        self.cache.clear()
+    def clear_cache(self) -> None:
+        """Clear the search cache."""
         self._cached_search.cache_clear()
-
-        # Clear all fetchers' caches
-        for fetcher in self.fetchers.values():
-            fetcher.clear_cache()
-
-        logger.info("Metadata manager cache cleared")
+        logger.info("Metadata search cache cleared")

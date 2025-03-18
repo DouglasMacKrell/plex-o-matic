@@ -18,6 +18,7 @@ These files already have proper type annotations and pass mypy checks:
 - `plexomatic/api/llm_client.py`
 - `plexomatic/api/anidb_client.py`
 - `plexomatic/metadata/fetcher.py`
+- `plexomatic/metadata/manager.py`
 - `tests/test_name_parser.py`
 - `tests/test_name_parser_comprehensive.py`
 - `tests/test_file_scanner.py`
@@ -26,13 +27,10 @@ These files already have proper type annotations and pass mypy checks:
 
 The following files should be typed next, in priority order:
 
-1. **Metadata System**
-   - `plexomatic/metadata/manager.py`
-
-2. **CLI Interface**
+1. **CLI Interface**
    - `plexomatic/cli.py`
 
-3. **Test Files**
+2. **Test Files**
    - Prioritize test files for components that have been typed
 
 ## Common Issues
@@ -45,6 +43,7 @@ The following files should be typed next, in priority order:
 6. Datetime module usage issues (`datetime.UTC` vs `datetime.timezone.UTC`)
 7. Type narrowing for list and dictionary access requires careful handling
 8. Incompatible type checking paths can lead to "unreachable code" errors
+9. Union types need careful type checking with isinstance() before attribute access
 
 ## Migration Strategy
 
@@ -53,3 +52,4 @@ The following files should be typed next, in priority order:
 3. Run test suite after each file to ensure functionality
 4. Prioritize core components that other parts depend on
 5. Use helper functions for common type checking operations
+6. Use isinstance() checks to narrow Union types before accessing attributes

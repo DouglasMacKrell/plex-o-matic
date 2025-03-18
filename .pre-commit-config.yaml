@@ -23,7 +23,7 @@ repos:
         ]
         args: [--ignore-missing-imports]
         # Only run mypy on files that we know are fully typed
-        files: ^(plexomatic/utils/name_parser\.py|plexomatic/utils/name_utils\.py|plexomatic/core/file_scanner\.py|plexomatic/core/models\.py|plexomatic/core/backup_system\.py|plexomatic/config/config_manager\.py|plexomatic/api/tvmaze_client\.py|plexomatic/api/tvdb_client\.py|plexomatic/api/tmdb_client\.py|plexomatic/api/llm_client\.py|plexomatic/api/anidb_client\.py|plexomatic/metadata/fetcher\.py|tests/test_name_parser\.py|tests/test_name_parser_comprehensive\.py|tests/test_file_scanner\.py)$
+        files: ^(plexomatic/utils/name_parser\.py|plexomatic/utils/name_utils\.py|plexomatic/core/file_scanner\.py|plexomatic/core/models\.py|plexomatic/core/backup_system\.py|plexomatic/config/config_manager\.py|plexomatic/api/tvmaze_client\.py|plexomatic/api/tvdb_client\.py|plexomatic/api/tmdb_client\.py|plexomatic/api/llm_client\.py|plexomatic/api/anidb_client\.py|plexomatic/metadata/fetcher\.py|plexomatic/metadata/manager\.py|tests/test_name_parser\.py|tests/test_name_parser_comprehensive\.py|tests/test_file_scanner\.py)$
 
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
