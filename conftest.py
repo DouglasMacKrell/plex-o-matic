@@ -63,12 +63,12 @@ def pytest_configure(config):
     logger.info("Test paths: %s", config.getini("testpaths"))
 
 
-def pytest_collect_file(parent, path):
+def pytest_collect_file(parent, file_path):
     """
     Pytest hook that runs during test collection.
     Log each file being considered for test collection.
     """
-    logger.debug("Collecting file: %s", path)
+    logger.debug("Collecting file: %s", file_path)
     return None  # Let pytest's default collection continue
 
 

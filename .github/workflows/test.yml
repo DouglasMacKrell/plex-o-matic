@@ -25,134 +25,143 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        # Install explicit dependencies for debugging
-        pip install pytest pytest-cov pytest-mock black ruff mypy typing_extensions
-        # Install package in development mode using setup.py
+        python -m pip install --upgrade pip setuptools wheel
+        # Install package in development mode
         pip install -e ".[test,dev]"
-        # Make sure setuptools is up to date
-        pip install --upgrade setuptools
+        # Ensure typing_extensions is available for Python 3.8
+        pip install typing_extensions
 
-    - name: Verify package installation
+    - name: Verify package structure
       run: |
         echo "Python version:"
         python --version
         echo "Working directory:"
         pwd
-        echo "Installed package info:"
-        pip show plex-o-matic || echo "Package not installed correctly"
-        echo "Plexomatic import path:"
-        python -c "import plexomatic; print(plexomatic.__file__)" || echo "Failed to import plexomatic"
-        echo "SQLite version:"
-        python -c "import sqlite3; print(f'SQLite version: {sqlite3.sqlite_version}')"
-        echo "Sys.path:"
-        python -c "import sys; print('\n'.join(sys.path))"
+        echo "Pip packages:"
+        pip list
+        echo "Import test:"
+        python -c "import plexomatic; print(f'plexomatic.__file__: {plexomatic.__file__}')"
+        python -c "import plexomatic.cli; print('CLI module successfully imported')"
+        python -c "import tests; print('Tests package successfully imported')"
         echo "Package structure:"
-        find plexomatic -type f -name "*.py" | sort
-        echo "Test structure:"
+        find plexomatic -type f -name "__init__.py" | sort
+        echo "Tests directory:"
         find tests -type f -name "*.py" | sort
 
-    - name: Debug Python import system
+    - name: Prepare test environment
       run: |
-        cat > debug_pythonpath.py << 'EOF'
+        # Add current directory to PYTHONPATH
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+
+        # Create directory for test output
+        mkdir -p test_output
+
+        # Ensure __init__.py exists in all directories
+        if [ ! -f "tests/__init__.py" ]; then
+          echo "Creating tests/__init__.py"
+          touch tests/__init__.py
+        fi
+
+        # Create subdirectories if needed
+        for dir in plexomatic/api plexomatic/utils plexomatic/metadata plexomatic/config plexomatic/core; do
+          if [ ! -d "$dir" ]; then
+            echo "Creating directory: $dir"
+            mkdir -p "$dir"
+            touch "$dir/__init__.py"
+          fi
+        done
+
+    - name: Debug Python imports
+      run: |
+        # Create a debug script
+        cat > debug_imports.py << 'EOF'
         import sys
         import os
         import importlib
-        import inspect
 
-        print("Current working directory:", os.getcwd())
-        print("\nPYTHONPATH:", os.environ.get("PYTHONPATH", "Not set"))
+        def test_module(name):
+            print(f"Testing import of {name}...")
+            try:
+                module = importlib.import_module(name)
+                file_path = getattr(module, '__file__', 'Unknown')
+                print(f"  ✅ Success: {name} imported from {file_path}")
+                return True
+            except ImportError as e:
+                print(f"  ❌ Failed: {name} - {e}")
+                return False
+
+        # First print environment info
+        print(f"Python {sys.version} on {sys.platform}")
+        print(f"Current directory: {os.getcwd()}")
+        print(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
+
+        # Print sys.path
         print("\nSystem path:")
         for i, path in enumerate(sys.path):
             print(f"{i}: {path}")
 
-        def check_module(name):
-            print(f"\nChecking module: {name}")
-            try:
-                module = importlib.import_module(name)
-                print(f"  Success! Module loaded from: {getattr(module, '__file__', 'Unknown')}")
-                return True
-            except Exception as e:
-                print(f"  Failed: {e}")
-                return False
-
+        # Test imports
         modules = [
-            'plexomatic',
-            'tests',
-            'pytest',
+            "plexomatic",
+            "plexomatic.cli",
+            "plexomatic.utils",
+            "plexomatic.api",
+            "plexomatic.metadata",
+            "tests",
+            "pytest",
         ]
 
+        print("\nTesting imports:")
         for module in modules:
-            check_module(module)
+            test_module(module)
         EOF
 
-        # Execute the debug script
-        python debug_pythonpath.py
+        # Run the debug script
+        python debug_imports.py
 
-    - name: Test direct import
+    - name: Run single simple test
       run: |
-        echo "Checking if test modules can import plexomatic directly:"
-        python -c "import sys; print(sys.path); import plexomatic; print('Success!')"
+        # Run a single simple test that should work
+        python -m pytest tests/test_cli.py::test_cli_entrypoint -v > test_output/single_test.log 2>&1 || echo "Simple test failed, see logs"
+        cat test_output/single_test.log
+      continue-on-error: true
 
-        echo "Checking if tests package can be imported:"
-        python -c "import sys; print(sys.path); import tests; print('Success!')"
-
-    - name: Check formatting with black
+    - name: Format check with black
       run: |
         black --check .
-      continue-on-error: true  # Don't fail the build on formatting issues
+      continue-on-error: true
 
-    - name: Lint with ruff
+    - name: Lint check with ruff
       run: |
         ruff check .
-      continue-on-error: true  # Don't fail the build on linting issues
+      continue-on-error: true
 
     - name: Type check with mypy
       run: |
         mypy --install-types --non-interactive --ignore-missing-imports plexomatic
-      continue-on-error: true  # Don't fail the build on type checking issues
-
-    - name: Set up test environment
-      run: |
-        # Create directory for test output
-        mkdir -p test_output
-
-        # Ensure tests can be imported as a package
-        touch tests/__init__.py
-
-        # Add project root to PYTHONPATH
-        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-
-    - name: Run single test directly
-      run: |
-        # Use a simple test file that's likely to work
-        echo "Running a single test file directly:"
-        python -m pytest tests/test_cli.py -v > test_output/single_test.log 2>&1 || echo "Single test failed, but continuing"
-        cat test_output/single_test.log
       continue-on-error: true
 
-    - name: Run pytest with detailed logging
+    - name: Run pytest with simple tests first
       run: |
-        # First collect only to debug test discovery
-        echo "Running test collection phase..."
-        python -m pytest --collect-only -v > test_output/collection.log 2>&1 || echo "Collection phase failed, see logs"
-        cat test_output/collection.log
+        # Run only basic CLI tests first
+        python -m pytest tests/test_cli.py -v > test_output/cli_tests.log 2>&1 || echo "CLI tests failed, but continuing"
+        cat test_output/cli_tests.log
+      continue-on-error: true
 
-        # Run full test suite with maximum verbosity
-        echo "Running full test suite..."
+    - name: Full test suite run
+      run: |
+        # Run full test suite with coverage
         python -m pytest -xvs \
           --no-header \
-          --tb=native \
           --cov=plexomatic \
           --cov-report=xml \
-          --log-cli-level=DEBUG \
           > test_output/pytest_output.log 2>&1 || echo "Tests failed, see logs"
 
         # Print test output summary
         echo "=== TEST OUTPUT SUMMARY ==="
         cat test_output/pytest_output.log || echo "No output log found"
         echo "=== END TEST OUTPUT SUMMARY ==="
-      continue-on-error: true  # Allow failure to be reported but complete all steps
+      continue-on-error: true
 
     - name: Upload test logs
       uses: actions/upload-artifact@v4
@@ -166,4 +175,4 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
-        fail_ci_if_error: false  # Don't fail if coverage upload fails
+        fail_ci_if_error: false

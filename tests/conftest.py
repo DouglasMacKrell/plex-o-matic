@@ -70,8 +70,8 @@ log_directory_structure(os.path.dirname(__file__))
 def test_import(module_name):
     """Test importing a module and log the result"""
     try:
-        __import__(module_name)
-        logger.info("Import SUCCESS: %s", module_name)
+        module = __import__(module_name)
+        logger.info("Import SUCCESS: %s at %s", module_name, getattr(module, "__file__", "unknown"))
         return True
     except ImportError as e:
         logger.error("Import FAILED: %s - %s", module_name, e)
@@ -86,6 +86,10 @@ for module in [
     "tests",
 ]:
     test_import(module)
+
+
+# Ensure that tests in the package can import from parent directory
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 # Define a fixture that will be available to all tests
