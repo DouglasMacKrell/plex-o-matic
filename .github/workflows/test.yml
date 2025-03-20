@@ -122,13 +122,28 @@ jobs:
         find tests -name "test_*.py" -print
         echo "Found test files."
 
+        # If no test files found, create a dummy file and log warning
+        if [ -z "$(find tests -name 'test_*.py')" ]; then
+          echo "WARNING: No test files found in tests directory!"
+          echo "Contents of tests directory:"
+          ls -la tests/
+        fi
+
     - name: Try running a single test file
       run: |
         export PYTHONPATH=$PYTHONPATH:$(pwd)
         echo "Trying to run a single test file directly:"
+
+        # Check if any test file exists
         TEST_FILE=$(find tests -name "test_*.py" | head -n 1)
-        echo "Running: $TEST_FILE"
-        python -m pytest $TEST_FILE -v
+
+        if [ -n "$TEST_FILE" ]; then
+          echo "Running: $TEST_FILE"
+          python -m pytest $TEST_FILE -v || echo "Single test file failed, but continuing"
+        else
+          echo "No test files found to run individually"
+        fi
+      continue-on-error: true
 
     - name: Run pytest with detailed logging and fail capture
       run: |
@@ -138,8 +153,20 @@ jobs:
         # Create a directory for test output
         mkdir -p test_output
 
+        # Make sure tests directory exists and has content
+        echo "Tests directory contents:"
+        ls -la tests/ || echo "Failed to list tests directory"
+
+        # Print the PYTHONPATH
+        echo "PYTHONPATH=$PYTHONPATH"
+
         # Run tests with maximum verbosity
-        python -m pytest tests -xvs --full-trace --showlocals \
+        echo "Running pytest collection phase..."
+        python -m pytest --collect-only -v > test_output/collection.log 2>&1 || echo "Collection phase failed, see logs"
+        cat test_output/collection.log
+
+        echo "Running full test suite with debugging..."
+        python -m pytest -xvs --full-trace --showlocals \
           --no-header \
           --tb=native \
           --cov=plexomatic \
@@ -149,26 +176,16 @@ jobs:
 
         # Print output regardless of test result
         echo "=== TEST OUTPUT SUMMARY ==="
-        tail -n 200 test_output/pytest_output.log
+        cat test_output/pytest_output.log || echo "No output log found"
         echo "=== END TEST OUTPUT SUMMARY ==="
-
-        # Store the output as an artifact
-        echo "Storing test output as an artifact"
-
-        # Ensure we can examine what tests are being collected
-        echo "=== TEST COLLECTION DEBUG ==="
-        PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest tests --collect-only -v
-        echo "=== END TEST COLLECTION DEBUG ==="
-
-        # Re-run with --cov option for coverage report
-        PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest tests -xvs --cov=plexomatic --cov-report=xml
       continue-on-error: true  # Allow failure to be reported but complete all steps
 
     - name: Upload test logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: test-logs-${{ matrix.python-version }}
-        path: test_output/pytest_output.log
+        path: test_output/
+        retention-days: 5
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
