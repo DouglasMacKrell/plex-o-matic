@@ -29,6 +29,19 @@ jobs:
         pip install .[test,dev]
         pip install typing_extensions  # Ensure typing_extensions is available
 
+    - name: Debug environment
+      run: |
+        echo "Python version:"
+        python --version
+        echo "Pip packages:"
+        pip list
+        echo "Current directory:"
+        pwd
+        echo "Contents of directory:"
+        ls -la
+        echo "SQLite version:"
+        python -c "import sqlite3; print(sqlite3.sqlite_version)"
+
     - name: Check formatting with black
       run: |
         black --check .
@@ -43,7 +56,8 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        python -m pytest --cov=plexomatic -v --cov-report=xml
+        # Set PYTHONPATH to ensure modules can be found
+        PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest --cov=plexomatic -vvs --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
