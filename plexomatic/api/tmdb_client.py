@@ -4,7 +4,13 @@ import time
 import json
 import requests
 import logging
-from typing import Dict, List, Optional, Any, cast
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Optional, Any, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Optional, Any, cast
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)

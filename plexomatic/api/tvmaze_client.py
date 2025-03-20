@@ -5,14 +5,21 @@ This module provides a client for interacting with the TVMaze API to retrieve TV
 
 import logging
 import json
-from typing import Dict, List, Any, Optional, cast, TypeVar
-from functools import lru_cache
 import requests
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Any, Optional, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Any, Optional, cast
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
-# Type variables for return types
-T = TypeVar("T")
+# Define a simple type alias instead of using TypeVar
+# This avoids typing compatibility issues between Python versions
+Dict_Any = Dict[str, Any]
 
 # TVMaze API endpoints
 BASE_URL = "https://api.tvmaze.com"

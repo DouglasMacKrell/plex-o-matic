@@ -3,7 +3,13 @@
 import json
 import logging
 import requests
-from typing import Dict, Any, Optional, cast
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, Any, Optional, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, Any, Optional, cast
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,13 @@
 import re
 import os
 from pathlib import Path
-from typing import Iterator, List, Optional
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Iterator, List, Optional
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Iterator, List, Optional
 
 
 class MediaFile:

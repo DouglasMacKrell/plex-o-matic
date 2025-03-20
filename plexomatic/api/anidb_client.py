@@ -8,12 +8,18 @@ import socket
 import hashlib
 import logging
 import time
-import difflib
+import xml.etree.ElementTree as ET
 import requests
-from typing import Dict, List, Any, Optional, cast
-from datetime import datetime, timedelta, timezone
-from xml.etree import ElementTree as ET
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Any, Optional, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Any, Optional, cast
 from functools import lru_cache
+from datetime import datetime, timedelta, timezone
+import difflib
 
 logger = logging.getLogger(__name__)
 

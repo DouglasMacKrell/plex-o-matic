@@ -2,7 +2,13 @@
 
 import re
 from pathlib import Path
-from typing import List, Dict, Union, Optional, Any
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import List, Dict, Union, Optional, Any
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import List, Dict, Union, Optional, Any
 from plexomatic.utils.name_utils import sanitize_filename, extract_show_info, generate_tv_filename
 
 # Regular expressions for detecting various episode formats

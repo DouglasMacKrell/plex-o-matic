@@ -1,14 +1,16 @@
-"""Metadata manager for aggregating and managing metadata from multiple sources.
-
-This module provides a unified interface for searching, matching, and fetching metadata
-from various sources like TVDB, TMDB, AniDB, and TVMaze.
-"""
+"""Metadata manager for retrieving and caching media information."""
 
 import logging
 import re
-from typing import Dict, List, Any, Optional, Tuple, Union, cast
 from functools import lru_cache
 from dataclasses import dataclass
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Any, Optional, Tuple, Union, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Any, Optional, Tuple, Union, cast
 
 from plexomatic.metadata.fetcher import (
     TVDBMetadataFetcher,

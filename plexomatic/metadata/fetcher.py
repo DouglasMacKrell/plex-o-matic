@@ -7,8 +7,14 @@ import logging
 import re
 import os
 from enum import Enum, auto
-from typing import Dict, List, Any, Optional, TypeVar, Type
 from functools import lru_cache
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Any, Optional, Type
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Any, Optional, Type
 
 from plexomatic.api.tvdb_client import TVDBClient
 from plexomatic.api.tmdb_client import TMDBClient
@@ -26,11 +32,7 @@ DEFAULT_ANIDB_USERNAME = os.environ.get("ANIDB_USERNAME", "")
 DEFAULT_ANIDB_PASSWORD = os.environ.get("ANIDB_PASSWORD", "")
 
 
-# Type helpers
-T = TypeVar("T")
-
-
-def safe_cast(obj: Any, target_type: Type[T]) -> Optional[T]:
+def safe_cast(obj: Any, target_type: Type) -> Optional[Any]:
     """Safely cast an object to the specified type, returning None if not possible."""
     return obj if isinstance(obj, target_type) else None
 

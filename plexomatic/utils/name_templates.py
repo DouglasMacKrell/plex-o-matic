@@ -1,10 +1,16 @@
-"""Templating system for media file names."""
+"""Name templates for media files."""
 
 import enum
 import os
-from typing import Dict, List, Optional, Callable, Union
 from dataclasses import dataclass
 import copy
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Optional, Callable, Union
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Optional, Callable, Union
 
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
 

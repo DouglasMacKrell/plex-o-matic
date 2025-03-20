@@ -3,7 +3,13 @@
 import hashlib
 import shutil
 from pathlib import Path
-from typing import Optional
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Optional
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Optional
 
 from plexomatic.core.backup_system import BackupSystem, FileOperation
 

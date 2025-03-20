@@ -3,7 +3,13 @@
 import re
 import enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Optional, Any, Union
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 import unicodedata
 

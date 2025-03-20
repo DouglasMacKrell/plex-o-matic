@@ -2,7 +2,13 @@
 
 import re
 from pathlib import Path
-from typing import Dict, Optional, Union, List
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, Optional, Union, List
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, Optional, Union, List
 
 
 def sanitize_filename(filename: str) -> str:

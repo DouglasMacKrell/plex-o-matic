@@ -4,7 +4,13 @@ import time
 import requests
 import logging
 import json
-from typing import Dict, List, Optional, Any, cast
+
+try:
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Optional, Any, cast
+except ImportError:
+    # For Python 3.8 support
+    from typing_extensions import Dict, List, Optional, Any, cast
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
