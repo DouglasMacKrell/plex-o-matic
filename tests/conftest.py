@@ -16,6 +16,91 @@ from typing import (
 
 import pytest
 from _pytest.config import Config
+import os
+import sys
+import logging
+from pathlib import Path
+
+# Configure logging for tests
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s [TESTS] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("pytest_tests_debug")
+
+# Log test environment information
+logger.info("Tests conftest.py loaded")
+logger.info("Python version: %s", sys.version)
+logger.info("Python executable: %s", sys.executable)
+
+# Add parent directory to sys.path to ensure imports work
+project_root = str(Path(__file__).parent.parent.absolute())
+logger.info("Project root from tests: %s", project_root)
+
+if project_root not in sys.path:
+    logger.info("Adding project root to sys.path from tests conftest")
+    sys.path.insert(0, project_root)
+
+
+# Log current directory structure for debugging
+def log_directory_structure(path, prefix=""):
+    """Log the directory structure recursively for debugging"""
+    if prefix == "":
+        logger.info("Directory structure of %s:", path)
+
+    try:
+        content = os.listdir(path)
+        for item in sorted(content):
+            item_path = os.path.join(path, item)
+            if os.path.isdir(item_path) and not item.startswith(".") and item != "__pycache__":
+                logger.info("%s[DIR] %s", prefix, item)
+                log_directory_structure(item_path, prefix + "  ")
+            elif item.endswith(".py"):
+                logger.info("%s[PY] %s", prefix, item)
+    except Exception as e:
+        logger.error("Error reading directory %s: %s", path, e)
+
+
+# Log the test directory structure
+log_directory_structure(os.path.dirname(__file__))
+
+
+# Test imports of key modules
+def test_import(module_name):
+    """Test importing a module and log the result"""
+    try:
+        __import__(module_name)
+        logger.info("Import SUCCESS: %s", module_name)
+        return True
+    except ImportError as e:
+        logger.error("Import FAILED: %s - %s", module_name, e)
+        return False
+
+
+# Test important imports
+for module in [
+    "plexomatic",
+    "plexomatic.cli",
+    "pytest",
+    "tests",
+]:
+    test_import(module)
+
+
+# Define a fixture that will be available to all tests
+def pytest_configure(config):
+    """Pytest configuration hook"""
+    logger.info("Pytest configuration hook called in tests/conftest.py")
+    logger.info("Test collection directories: %s", config.getini("testpaths"))
+
+
+def pytest_collection_modifyitems(config, items):
+    """Called after test collection - logs number of collected tests"""
+    logger.info("Collected %d tests", len(items))
+    for idx, item in enumerate(items[:10]):  # Log first 10 tests
+        logger.info("Test %d: %s", idx + 1, item.nodeid)
+
 
 # Type variables for better typing
 T = TypeVar("T")
