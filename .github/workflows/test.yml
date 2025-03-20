@@ -43,7 +43,7 @@ jobs:
 
     - name: Run tests with pytest
       run: |
-        pytest --cov=plexomatic --cov-report=xml
+        python -m pytest --cov=plexomatic -v --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
