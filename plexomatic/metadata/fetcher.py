@@ -6,20 +6,31 @@ This module contains classes for fetching metadata from different sources like T
 import logging
 import re
 import os
+import sys
 from enum import Enum, auto
 from functools import lru_cache
 
-try:
-    # Python 3.9+ has native support for these types
-    from typing import Dict, List, Any, Optional, Type
-except ImportError:
-    # For Python 3.8 support
-    from typing_extensions import Dict, List, Any, Optional, Type
-
+# Import standard library dependencies
 from plexomatic.api.tvdb_client import TVDBClient
 from plexomatic.api.tmdb_client import TMDBClient
 from plexomatic.api.anidb_client import AniDBClient
 from plexomatic.api.tvmaze_client import TVMazeClient
+
+# Define Python version
+PY_VERSION = sys.version_info[:2]
+
+# Import typing elements based on Python version
+if PY_VERSION >= (3, 9):
+    # Python 3.9+ has native support for these types
+    from typing import Dict, List, Any, Optional, Type
+else:
+    # For Python 3.8 support
+    try:
+        from typing import Any, Optional
+        from typing_extensions import Dict, List, Type
+    except ImportError:
+        # Fallback if typing_extensions is not available
+        from typing import Dict, List, Any, Optional, Type
 
 logger = logging.getLogger(__name__)
 

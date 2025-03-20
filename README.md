@@ -62,6 +62,10 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Environment variable support
   - Customizable settings for file types and naming
 
+## Python Compatibility
+
+Plex-o-matic is compatible with Python 3.8-3.11. When using Python 3.8, the `typing_extensions` package is required. This dependency is automatically installed if you install the package via pip.
+
 ## Installation
 
 ### From Source

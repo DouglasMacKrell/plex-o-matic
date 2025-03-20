@@ -23,13 +23,18 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
-    - name: Install dependencies
+    - name: Install core dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
+        # Explicitly install typing_extensions first to ensure it's available
+        pip install typing_extensions>=4.0.0
+
+    - name: Install package dependencies
+      run: |
         # Install package in development mode
         pip install -e ".[test,dev]"
-        # Ensure typing_extensions is available for Python 3.8
-        pip install typing_extensions
+        # Display installed versions
+        pip list | grep typing
 
     - name: Verify package structure
       run: |
@@ -43,6 +48,7 @@ jobs:
         python -c "import plexomatic; print(f'plexomatic.__file__: {plexomatic.__file__}')"
         python -c "import plexomatic.cli; print('CLI module successfully imported')"
         python -c "import tests; print('Tests package successfully imported')"
+        python -c "import typing_extensions; print('typing_extensions version successfully imported')"
         echo "Package structure:"
         find plexomatic -type f -name "__init__.py" | sort
         echo "Tests directory:"
