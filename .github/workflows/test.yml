@@ -28,78 +28,74 @@ jobs:
         python -m pip install --upgrade pip
         # Install explicit dependencies for debugging
         pip install pytest pytest-cov pytest-mock black ruff mypy typing_extensions
-        # Install package in development mode with testing extras
-        pip install -e .[test,dev]
+        # Install package in development mode using setup.py
+        pip install -e ".[test,dev]"
+        # Make sure setuptools is up to date
+        pip install --upgrade setuptools
 
     - name: Verify package installation
       run: |
-        python -c "import sys; print('Python:', sys.version)"
-        python -c "import os; print('Working directory:', os.getcwd())"
-        python -c "import plexomatic; print('Plexomatic location:', plexomatic.__file__)"
-        python -c "import sqlite3; print('SQLite version:', sqlite3.sqlite_version)"
-        python -c "import sys; print('Sys.path:', sys.path)"
-        python -c "import pytest; print('Pytest version:', pytest.__version__)"
-        python -c "import typing; print('Typing available:', dir(typing)[:5])"
-        echo "PYTHONPATH: $PYTHONPATH"
+        echo "Python version:"
+        python --version
+        echo "Working directory:"
+        pwd
+        echo "Installed package info:"
+        pip show plex-o-matic || echo "Package not installed correctly"
+        echo "Plexomatic import path:"
+        python -c "import plexomatic; print(plexomatic.__file__)" || echo "Failed to import plexomatic"
+        echo "SQLite version:"
+        python -c "import sqlite3; print(f'SQLite version: {sqlite3.sqlite_version}')"
+        echo "Sys.path:"
+        python -c "import sys; print('\n'.join(sys.path))"
         echo "Package structure:"
         find plexomatic -type f -name "*.py" | sort
         echo "Test structure:"
         find tests -type f -name "*.py" | sort
 
-    - name: Debug environment
+    - name: Debug Python import system
       run: |
-        echo "Python version:"
-        python --version
-        echo "Pip packages:"
-        pip list
-        echo "Current directory:"
-        pwd
-        echo "Contents of directory:"
-        ls -la
-        echo "Contents of tests directory:"
-        ls -la tests/
-        echo "SQLite version:"
-        python -c "import sqlite3; print(f'SQLite version: {sqlite3.sqlite_version}')"
-
-    - name: Create debug helpers
-      run: |
-        # Create a utility script to help debug imports
-        cat > debug_imports.py << 'EOF'
+        cat > debug_pythonpath.py << 'EOF'
         import sys
+        import os
         import importlib
-        import traceback
+        import inspect
 
-        def test_import(module_name):
-            print(f"\nTesting import: {module_name}")
+        print("Current working directory:", os.getcwd())
+        print("\nPYTHONPATH:", os.environ.get("PYTHONPATH", "Not set"))
+        print("\nSystem path:")
+        for i, path in enumerate(sys.path):
+            print(f"{i}: {path}")
+
+        def check_module(name):
+            print(f"\nChecking module: {name}")
             try:
-                module = importlib.import_module(module_name)
-                print(f"  SUCCESS: {module_name} imported successfully")
-                print(f"  Location: {getattr(module, '__file__', 'unknown')}")
+                module = importlib.import_module(name)
+                print(f"  Success! Module loaded from: {getattr(module, '__file__', 'Unknown')}")
                 return True
             except Exception as e:
-                print(f"  FAILED: {module_name}")
-                print(f"  Error: {e}")
-                print("  Traceback:")
-                traceback.print_exc()
+                print(f"  Failed: {e}")
                 return False
 
-        # Test essential imports
-        modules_to_test = [
+        modules = [
             'plexomatic',
-            'plexomatic.cli',
-            'plexomatic.utils',
-            'plexomatic.metadata',
-            'plexomatic.api',
             'tests',
-            'tests.test_cli',
+            'pytest',
         ]
 
-        for module in modules_to_test:
-            test_import(module)
+        for module in modules:
+            check_module(module)
         EOF
 
-        # Run the import test script
-        python debug_imports.py
+        # Execute the debug script
+        python debug_pythonpath.py
+
+    - name: Test direct import
+      run: |
+        echo "Checking if test modules can import plexomatic directly:"
+        python -c "import sys; print(sys.path); import plexomatic; print('Success!')"
+
+        echo "Checking if tests package can be imported:"
+        python -c "import sys; print(sys.path); import tests; print('Success!')"
 
     - name: Check formatting with black
       run: |
@@ -116,57 +112,35 @@ jobs:
         mypy --install-types --non-interactive --ignore-missing-imports plexomatic
       continue-on-error: true  # Don't fail the build on type checking issues
 
-    - name: Collect test file list
+    - name: Set up test environment
       run: |
-        echo "Looking for test files..."
-        find tests -name "test_*.py" -print
-        echo "Found test files."
-
-        # If no test files found, create a dummy file and log warning
-        if [ -z "$(find tests -name 'test_*.py')" ]; then
-          echo "WARNING: No test files found in tests directory!"
-          echo "Contents of tests directory:"
-          ls -la tests/
-        fi
-
-    - name: Try running a single test file
-      run: |
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-        echo "Trying to run a single test file directly:"
-
-        # Check if any test file exists
-        TEST_FILE=$(find tests -name "test_*.py" | head -n 1)
-
-        if [ -n "$TEST_FILE" ]; then
-          echo "Running: $TEST_FILE"
-          python -m pytest $TEST_FILE -v || echo "Single test file failed, but continuing"
-        else
-          echo "No test files found to run individually"
-        fi
-      continue-on-error: true
-
-    - name: Run pytest with detailed logging and fail capture
-      run: |
-        # Set PYTHONPATH to include the current directory
-        export PYTHONPATH=$PYTHONPATH:$(pwd)
-
-        # Create a directory for test output
+        # Create directory for test output
         mkdir -p test_output
 
-        # Make sure tests directory exists and has content
-        echo "Tests directory contents:"
-        ls -la tests/ || echo "Failed to list tests directory"
+        # Ensure tests can be imported as a package
+        touch tests/__init__.py
 
-        # Print the PYTHONPATH
-        echo "PYTHONPATH=$PYTHONPATH"
+        # Add project root to PYTHONPATH
+        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-        # Run tests with maximum verbosity
-        echo "Running pytest collection phase..."
+    - name: Run single test directly
+      run: |
+        # Use a simple test file that's likely to work
+        echo "Running a single test file directly:"
+        python -m pytest tests/test_cli.py -v > test_output/single_test.log 2>&1 || echo "Single test failed, but continuing"
+        cat test_output/single_test.log
+      continue-on-error: true
+
+    - name: Run pytest with detailed logging
+      run: |
+        # First collect only to debug test discovery
+        echo "Running test collection phase..."
         python -m pytest --collect-only -v > test_output/collection.log 2>&1 || echo "Collection phase failed, see logs"
         cat test_output/collection.log
 
-        echo "Running full test suite with debugging..."
-        python -m pytest -xvs --full-trace --showlocals \
+        # Run full test suite with maximum verbosity
+        echo "Running full test suite..."
+        python -m pytest -xvs \
           --no-header \
           --tb=native \
           --cov=plexomatic \
@@ -174,7 +148,7 @@ jobs:
           --log-cli-level=DEBUG \
           > test_output/pytest_output.log 2>&1 || echo "Tests failed, see logs"
 
-        # Print output regardless of test result
+        # Print test output summary
         echo "=== TEST OUTPUT SUMMARY ==="
         cat test_output/pytest_output.log || echo "No output log found"
         echo "=== END TEST OUTPUT SUMMARY ==="
