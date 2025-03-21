@@ -14,7 +14,10 @@ T = TypeVar("T", bound=Any)
 
 
 class MediaType(Enum):
-    """Enum representing types of media."""
+    """Enum representing types of media.
+
+    This enum must be kept in sync with the one in name_parser.py
+    """
 
     TV_SHOW = auto()
     MOVIE = auto()
@@ -22,6 +25,18 @@ class MediaType(Enum):
     TV_SPECIAL = auto()
     ANIME_SPECIAL = auto()
     UNKNOWN = auto()
+
+    @classmethod
+    def from_string(cls, value: str) -> "MediaType":
+        """Convert a string value to a MediaType enum value.
+
+        This is used for compatibility between different enum implementations.
+        """
+        value = value.upper()
+        for member in cls:
+            if member.name == value:
+                return member
+        return cls.UNKNOWN
 
 
 # Type to help with type checking

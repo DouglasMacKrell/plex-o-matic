@@ -1,53 +1,72 @@
-"""Safe casting utility.
+"""Safe casting functions for Python 3.8 compatibility.
 
-This module provides a utility function for safely casting values from one type to another.
+This module provides utility functions for safely casting
+between different types, especially for older Python versions.
 """
 
-from typing import TypeVar, Type, Optional, Any, cast
+from typing import Any, TypeVar, Type, Optional, cast
 
-# Type variable for input
 T = TypeVar("T")
 
 
-def safe_cast(t: Type[T], val: Any, default: Optional[T] = None) -> Optional[T]:
-    """Safely cast a value to a specified type.
+def safe_cast(value: Any, target_type: Type[T], default: Optional[T] = None) -> Optional[T]:
+    """Safely cast a value to a target type.
 
     Args:
-        t: The target type to cast to
-        val: The value to cast
-        default: The default value to return if casting fails
+        value: The value to cast
+        target_type: The type to cast to
+        default: Default value to return if casting fails
 
     Returns:
-        The cast value if successful, otherwise the default value
+        The cast value or the default if casting fails
     """
     try:
-        # Special case for bool to handle string values correctly
-        if t is bool and isinstance(val, str):
-            return cast(Optional[T], val.lower() in ("true", "yes", "1", "y", "t"))
-
-        # Special case for casting to int from float
-        if t is int and isinstance(val, float):
-            return cast(Optional[T], int(val))
-
-        # Special case for casting None to appropriate types
-        if val is None:
-            if t is str:
-                return cast(Optional[T], "")
-            elif t is int:
-                return cast(Optional[T], 0)
-            elif t is float:
-                return cast(Optional[T], 0.0)
-            elif t is bool:
-                return cast(Optional[T], False)
-            elif t is list:
-                return cast(Optional[T], [])
-            elif t is dict:
-                return cast(Optional[T], {})
-            else:
-                return default
-
-        # Normal type conversion
-        result = t(val)
-        return cast(Optional[T], result)
-    except (ValueError, TypeError, AttributeError, OverflowError):
+        return cast(T, target_type(value))
+    except (ValueError, TypeError):
         return default
+
+
+def safe_int(value: Any, default: Optional[int] = None) -> Optional[int]:
+    """Safely cast a value to an integer.
+
+    Args:
+        value: The value to cast
+        default: Default value to return if casting fails
+
+    Returns:
+        The cast integer or the default if casting fails
+    """
+    return safe_cast(value, int, default)
+
+
+def safe_float(value: Any, default: Optional[float] = None) -> Optional[float]:
+    """Safely cast a value to a float.
+
+    Args:
+        value: The value to cast
+        default: Default value to return if casting fails
+
+    Returns:
+        The cast float or the default if casting fails
+    """
+    return safe_cast(value, float, default)
+
+
+def safe_bool(value: Any, default: Optional[bool] = None) -> Optional[bool]:
+    """Safely cast a value to a boolean.
+
+    Args:
+        value: The value to cast
+        default: Default value to return if casting fails
+
+    Returns:
+        The cast boolean or the default if casting fails
+    """
+    if isinstance(value, str):
+        value = value.lower()
+        if value in ("true", "yes", "y", "1", "t"):
+            return True
+        if value in ("false", "no", "n", "0", "f"):
+            return False
+        return default
+    return safe_cast(value, bool, default)

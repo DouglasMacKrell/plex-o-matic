@@ -7,20 +7,19 @@ and applying format strings to generate consistent filenames.
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Union, Dict, List
 
-# Python 3.9+ has native support for these types
+# Used to verify Python 3.8 compatibility at runtime
 try:
-    from typing import Dict, List
+    from typing import Literal  # noqa: F401
 except ImportError:
-    # Python 3.8 compatibility
-    try:
-        from typing_extensions import Dict, List
-    except ImportError:
-        from typing import Dict, List
+    from typing_extensions import Literal  # noqa: F401
 
-from plexomatic.core.models import MediaType
-from plexomatic.utils.name_parser import ParsedMediaName
+from plexomatic.core.models import MediaType as CoreMediaType
+from plexomatic.utils.name_parser import ParsedMediaName, MediaType as ParserMediaType
+
+# Create a unified MediaType for internal use
+MediaType = Union[CoreMediaType, ParserMediaType]
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +33,22 @@ class TemplateType(Enum):
     GENERAL = "general"
 
 
+# Helper function to normalize MediaType between different implementations
+def normalize_media_type(media_type: MediaType) -> str:
+    """Normalize MediaType to a standard string representation.
+
+    This handles both CoreMediaType and ParserMediaType implementations.
+    """
+    return media_type.name
+
+
 # Default templates directory
 DEFAULT_TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 # Default templates for different media types
 DEFAULT_TV_TEMPLATE = "{title}/Season {season:02d}/{title} - S{season:02d}E{episode:02d}{episode_title_suffix}{quality_suffix}"
 DEFAULT_MOVIE_TEMPLATE = "{title} ({year}){quality_suffix}"
-DEFAULT_ANIME_TEMPLATE = "Anime/{title}/Season {season:02d}/{title} - {episode:02d}{episode_title_suffix}{quality_suffix}"
+DEFAULT_ANIME_TEMPLATE = "{title}/Season {season:02d}/{title} - S{season:02d}E{episode:02d}{episode_title_suffix} [{group}]"
 
 
 # Formatter functions
@@ -111,46 +119,50 @@ class TemplateManager:
         """Initialize the template manager.
 
         Args:
-            templates_dir: Directory where templates are stored, or None to use default
+            templates_dir: Path to the templates directory. If None, uses the default.
         """
         self.templates_dir = templates_dir or DEFAULT_TEMPLATES_DIR
-        self.formatters: Dict[str, Callable[[Any], str]] = {
+        self._formatters = {
             "episode_title_suffix": format_episode_title_suffix,
             "quality_suffix": format_quality_suffix,
         }
-        self.templates: Dict[MediaType, str] = {
-            MediaType.TV_SHOW: DEFAULT_TV_TEMPLATE,
-            MediaType.MOVIE: DEFAULT_MOVIE_TEMPLATE,
-            MediaType.ANIME: DEFAULT_ANIME_TEMPLATE,
-            MediaType.TV_SPECIAL: DEFAULT_TV_TEMPLATE,  # Use TV template for specials
-            MediaType.ANIME_SPECIAL: DEFAULT_ANIME_TEMPLATE,  # Use anime template for anime specials
+        self._templates: Dict[str, str] = {
+            "TV_SHOW": DEFAULT_TV_TEMPLATE,
+            "MOVIE": DEFAULT_MOVIE_TEMPLATE,
+            "ANIME": DEFAULT_ANIME_TEMPLATE,
+            "TV_SPECIAL": DEFAULT_TV_TEMPLATE,  # Use TV template for specials
+            "ANIME_SPECIAL": DEFAULT_ANIME_TEMPLATE,  # Use anime template for anime specials
+            "UNKNOWN": DEFAULT_TV_TEMPLATE,  # Fallback
         }
         self._load_templates()
 
     def _load_templates(self) -> None:
         """Load templates from the templates directory."""
         if not self.templates_dir.exists():
-            logger.info(f"Templates directory {self.templates_dir} does not exist, using defaults")
+            logger.warning(f"Templates directory {self.templates_dir} does not exist")
             return
 
-        for template_file in self.templates_dir.glob("*.template"):
-            try:
-                media_type_str = template_file.stem.upper()
-                try:
-                    media_type = MediaType[media_type_str]
-                except KeyError:
-                    logger.warning(
-                        f"Unknown media type {media_type_str} in template file {template_file}"
-                    )
-                    continue
+        # Map of file names to media types
+        file_map = {
+            "tv_show.template": "TV_SHOW",
+            "movie.template": "MOVIE",
+            "anime.template": "ANIME",
+            "tv_special.template": "TV_SPECIAL",
+            "anime_special.template": "ANIME_SPECIAL",
+            "general.template": "UNKNOWN",
+        }
 
-                with open(template_file, "r") as f:
-                    template = f.read().strip()
-                    if template:
-                        self.templates[media_type] = template
-                        logger.debug(f"Loaded template for {media_type}: {template}")
-            except Exception as e:
-                logger.error(f"Error loading template {template_file}: {e}")
+        for file_name, media_type_str in file_map.items():
+            template_file = self.templates_dir / file_name
+            if template_file.exists():
+                try:
+                    with open(template_file, "r") as f:
+                        template = f.read().strip()
+                        if template:
+                            self._templates[media_type_str] = template
+                            logger.debug(f"Loaded template for {media_type_str}: {template}")
+                except Exception as e:
+                    logger.error(f"Error loading template {template_file}: {e}")
 
     def register_formatter(self, name: str, formatter: Callable[[Any], str]) -> None:
         """Register a custom formatter function.
@@ -159,29 +171,33 @@ class TemplateManager:
             name: Name of the formatter to use in templates
             formatter: Function that takes a value and returns a formatted string
         """
-        self.formatters[name] = formatter
+        self._formatters[name] = formatter
         logger.debug(f"Registered formatter {name}")
 
     def register_template(self, media_type: MediaType, template: str) -> None:
-        """Register a custom template for a media type.
+        """Register a template for a specific media type.
 
         Args:
-            media_type: Type of media (TV show, movie, anime, etc.)
-            template: Template string
+            media_type: The MediaType enum value.
+            template: The template string.
         """
-        self.templates[media_type] = template
-        logger.debug(f"Registered template for {media_type}: {template}")
+        media_type_name = normalize_media_type(media_type)
+        self._templates[media_type_name] = template
+        logger.debug(f"Registered template for {media_type_name}: {template}")
 
     def get_template(self, media_type: MediaType) -> str:
-        """Get the template for a media type.
+        """Get the template string for a specific media type.
 
         Args:
-            media_type: Type of media (TV show, movie, anime, etc.)
+            media_type: The MediaType enum value.
 
         Returns:
-            Template string for the media type
+            The template string.
         """
-        return self.templates.get(media_type, DEFAULT_TV_TEMPLATE)
+        media_type_name = normalize_media_type(media_type)
+        return self._templates.get(
+            media_type_name, self._templates.get("UNKNOWN", DEFAULT_TV_TEMPLATE)
+        )
 
     def format_multi_episode(
         self, parsed: ParsedMediaName, episodes: List[int], separator: str = "-"
@@ -248,67 +264,79 @@ class TemplateManager:
             return self._format_with_template(parsed, template)
 
     def format(self, parsed: ParsedMediaName) -> str:
-        """Format a media name using the appropriate template.
+        """Format a parsed media name using the appropriate template.
 
         Args:
-            parsed: Parsed media name
+            parsed: The parsed media name.
 
         Returns:
-            Formatted media name
+            Formatted string.
         """
-        template = self.get_template(parsed.media_type)
+        media_type_name = normalize_media_type(parsed.media_type)
+        template = self._templates.get(
+            media_type_name, self._templates.get("UNKNOWN", DEFAULT_TV_TEMPLATE)
+        )
         return self._format_with_template(parsed, template)
 
     def _format_with_template(self, parsed: ParsedMediaName, template: str) -> str:
         """Format a parsed media name with a specific template.
 
         Args:
-            parsed: Parsed media name
-            template: Template string to use
+            parsed: The parsed media name.
+            template: The template string to use.
 
         Returns:
-            Formatted name
+            Formatted string.
         """
-        # Create a dictionary of values to format
+        # Prepare format values
         format_values = {
-            "title": parsed.title or "Unknown",
-            "season": parsed.season or 1,
-            "episode": (
-                parsed.episodes[0]
-                if parsed.episodes and isinstance(parsed.episodes, list) and parsed.episodes
-                else 1
-            ),
-            "year": parsed.year or "",
+            "title": parsed.title.replace(" ", "."),
+            "extension": parsed.extension,
             "quality": parsed.quality or "",
-            "episode_title": parsed.episode_title or "",
-            "group": parsed.group or "",
         }
 
-        # Add any extra info
-        if parsed.additional_info:
-            format_values.update(parsed.additional_info)
+        # Add TV show specific fields
+        if parsed.season is not None:
+            format_values["season"] = parsed.season
+        if parsed.episodes:
+            if len(parsed.episodes) == 1:
+                format_values["episode"] = parsed.episodes[0]
+            else:
+                # Handle multi-episode case
+                return self.format_multi_episode(parsed, parsed.episodes, template=template)
+        if parsed.episode_title:
+            format_values["episode_title"] = parsed.episode_title.replace(" ", ".")
+
+        # Add movie specific fields
+        if parsed.year:
+            format_values["year"] = parsed.year
+
+        # Add anime specific fields
+        if parsed.group:
+            format_values["group"] = parsed.group
+        if parsed.version is not None:
+            format_values["version"] = parsed.version
 
         # Apply custom formatters
-        for name, formatter in self.formatters.items():
+        for name, formatter in self._formatters.items():
             format_values[name] = formatter(format_values.get(name.replace("_suffix", ""), ""))
 
         try:
-            # Format the template with the values
+            # Replace dots with spaces for display templates
+            if "{title}" in template and "{title.lower()}" not in template:
+                format_values["title"] = parsed.title
+
+            if "{episode_title}" in template and parsed.episode_title:
+                format_values["episode_title"] = parsed.episode_title
+
             result = template.format(**format_values)
-            logger.debug(f"Formatted {parsed.media_type} name: {result}")
             return result
         except KeyError as e:
-            logger.warning(f"Missing key in template {template}: {e}")
-            # Fall back to a simpler template
-            if parsed.media_type in (MediaType.TV_SHOW, MediaType.TV_SPECIAL):
-                return f"{parsed.title or 'Unknown'} - S{parsed.season or 1:02d}E{parsed.episode or 1:02d}"
-            elif parsed.media_type in (MediaType.ANIME, MediaType.ANIME_SPECIAL):
-                return f"{parsed.title or 'Unknown'} - {parsed.episode or 1:02d}"
-            else:  # Movie or unknown
-                return f"{parsed.title or 'Unknown'} ({parsed.year or 'Unknown Year'})"
+            logger.error(f"Missing key in template: {e}")
+            return f"{parsed.title} - Error formatting filename"
         except Exception as e:
-            logger.error(f"Error formatting template {template}: {e}")
-            return f"{parsed.title or 'Unknown'}"
+            logger.error(f"Error formatting filename: {e}")
+            return f"{parsed.title} - Error formatting filename"
 
 
 # Singleton template manager
