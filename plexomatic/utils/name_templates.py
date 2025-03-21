@@ -216,7 +216,8 @@ class TemplateManager:
             return ""
 
         # Handle special episodes
-        if parsed.media_type in (MediaType.TV_SPECIAL, MediaType.ANIME_SPECIAL):
+        media_type_name = normalize_media_type(parsed.media_type)
+        if media_type_name in ("TV_SPECIAL", "ANIME_SPECIAL"):
             return self.format(parsed)
 
         # Sort episodes
@@ -447,15 +448,15 @@ def apply_template(parsed: ParsedMediaName, template_name: str) -> str:
     Returns:
         Formatted string
     """
-    media_type = parsed.media_type
+    media_type_name = normalize_media_type(parsed.media_type)
 
-    # Map MediaType to TemplateType
+    # Map MediaType name to TemplateType
     template_type = None
-    if media_type in (MediaType.TV_SHOW, MediaType.TV_SPECIAL):
+    if media_type_name in ("TV_SHOW", "TV_SPECIAL"):
         template_type = TemplateType.TV_SHOW
-    elif media_type == MediaType.MOVIE:
+    elif media_type_name == "MOVIE":
         template_type = TemplateType.MOVIE
-    elif media_type in (MediaType.ANIME, MediaType.ANIME_SPECIAL):
+    elif media_type_name in ("ANIME", "ANIME_SPECIAL"):
         template_type = TemplateType.ANIME
     else:
         template_type = TemplateType.GENERAL
