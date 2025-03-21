@@ -85,7 +85,16 @@ jobs:
     - name: Test with pytest and coverage
       continue-on-error: true
       run: |
-        python -m pytest --cov=plexomatic -v
+        python -m pytest --cov=plexomatic -v > test_output/pytest_output.log 2>&1
+
+    - name: Ensure test output directory has content
+      run: |
+        # Create a placeholder file if the directory is empty
+        if [ ! "$(ls -A test_output 2>/dev/null)" ]; then
+          echo "No test logs found, creating placeholder" > test_output/placeholder.log
+        fi
+        # List files for debugging
+        ls -la test_output/
 
     - name: Upload test logs as artifacts
       uses: actions/upload-artifact@v3
