@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Plex-o-matic CLI Documentation
 
 Plex-o-matic provides a powerful command-line interface (CLI) to help you organize your media files for Plex.

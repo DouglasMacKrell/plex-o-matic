@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Plex-o-matic Documentation
 
 Welcome to the Plex-o-matic documentation. This guide will help you understand how to use and get the most out of Plex-o-matic for organizing your media files.
@@ -14,6 +16,27 @@ Welcome to the Plex-o-matic documentation. This guide will help you understand h
 Plex-o-matic is a powerful tool designed to help you organize your media files for Plex. It automates the process of scanning, renaming, and organizing media files according to Plex's preferred naming conventions.
 
 ### Installation
+
+#### From Source
+
+1. Clone the repository:
+```bash
+git clone https://github.com/DouglasMacKrell/plex-o-matic.git
+cd plex-o-matic
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -e .
+```
+
+#### From PyPI (Coming Soon)
 
 ```bash
 pip install plex-o-matic
@@ -67,7 +90,16 @@ Plex-o-matic provides several powerful features:
 - TV show filename detection and standardization
 - Movie filename detection and standardization
 - Multi-episode detection
+- Special episode handling (TV specials, OVAs)
+- Anime-specific naming conventions
 - Proper Plex-compatible naming
+
+### Media Type Detection
+- **TV_SHOW**: Regular TV show episodes
+- **MOVIE**: Movie files
+- **ANIME**: Anime TV series episodes
+- **TV_SPECIAL**: Special episodes, OVAs, extras, and behind-the-scenes content
+- **ANIME_SPECIAL**: Anime specials, OVAs, and movies tied to a series
 
 ### Safe File Operations
 - Backup system with SQLite integration
@@ -129,3 +161,12 @@ plexomatic configure
 ```
 
 This will guide you through setting up API keys for TVDB, TMDB, and other metadata sources. It's the recommended way to configure Plex-o-matic rather than editing the configuration file manually.
+
+### How does Plex-o-matic handle special episodes like OVAs and extras?
+
+Plex-o-matic has dedicated media types for special episodes:
+
+- **TV_SPECIAL**: For TV show specials, extras, OVAs, behind-the-scenes content
+- **ANIME_SPECIAL**: For anime specials, OVAs, and movies related to a series
+
+The system automatically detects these special types and organizes them according to Plex's conventions (typically in Season 0). For more details, see the [Episode Handling](episode_handling.md) documentation.

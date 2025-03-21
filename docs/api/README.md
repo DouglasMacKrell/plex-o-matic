@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../../public/Plex-O-Matic_README_Title_Image.webp)
+
 # API Integration
 
 Plex-o-matic integrates with external APIs to fetch metadata for media files and leverage local AI for enhanced file analysis.
@@ -243,3 +245,84 @@ API keys and settings are managed through the application's configuration system
     }
 }
 ```
+
+## Working with Special Media Types
+
+Plex-o-matic provides specialized API handling for different media types, including special episodes.
+
+### Fetching Special Episode Metadata
+
+When working with TV specials or anime specials, you'll need special handling in the metadata fetch:
+
+```python
+from plexomatic.metadata.manager import MetadataManager
+from plexomatic.core.models import MediaType
+
+# Initialize the manager
+manager = MetadataManager()
+
+# Fetch metadata for a TV special
+tv_special_metadata = manager.fetch_metadata(
+    "Show Name - Special.mp4",
+    media_type=MediaType.TV_SPECIAL
+)
+
+# Fetch metadata for an anime special
+anime_special_metadata = manager.fetch_metadata(
+    "[Group] Anime Name - OVA1 [1080p].mkv",
+    media_type=MediaType.ANIME_SPECIAL
+)
+```
+
+### Special Type Detection
+
+The API integration includes automatic detection of special types:
+
+```python
+from plexomatic.utils.name_parser import detect_media_type
+
+# Detect media type from filename
+media_type = detect_media_type("Show.Special.mp4")
+# Returns: MediaType.TV_SPECIAL
+
+media_type = detect_media_type("[Group] Anime - OVA [1080p].mkv")
+# Returns: MediaType.ANIME_SPECIAL
+```
+
+### TVDB Special Episode Handling
+
+TVDB categorizes specials as Season 0 episodes:
+
+```python
+from plexomatic.api.tvdb_client import TVDBClient
+
+# Initialize the client
+client = TVDBClient(api_key="your_tvdb_api_key")
+client.authenticate()
+
+# Fetch specials (Season 0)
+specials = client.get_episode_info_by_season(series_id=12345, season_number=0)
+```
+
+### AniDB Special Handling
+
+AniDB has special categories for OVAs, specials, and movies:
+
+```python
+from plexomatic.api.anidb_client import AniDBClient
+
+# Initialize the client
+client = AniDBClient(
+    username="your_username",
+    password="your_password",
+    client_name="plexomatic",
+    client_version=1
+)
+
+# Fetch anime with specials
+anime_info = client.get_anime(anime_id=12345)
+
+# Special episodes will have type indicators in the episode data
+```
+
+## API Rate Limiting

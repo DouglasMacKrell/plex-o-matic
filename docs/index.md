@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Plex-o-matic Documentation
 
 ## Introduction

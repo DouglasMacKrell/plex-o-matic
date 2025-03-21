@@ -1,6 +1,6 @@
-douglasmackrell@Douglass-MBP plex-o-matic % git merge origin/main --allow-unrelated-histories
-fatal: You have not concluded your merge (MERGE_HEAD exists).
-Please, commit your changes before you merge.# Plex-o-matic
+![Plex-O-Matic Title Image](public/Plex-O-Matic_README_Title_Image.webp)
+
+# Plex-o-matic
 
 ## Overview
 Plex-o-matic is an intelligent media file organization tool designed to automate the process of renaming and structuring media files for optimal Plex compatibility. It handles complex scenarios such as multi-episode files, series name verification, and maintains a safety system for all operations.

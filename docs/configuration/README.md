@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Configuration System
 
 Plex-o-matic provides a flexible configuration system that allows you to customize its behavior to suit your needs.

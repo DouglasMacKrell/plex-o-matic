@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../../public/Plex-O-Matic_README_Title_Image.webp)
+
 # File Utilities
 
 Plex-o-matic includes powerful utilities for handling file operations and standardizing media filenames.

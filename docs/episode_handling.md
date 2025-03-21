@@ -1,6 +1,20 @@
+![Plex-O-Matic Title Image](../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Episode Handling
 
 Plex-o-matic includes robust support for handling various TV show episode formats, including multi-episode files, special episodes, and season packs.
+
+## Media Types
+
+Plex-o-matic supports the following media types for proper handling:
+
+- **TV_SHOW**: Regular TV show episodes
+- **MOVIE**: Movie files
+- **ANIME**: Anime TV series episodes
+- **TV_SPECIAL**: Special episodes for TV shows (OVAs, extras, etc.)
+- **ANIME_SPECIAL**: Special episodes for anime series (OVAs, specials, movies)
+
+Each media type has specific naming conventions and handling logic that optimizes organization for Plex.
 
 ## Multi-Episode Detection
 
@@ -99,6 +113,37 @@ Special episodes are detected and handled appropriately:
 - Special keyword: `Show.Special.mp4`, `Show.Special1.mp4`
 - OVA (Original Video Animation): `Show.OVA.mp4`, `Show.OVA1.mp4`, `Show.OVA.1.mp4`
 - Movies/Films: `Show.Movie.mp4`, `Show.Film.mp4`, `Show.Movie.1.mp4`
+
+### Media Type Classification
+
+Special episodes are automatically classified with the appropriate media type:
+
+- **TV_SPECIAL**: Used for TV show specials, extras, OVAs, and behind-the-scenes content
+  - Example patterns: `Show.Special.mp4`, `Show.OVA.mp4`, `Show.Extra.mp4`
+  - Typically placed in Season 0 (Specials) folder in Plex
+
+- **ANIME_SPECIAL**: Used for anime specials, OVAs, and movies related to a series
+  - Example patterns: `[Group] Show OVA [1080p].mkv`, `[Group] Show - Special 1 [720p].mkv`
+  - Often includes group/fansub information and quality tags
+
+### Template Handling
+
+Each special type uses appropriate templates for file naming:
+
+```python
+from plexomatic.utils.name_templates import get_template_for_media_type
+from plexomatic.core.models import MediaType
+
+# Get template for TV specials
+tv_special_template = get_template_for_media_type(MediaType.TV_SPECIAL)
+# Uses the same template as TV shows but with special handling
+
+# Get template for anime specials
+anime_special_template = get_template_for_media_type(MediaType.ANIME_SPECIAL)
+# Uses the same template as anime but with special handling
+```
+
+Special episodes are typically organized into Season 0 in Plex's naming structure, which is reflected in the file naming.
 
 ## Season Pack Organization
 

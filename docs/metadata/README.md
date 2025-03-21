@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](../../public/Plex-O-Matic_README_Title_Image.webp)
+
 # Metadata Management System
 
 The Metadata Management system in Plex-o-matic provides a unified interface for searching, matching, and managing metadata from multiple sources. It allows the application to intelligently combine results from different providers (TVDB, TMDB, AniDB, TVMaze) and select the best match for a given media file.

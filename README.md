@@ -1,3 +1,5 @@
+![Plex-O-Matic Title Image](public/Plex-O-Matic_README_Title_Image.webp)
+
 # Plex-o-matic
 
 [![Test & Quality Check](https://github.com/DouglasMacKrell/plex-o-matic/actions/workflows/test.yml/badge.svg)](https://github.com/DouglasMacKrell/plex-o-matic/actions/workflows/test.yml)
