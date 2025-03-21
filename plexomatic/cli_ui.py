@@ -180,3 +180,26 @@ def format_warning(message: str) -> None:
     """
     panel = Panel(message, style="yellow", title="Warning")
     console.print(panel)
+
+
+def print_info(message: str) -> None:
+    """Print an info message with blue color.
+
+    Args:
+        message: The message to print
+    """
+    console.print(message, style=STYLES["info"])
+
+
+def print_result(message: str) -> None:
+    """Print a result with cyan color.
+
+    Args:
+        message: The result to print
+    """
+    console.print(message, style=STYLES["highlight"])
+
+
+def print_newline() -> None:
+    """Print a newline for better spacing."""
+    console.print("")

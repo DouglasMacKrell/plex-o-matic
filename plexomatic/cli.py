@@ -16,6 +16,7 @@ from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
 from plexomatic.utils import rename_file, rollback_operation, get_preview_rename
 from plexomatic import cli_ui
+from plexomatic.utils.name_templates import TemplateManager
 
 # Initialize configuration
 config = ConfigManager()
@@ -512,6 +513,100 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
             f"LLM configured to use {api_config['llm']['model_name']} at {api_config['llm']['base_url']}",
             status="success",
         )
+
+
+@cli.group()
+def templates() -> None:
+    """Manage file name templates."""
+    pass
+
+
+@templates.command("list")
+def list_templates() -> None:
+    """List all available templates."""
+    cli_ui.print_heading("Available Templates")
+
+    # Initialize template manager
+    template_manager = TemplateManager()
+
+    # Media type names and descriptions
+    media_types = [
+        ("TV_SHOW", "TV Show Episodes"),
+        ("MOVIE", "Movies"),
+        ("ANIME", "Anime Episodes"),
+        ("TV_SPECIAL", "TV Show Specials"),
+        ("ANIME_SPECIAL", "Anime Specials"),
+        ("UNKNOWN", "Unknown Media Types"),
+    ]
+
+    # Print templates for each media type
+    for media_type_name, description in media_types:
+        from plexomatic.core.models import MediaType
+
+        media_type = getattr(MediaType, media_type_name)
+        template = template_manager.get_template(media_type)
+
+        cli_ui.print_info(f"{description} ({media_type_name}):")
+        cli_ui.print_result(template)
+        cli_ui.print_newline()
+
+
+@templates.command("show")
+@click.argument(
+    "media_type",
+    type=click.Choice(["TV_SHOW", "MOVIE", "ANIME", "TV_SPECIAL", "ANIME_SPECIAL", "UNKNOWN"]),
+)
+@click.argument("title", default="Example Title")
+@click.option("--season", type=int, default=1, help="Season number")
+@click.option("--episode", type=int, default=1, help="Episode number")
+@click.option("--episode-title", type=str, default="Example Episode", help="Episode title")
+@click.option("--year", type=int, default=2023, help="Release year (for movies)")
+@click.option("--quality", type=str, default="1080p", help="Video quality")
+@click.option("--group", type=str, default="GROUP", help="Release group (for anime)")
+def show_template(
+    media_type: str,
+    title: str,
+    season: int,
+    episode: int,
+    episode_title: str,
+    year: int,
+    quality: str,
+    group: str,
+) -> None:
+    """Show how a template would be applied to sample data."""
+    from plexomatic.core.models import MediaType
+    from plexomatic.utils.name_parser import ParsedMediaName
+
+    # Map string to MediaType enum
+    media_type_enum = getattr(MediaType, media_type)
+
+    # Create a parsed media name
+    parsed = ParsedMediaName(
+        title=title,
+        season=season,
+        episodes=[episode],
+        episode_title=episode_title,
+        year=year,
+        quality=quality,
+        group=group,
+        media_type=media_type_enum,
+        extension=".mp4",
+    )
+
+    # Initialize template manager
+    template_manager = TemplateManager()
+
+    # Get template and formatted result
+    template = template_manager.get_template(media_type_enum)
+    result = template_manager.format(parsed)
+
+    # Print results
+    cli_ui.print_heading(f"Template Preview for {media_type}")
+    cli_ui.print_info("Template:")
+    cli_ui.print_result(template)
+    cli_ui.print_newline()
+    cli_ui.print_info("Formatted Result:")
+    cli_ui.print_result(result)
 
 
 if __name__ == "__main__":
