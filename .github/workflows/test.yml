@@ -2,7 +2,7 @@ name: Diagnostic Test
 
 on:
   push:
-    branches: [ main, develop, bugfix/github-actions-debug ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
 
@@ -57,8 +57,8 @@ jobs:
         echo "============= INSTALLING DEPENDENCIES ============="
         python -m pip install --upgrade pip
         pip --version
-        echo "Installing dev dependencies..."
-        python -m pip install pytest pytest-cov black ruff mypy
+        echo "Installing test dependencies..."
+        python -m pip install pytest pytest-cov black ruff mypy typing-extensions setuptools
         echo "Installing package..."
         python -m pip install -e .
         echo "============= INSTALLED PACKAGES ============="
@@ -83,6 +83,7 @@ jobs:
         echo "Testing specific module imports..."
         python -c "from plexomatic.core import models; print('✓ models')" || echo "✗ Failed to import models"
         python -c "from plexomatic.utils import name_templates; print('✓ name_templates')" || echo "✗ Failed to import name_templates"
+        python -c "from plexomatic.utils.name_templates import MediaType; print('✓ MediaType union type')" || echo "✗ Failed to import MediaType from name_templates"
 
     - name: Debug Python path and versions
       run: |
@@ -95,6 +96,11 @@ jobs:
             print('✓ Python 3.8 typing imports available')
         except ImportError as e:
             print(f'✗ Error importing Python 3.8 typing features: {e}')
+            try:
+                from typing_extensions import Literal, Protocol, TypedDict
+                print('✓ typing_extensions imports available')
+            except ImportError as e:
+                print(f'✗ Error importing from typing_extensions: {e}')
         "
 
     - name: Black formatting check
@@ -172,6 +178,16 @@ jobs:
             head -n 20 logs/tests/${test_name}.log
           fi
         done
+
+    - name: Show failing test details
+      continue-on-error: true
+      run: |
+        echo "============= FAILING TEST DETAILS ============="
+        grep -r "FAILED" logs/tests/ --include="*.log" | sort
+        echo "============= ERROR DETAILS ============="
+        grep -r "Error" logs/tests/ --include="*.log" | sort
+        echo "============= EXCEPTION DETAILS ============="
+        grep -r "Exception" logs/tests/ --include="*.log" | sort
 
     - name: Collect all logs
       run: |
