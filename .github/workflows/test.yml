@@ -1,4 +1,4 @@
-name: Test & Quality Check
+name: Test
 
 on:
   push:
@@ -8,177 +8,88 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-      fail-fast: false  # Continue with other versions even if one fails
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+        os: [ubuntu-latest]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+    env:
+      PY_COLORS: 1
 
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
 
-    - name: Install core dependencies
+    - name: Print system information
       run: |
-        python -m pip install --upgrade pip setuptools wheel
-        # Explicitly install typing_extensions first to ensure it's available
-        pip install typing_extensions>=4.0.0
+        echo "OS: $(uname -a)"
+        echo "Disk usage: $(df -h)"
+        echo "Memory: $(free -h)"
+        echo "Python: $(python --version)"
+        echo "Pip: $(pip --version)"
+        echo "Directory: $(pwd)"
+        echo "Files: $(ls -la)"
 
-    - name: Install package dependencies
+    - name: Install dependencies
       run: |
-        # Install package in development mode
-        pip install -e ".[test,dev]"
-        # Display installed versions
-        pip list | grep typing
+        python -m pip install --upgrade pip
+        python -m pip install tox tox-gh-actions
+        python -m pip install pytest pytest-cov
+        python -m pip install -e .
+        python -m pip list
 
-    - name: Verify package structure
+    - name: Check imports (debugging)
       run: |
-        echo "Python version:"
-        python --version
-        echo "Working directory:"
-        pwd
-        echo "Pip packages:"
-        pip list
-        echo "Import test:"
-        python -c "import plexomatic; print(f'plexomatic.__file__: {plexomatic.__file__}')"
-        python -c "import plexomatic.cli; print('CLI module successfully imported')"
-        python -c "import tests; print('Tests package successfully imported')"
-        python -c "import typing_extensions; print('typing_extensions version successfully imported')"
-        echo "Package structure:"
-        find plexomatic -type f -name "__init__.py" | sort
-        echo "Tests directory:"
-        find tests -type f -name "*.py" | sort
+        python -c "import plexomatic; print('Successfully imported plexomatic')"
+        python -c "import tests; print('Successfully imported tests')"
+        python -c "import conftest; print('Successfully imported conftest')"
 
-    - name: Prepare test environment
+    - name: Format, lint, type check (debugging)
       run: |
-        # Add current directory to PYTHONPATH
-        echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+        black --check .
+        ruff check .
+        mypy plexomatic
 
-        # Create directory for test output
+    - name: Run all tests (with detailed verbosity)
+      continue-on-error: true
+      run: |
         mkdir -p test_output
+        python -m pytest tests/ -v --cov=plexomatic --no-header --no-summary -v > test_output/all_tests.log 2>&1
 
-        # Ensure __init__.py exists in all directories
-        if [ ! -f "tests/__init__.py" ]; then
-          echo "Creating tests/__init__.py"
-          touch tests/__init__.py
-        fi
+    - name: Debug tests collection
+      run: |
+        mkdir -p test_output
+        python -m pytest tests/ --collect-only -v > test_output/collection.log 2>&1
+        cat test_output/collection.log
 
-        # Create subdirectories if needed
-        for dir in plexomatic/api plexomatic/utils plexomatic/metadata plexomatic/config plexomatic/core; do
-          if [ ! -d "$dir" ]; then
-            echo "Creating directory: $dir"
-            mkdir -p "$dir"
-            touch "$dir/__init__.py"
+    - name: Debug failing tests individually
+      run: |
+        set +e
+        for test_file in tests/test_cli.py tests/test_name_templates.py tests/test_metadata_fetcher.py tests/test_config_manager.py; do
+          echo "Running $test_file..."
+          python -m pytest $test_file -v > test_output/$(basename $test_file).log 2>&1
+          if [ $? -ne 0 ]; then
+            echo "Failed: $test_file"
+            cat test_output/$(basename $test_file).log
+          else
+            echo "Passed: $test_file"
           fi
         done
 
-    - name: Debug Python imports
-      run: |
-        # Create a debug script
-        cat > debug_imports.py << 'EOF'
-        import sys
-        import os
-        import importlib
-
-        def test_module(name):
-            print(f"Testing import of {name}...")
-            try:
-                module = importlib.import_module(name)
-                file_path = getattr(module, '__file__', 'Unknown')
-                print(f"  ✅ Success: {name} imported from {file_path}")
-                return True
-            except ImportError as e:
-                print(f"  ❌ Failed: {name} - {e}")
-                return False
-
-        # First print environment info
-        print(f"Python {sys.version} on {sys.platform}")
-        print(f"Current directory: {os.getcwd()}")
-        print(f"PYTHONPATH: {os.environ.get('PYTHONPATH', 'Not set')}")
-
-        # Print sys.path
-        print("\nSystem path:")
-        for i, path in enumerate(sys.path):
-            print(f"{i}: {path}")
-
-        # Test imports
-        modules = [
-            "plexomatic",
-            "plexomatic.cli",
-            "plexomatic.utils",
-            "plexomatic.api",
-            "plexomatic.metadata",
-            "tests",
-            "pytest",
-        ]
-
-        print("\nTesting imports:")
-        for module in modules:
-            test_module(module)
-        EOF
-
-        # Run the debug script
-        python debug_imports.py
-
-    - name: Run single simple test
-      run: |
-        # Run a single simple test that should work
-        python -m pytest tests/test_cli.py::test_cli_entrypoint -v > test_output/single_test.log 2>&1 || echo "Simple test failed, see logs"
-        cat test_output/single_test.log
+    - name: Test with pytest and coverage
       continue-on-error: true
-
-    - name: Format check with black
       run: |
-        black --check .
-      continue-on-error: true
+        python -m pytest --cov=plexomatic -v
 
-    - name: Lint check with ruff
-      run: |
-        ruff check .
-      continue-on-error: true
-
-    - name: Type check with mypy
-      run: |
-        mypy --install-types --non-interactive --ignore-missing-imports plexomatic
-      continue-on-error: true
-
-    - name: Run pytest with simple tests first
-      run: |
-        # Run only basic CLI tests first
-        python -m pytest tests/test_cli.py -v > test_output/cli_tests.log 2>&1 || echo "CLI tests failed, but continuing"
-        cat test_output/cli_tests.log
-      continue-on-error: true
-
-    - name: Full test suite run
-      run: |
-        # Run full test suite with coverage
-        python -m pytest -xvs \
-          --no-header \
-          --cov=plexomatic \
-          --cov-report=xml \
-          > test_output/pytest_output.log 2>&1 || echo "Tests failed, see logs"
-
-        # Print test output summary
-        echo "=== TEST OUTPUT SUMMARY ==="
-        cat test_output/pytest_output.log || echo "No output log found"
-        echo "=== END TEST OUTPUT SUMMARY ==="
-      continue-on-error: true
-
-    - name: Upload test logs
-      uses: actions/upload-artifact@v4
+    - name: Upload test logs as artifacts
+      uses: actions/upload-artifact@v3
       with:
         name: test-logs-${{ matrix.python-version }}
         path: test_output/
-        retention-days: 5
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        fail_ci_if_error: false
+        if-no-files-found: warn
