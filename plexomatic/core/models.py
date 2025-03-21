@@ -4,9 +4,13 @@ from datetime import datetime, timezone
 from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
+from typing import Any, TypeVar
 
 # Create the declarative base
 Base = declarative_base()
+
+# Type variable for SQLAlchemy models
+T = TypeVar("T", bound=Any)
 
 
 class MediaType(Enum):
