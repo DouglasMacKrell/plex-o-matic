@@ -97,8 +97,8 @@ jobs:
         ls -la test_output/
 
     - name: Upload test logs as artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.3
       with:
         name: test-logs-${{ matrix.python-version }}
-        path: test_output/
-        if-no-files-found: warn
+        path: ./test_output
+        retention-days: 5
