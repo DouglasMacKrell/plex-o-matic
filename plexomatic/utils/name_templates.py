@@ -5,6 +5,7 @@ and applying format strings to generate consistent filenames.
 """
 
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -22,6 +23,16 @@ from plexomatic.core.models import MediaType
 from plexomatic.utils.name_parser import ParsedMediaName
 
 logger = logging.getLogger(__name__)
+
+
+class TemplateType(Enum):
+    """Enum for template types."""
+
+    TV_SHOW = "tv_show"
+    MOVIE = "movie"
+    ANIME = "anime"
+    GENERAL = "general"
+
 
 # Default templates directory
 DEFAULT_TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
@@ -262,7 +273,11 @@ class TemplateManager:
         format_values = {
             "title": parsed.title or "Unknown",
             "season": parsed.season or 1,
-            "episode": parsed.episode or 1,
+            "episode": (
+                parsed.episodes[0]
+                if parsed.episodes and isinstance(parsed.episodes, list) and parsed.episodes
+                else 1
+            ),
             "year": parsed.year or "",
             "quality": parsed.quality or "",
             "episode_title": parsed.episode_title or "",
@@ -270,8 +285,8 @@ class TemplateManager:
         }
 
         # Add any extra info
-        if parsed.extra_info:
-            format_values.update(parsed.extra_info)
+        if parsed.additional_info:
+            format_values.update(parsed.additional_info)
 
         # Apply custom formatters
         for name, formatter in self.formatters.items():
@@ -298,3 +313,195 @@ class TemplateManager:
 
 # Singleton template manager
 template_manager = TemplateManager()
+
+
+class NameTemplate:
+    """Class representing a name template."""
+
+    def __init__(self, name: str, template_type: TemplateType, format_string: str):
+        """Initialize a name template.
+
+        Args:
+            name: Name of the template
+            template_type: Type of the template
+            format_string: Format string for the template
+        """
+        self.name = name
+        self.type = template_type
+        self.format_string = format_string
+
+    def apply(self, parsed: ParsedMediaName) -> str:
+        """Apply the template to a parsed media name.
+
+        Args:
+            parsed: Parsed media name
+
+        Returns:
+            Formatted string
+        """
+        return _apply_template(parsed, self.format_string)
+
+
+# Template registry
+_templates: Dict[TemplateType, Dict[str, NameTemplate]] = {
+    TemplateType.TV_SHOW: {},
+    TemplateType.MOVIE: {},
+    TemplateType.ANIME: {},
+    TemplateType.GENERAL: {},
+}
+
+
+def _default_formatter(value: Any) -> str:
+    """Default formatter for template values.
+
+    Args:
+        value: Value to format
+
+    Returns:
+        Formatted string
+    """
+    if value is None:
+        return ""
+    return str(value)
+
+
+def _ensure_episode_list(episodes: Any) -> List[int]:
+    """Ensure episodes is a list of integers.
+
+    Args:
+        episodes: Episode number(s)
+
+    Returns:
+        List of episode numbers
+    """
+    # Reuse existing function
+    return ensure_episode_list(episodes)
+
+
+def _format_multi_episode(
+    parsed: ParsedMediaName, episodes: List[int], separator: str = "-"
+) -> str:
+    """Format a multi-episode filename.
+
+    Args:
+        parsed: Parsed media name
+        episodes: List of episode numbers
+        separator: Separator for episode numbers
+
+    Returns:
+        Formatted string
+    """
+    # Use existing template manager function
+    return template_manager.format_multi_episode(parsed, episodes, separator)
+
+
+def _apply_template(parsed: ParsedMediaName, template: str) -> str:
+    """Apply a template to a parsed media name.
+
+    Args:
+        parsed: Parsed media name
+        template: Template string
+
+    Returns:
+        Formatted string
+    """
+    # Use existing template manager
+    return template_manager._format_with_template(parsed, template)
+
+
+def apply_template(parsed: ParsedMediaName, template_name: str) -> str:
+    """Apply a named template to a parsed media name.
+
+    Args:
+        parsed: Parsed media name
+        template_name: Name of the template
+
+    Returns:
+        Formatted string
+    """
+    media_type = parsed.media_type
+
+    # Map MediaType to TemplateType
+    template_type = None
+    if media_type in (MediaType.TV_SHOW, MediaType.TV_SPECIAL):
+        template_type = TemplateType.TV_SHOW
+    elif media_type == MediaType.MOVIE:
+        template_type = TemplateType.MOVIE
+    elif media_type in (MediaType.ANIME, MediaType.ANIME_SPECIAL):
+        template_type = TemplateType.ANIME
+    else:
+        template_type = TemplateType.GENERAL
+
+    # Find the template
+    templates = _templates.get(template_type, {})
+    template_obj = templates.get(template_name)
+
+    if template_obj:
+        # Use the template directly without going through the template manager
+        format_values = {
+            "title": parsed.title or "Unknown",
+            "season": parsed.season or 1,
+            "episode": (
+                parsed.episodes[0]
+                if parsed.episodes and isinstance(parsed.episodes, list) and parsed.episodes
+                else 1
+            ),
+            "year": parsed.year or "",
+            "quality": parsed.quality or "",
+            "episode_title": parsed.episode_title or "",
+            "group": parsed.group or "",
+            "extension": parsed.extension or "",
+        }
+
+        try:
+            # Format the template with the values
+            result = template_obj.format_string.format(**format_values)
+            logger.debug(f"Applied template {template_name} to {parsed.media_type}: {result}")
+            return result
+        except Exception as e:
+            logger.error(f"Error applying template {template_name}: {e}")
+
+    # Fallback to using the template manager
+    return template_manager.format(parsed)
+
+
+def register_template(name: str, template_type: TemplateType, format_string: str) -> None:
+    """Register a template.
+
+    Args:
+        name: Name of the template
+        template_type: Type of the template
+        format_string: Format string for the template
+    """
+    template = NameTemplate(name, template_type, format_string)
+    _templates[template_type][name] = template
+    logger.debug(f"Registered template {name} for {template_type}: {format_string}")
+
+
+def get_available_templates(template_type: TemplateType) -> Dict[str, NameTemplate]:
+    """Get available templates for a template type.
+
+    Args:
+        template_type: Type of templates to get
+
+    Returns:
+        Dictionary of template name to template object
+    """
+    return _templates.get(template_type, {})
+
+
+# Register default templates
+register_template(
+    "default",
+    TemplateType.TV_SHOW,
+    "{title}.S{season:02d}E{episode:02d}.{episode_title}.{extension}",
+)
+register_template(
+    "plex",
+    TemplateType.TV_SHOW,
+    "{title} - S{season:02d}E{episode:02d} - {episode_title}{extension}",
+)
+register_template("default", TemplateType.MOVIE, "{title}.({year}){extension}")
+register_template("plex", TemplateType.MOVIE, "{title} ({year}){extension}")
+register_template("default", TemplateType.ANIME, "Anime.{title}.{episode:02d}{extension}")
+register_template("plex", TemplateType.ANIME, "Anime/{title} - {episode:02d}{extension}")
