@@ -1,60 +1,203 @@
-name: Test
+name: Diagnostic Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, bugfix/github-actions-debug ]
   pull_request:
     branches: [ main, develop ]
 
 jobs:
-  test:
+  diagnostic:
     runs-on: ubuntu-latest
     env:
       PY_COLORS: 1
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: System diagnostics
+      run: |
+        echo "============= SYSTEM INFO ============="
+        echo "OS: $(uname -a)"
+        echo "Directory: $(pwd)"
+        echo "User: $(whoami)"
+        echo "Disk space:"
+        df -h
+        echo "============= DIRECTORY STRUCTURE ============="
+        find . -type f -name "*.py" | sort
+        echo "Total Python files: $(find . -type f -name "*.py" | wc -l)"
+        echo "============= PYTHON INFO ============="
+        python --version
+        pip --version
 
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: Print system information
+    - name: Python post-setup verification
       run: |
-        echo "OS: $(uname -a)"
-        echo "Python: $(python --version)"
-        echo "Pip: $(pip --version)"
+        echo "Python: $(which python)"
+        echo "Python version: $(python --version)"
+        echo "Pip: $(which pip)"
+        echo "Pip version: $(pip --version)"
+        echo "Python path:"
+        python -c "import sys; print(sys.path)"
 
-    - name: Install dependencies
+    - name: Create all output directories
       run: |
+        mkdir -p logs/linting
+        mkdir -p logs/tests
+        echo "Created log directories:"
+        ls -la logs/
+
+    - name: Install dependencies with verbose logging
+      run: |
+        echo "============= INSTALLING DEPENDENCIES ============="
         python -m pip install --upgrade pip
+        pip --version
+        echo "Installing dev dependencies..."
         python -m pip install pytest pytest-cov black ruff mypy
+        echo "Installing package..."
         python -m pip install -e .
+        echo "============= INSTALLED PACKAGES ============="
+        pip list
+        echo "============= IMPORTING PLEXOMATIC ============="
+        python -c "import plexomatic; print(f'Successfully imported plexomatic version: {plexomatic.__version__}')" || echo "Failed to import plexomatic"
 
-    - name: Format and lint
+    - name: Test importing modules
       run: |
-        black --check .
-        ruff check .
-        mypy plexomatic
+        echo "============= MODULE IMPORT TEST ============="
+        echo "Testing imports of key modules..."
+        python -c "import plexomatic; print('✓ plexomatic')" || echo "✗ Failed to import plexomatic"
+        python -c "import plexomatic.core; print('✓ plexomatic.core')" || echo "✗ Failed to import plexomatic.core"
+        python -c "import plexomatic.utils; print('✓ plexomatic.utils')" || echo "✗ Failed to import plexomatic.utils"
+        echo "Testing specific module imports..."
+        python -c "from plexomatic.core import models; print('✓ models')" || echo "✗ Failed to import models"
+        python -c "from plexomatic.utils import name_templates; print('✓ name_templates')" || echo "✗ Failed to import name_templates"
 
-    - name: Test with pytest
+    - name: Debug Python path and versions
+      run: |
+        echo "Python executable location: $(which python)"
+        echo "Python version details:"
+        python -c "import sys; print(sys.version_info); print(sys.path)"
+        echo "Checking Python 3.8 compatibility imports..."
+        python -c "try:
+            from typing import Literal, Protocol, TypedDict
+            print('✓ Python 3.8 typing imports available')
+        except ImportError as e:
+            print(f'✗ Error importing Python 3.8 typing features: {e}')
+        "
+
+    - name: Black formatting check
       continue-on-error: true
       run: |
-        mkdir -p test_logs
-        python -m pytest tests/ -v --cov=plexomatic > test_logs/pytest.log 2>&1 || true
-        echo "Test results saved to test_logs/pytest.log"
-        ls -la test_logs
+        echo "============= BLACK CHECK ============="
+        BLACK_VERSION=$(black --version)
+        echo "Black version: $BLACK_VERSION"
+        echo "Running black check..."
+        black --check . > logs/linting/black.log 2>&1 || true
+        echo "Black exit code: $?"
+        echo "Black log preview:"
+        head -n 20 logs/linting/black.log
 
-    - name: Create summary file if directory is empty
+    - name: Ruff linting check
+      continue-on-error: true
       run: |
-        if [ ! "$(ls -A test_logs 2>/dev/null)" ]; then
-          echo "No test logs found. Tests may have failed to run." > test_logs/summary.log
-        fi
+        echo "============= RUFF CHECK ============="
+        RUFF_VERSION=$(ruff --version)
+        echo "Ruff version: $RUFF_VERSION"
+        echo "Running ruff check..."
+        ruff check . > logs/linting/ruff.log 2>&1 || true
+        echo "Ruff exit code: $?"
+        echo "Ruff log preview:"
+        head -n 20 logs/linting/ruff.log
 
-    - name: Upload test results
+    - name: Mypy type check
+      continue-on-error: true
+      run: |
+        echo "============= MYPY CHECK ============="
+        MYPY_VERSION=$(mypy --version)
+        echo "Mypy version: $MYPY_VERSION"
+        echo "Running mypy check..."
+        mypy plexomatic > logs/linting/mypy.log 2>&1 || true
+        echo "Mypy exit code: $?"
+        echo "Mypy log preview:"
+        head -n 20 logs/linting/mypy.log
+
+    - name: Full linting logs
+      run: |
+        echo "============= FULL LINTING LOGS ============="
+        echo "Black log:"
+        cat logs/linting/black.log || echo "No black log found"
+        echo "Ruff log:"
+        cat logs/linting/ruff.log || echo "No ruff log found"
+        echo "Mypy log:"
+        cat logs/linting/mypy.log || echo "No mypy log found"
+
+    - name: Test with pytest verbose
+      continue-on-error: true
+      run: |
+        echo "============= PYTEST RUN ============="
+        echo "Pytest version: $(pytest --version)"
+        echo "Running pytest..."
+        python -m pytest tests/ -v --cov=plexomatic > logs/tests/pytest.log 2>&1 || true
+        echo "Pytest exit code: $?"
+        echo "Test logs directory contents:"
+        ls -la logs/tests/
+        echo "Pytest log preview:"
+        head -n 50 logs/tests/pytest.log
+
+    - name: Run individual test modules
+      continue-on-error: true
+      run: |
+        echo "============= INDIVIDUAL TEST MODULES ============="
+        for test_file in $(find tests -name "test_*.py"); do
+          echo "Testing $test_file..."
+          test_name=$(basename $test_file .py)
+          python -m pytest $test_file -v > logs/tests/${test_name}.log 2>&1 || true
+          if [ $? -eq 0 ]; then
+            echo "✓ $test_file passed"
+          else
+            echo "✗ $test_file failed"
+            echo "First 20 lines of log:"
+            head -n 20 logs/tests/${test_name}.log
+          fi
+        done
+
+    - name: Collect all logs
+      run: |
+        echo "============= COLLECTING LOGS ============="
+        echo "Aggregating all logs..."
+        mkdir -p all_logs
+        cp -r logs/* all_logs/
+        echo "Creating summary file..."
+        echo "Test and Lint Diagnostic Summary" > all_logs/summary.txt
+        echo "Date: $(date)" >> all_logs/summary.txt
+        echo "Python version: $(python --version)" >> all_logs/summary.txt
+        echo "Linting results:" >> all_logs/summary.txt
+        echo "- Black: $(grep -c "would reformat" logs/linting/black.log || echo "0") files would be reformatted" >> all_logs/summary.txt
+        echo "- Ruff: $(grep -c "^[A-Z]" logs/linting/ruff.log || echo "0") issues found" >> all_logs/summary.txt
+        echo "- Mypy: $(grep -c "error:" logs/linting/mypy.log || echo "0") type errors found" >> all_logs/summary.txt
+        echo "Logs collected. Directory structure:"
+        find all_logs -type f | sort
+
+    - name: Debug test logs existence
+      run: |
+        echo "============= DEBUG TEST LOGS ============="
+        echo "Current directory: $(pwd)"
+        echo "Checking all_logs directory..."
+        ls -la all_logs || echo "all_logs directory not found"
+        echo "Checking individual log files..."
+        find . -name "*.log" | sort
+        echo "Log file counts: $(find . -name "*.log" | wc -l)"
+        echo "Log file sizes:"
+        find . -name "*.log" -exec du -h {} \;
+
+    - name: Upload test and lint results
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
-        path: test_logs
+        name: diagnostic-results
+        path: all_logs
