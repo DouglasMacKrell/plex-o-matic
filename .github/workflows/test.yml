@@ -66,6 +66,13 @@ jobs:
         echo "============= IMPORTING PLEXOMATIC ============="
         python -c "import plexomatic; print(f'Successfully imported plexomatic version: {plexomatic.__version__}')" || echo "Failed to import plexomatic"
 
+    - name: Run custom import diagnostic script
+      run: |
+        echo "============= CUSTOM IMPORT DIAGNOSTICS ============="
+        python debug_imports.py > logs/import_diagnostics.log 2>&1 || true
+        echo "Import diagnostics log:"
+        cat logs/import_diagnostics.log
+
     - name: Test importing modules
       run: |
         echo "============= MODULE IMPORT TEST ============="
