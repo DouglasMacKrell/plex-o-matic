@@ -5,6 +5,10 @@ from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
 from typing import Any, TypeVar
+import warnings
+
+# Import the consolidated MediaType
+from plexomatic.core.constants import MediaType as ConsolidatedMediaType
 
 # Create the declarative base
 Base = declarative_base()
@@ -13,10 +17,12 @@ Base = declarative_base()
 T = TypeVar("T", bound=Any)
 
 
+# Deprecated - kept for backward compatibility
 class MediaType(Enum):
     """Enum representing types of media.
-
-    This enum must be kept in sync with the one in name_parser.py
+    
+    DEPRECATED: Use plexomatic.core.constants.MediaType instead.
+    This class is kept for database backward compatibility.
     """
 
     TV_SHOW = auto()
@@ -32,11 +38,21 @@ class MediaType(Enum):
 
         This is used for compatibility between different enum implementations.
         """
+        warnings.warn(
+            "models.MediaType is deprecated. Use constants.MediaType instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        
         value = value.upper()
         for member in cls:
             if member.name == value:
                 return member
         return cls.UNKNOWN
+    
+    def to_consolidated(self) -> ConsolidatedMediaType:
+        """Convert to the consolidated MediaType."""
+        return ConsolidatedMediaType.from_legacy_value(self.value, "core")
 
 
 # Type to help with type checking

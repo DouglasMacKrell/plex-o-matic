@@ -95,6 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed name_templates.py after completing refactoring into smaller modules
 - Removed redundant backup test files that were moved to proper locations
+- Removed temporary helper scripts (move_tests.py and check_syntax.py) that were used during refactoring
 
 ### Fixed
 - Comprehensive type annotation improvements for test files

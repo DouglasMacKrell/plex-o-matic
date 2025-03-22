@@ -9,12 +9,16 @@ import os
 import sys
 from enum import Enum, auto
 from functools import lru_cache
+import warnings
 
 # Import standard library dependencies
 from plexomatic.api.tvdb_client import TVDBClient
 from plexomatic.api.tmdb_client import TMDBClient
 from plexomatic.api.anidb_client import AniDBClient
 from plexomatic.api.tvmaze_client import TVMazeClient
+
+# Import consolidated MediaType
+from plexomatic.core.constants import MediaType as ConsolidatedMediaType
 
 # Define Python version
 PY_VERSION = sys.version_info[:2]
@@ -49,8 +53,12 @@ def safe_cast(obj: Any, target_type: Type) -> Optional[Any]:
 
 
 def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
-    """Safely extract a list of dictionaries from an object."""
+    """Extract a list of dictionaries from various data formats."""
     result: List[Dict[str, Any]] = []
+
+    # Handle empty data
+    if not data:
+        return result
 
     # Check if data is a dict with a results key
     data_dict = safe_cast(data, dict)
@@ -63,8 +71,10 @@ def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
                     item_dict = safe_cast(item, dict)
                     if item_dict is not None:
                         result.append(item_dict)
-    # Check if data is a list directly
-    elif isinstance(data, list):
+                return result
+    
+    # Handle list of objects
+    if isinstance(data, list):
         for item in data:
             item_dict = safe_cast(item, dict)
             if item_dict is not None:
@@ -73,14 +83,42 @@ def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
     return result
 
 
+# Deprecated - kept for backward compatibility
 class MediaType(Enum):
-    """Enum representing different types of media."""
+    """Enum representing different types of media.
+    
+    DEPRECATED: Use plexomatic.core.constants.MediaType instead.
+    This class is kept for database backward compatibility.
+    """
 
     TV_SHOW = auto()
     MOVIE = auto()
     ANIME = auto()
     MUSIC = auto()
     UNKNOWN = auto()
+    
+    def to_consolidated(self) -> ConsolidatedMediaType:
+        """Convert to the consolidated MediaType."""
+        warnings.warn(
+            "fetcher.MediaType is deprecated. Use constants.MediaType instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return ConsolidatedMediaType.from_legacy_value(self.value, "fetcher")
+
+
+# For backward compatibility 
+def __getattr__(name: str) -> Any:
+    """Handle deprecated attributes."""
+    if name == "MediaType":
+        warnings.warn(
+            "Importing MediaType from fetcher is deprecated. "
+            "Use 'from plexomatic.core.constants import MediaType' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return ConsolidatedMediaType
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 class MetadataResult:

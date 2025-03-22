@@ -70,6 +70,25 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - Color coding for better readability
 - Interactive mode for complex operations
 
+### 7. Preview System
+- Advanced diff display for file operations
+  - Side-by-side comparison of original and new filenames
+  - Highlighting of changes in filenames
+  - Color-coded diff output for clarity
+- Batch preview for multiple files
+  - Tabular format for large numbers of files
+  - Grouping of similar operations
+  - Sorting and filtering options
+- Interactive approval process
+  - Per-file approval option
+  - Batch approval for similar changes
+  - Skip/ignore functionality for specific files
+  - Edit suggestions before applying
+- Preview persistence
+  - Save preview results for later review
+  - Export preview as JSON or CSV
+  - Resume previously saved preview session
+
 ## Configuration Options
 
 ### Anthology Mode
@@ -77,6 +96,13 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - `title_match_priority`: Weight for title vs episode number matching
 - `infer_from_directory`: Enable series name inference from directory structure
 - `match_threshold`: Confidence threshold for title matching
+
+### Preview System Options
+- `diff_style`: Style for diff display (side-by-side, unified, or minimal)
+- `color_mode`: Enable/disable colored output
+- `batch_size`: Number of files to display at once in batch mode
+- `interactive_default`: Default action for interactive prompts
+- `preview_format`: Format for exporting previews (JSON, CSV, text)
 
 ## Technical Specifications
 

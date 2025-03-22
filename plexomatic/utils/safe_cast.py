@@ -21,7 +21,7 @@ def safe_cast(value: Any, target_type: Type[T], default: Optional[T] = None) -> 
         The cast value or the default if casting fails
     """
     try:
-        return cast(T, target_type(value))
+        return target_type(value)
     except (ValueError, TypeError):
         return default
 

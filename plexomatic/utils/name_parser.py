@@ -3,6 +3,7 @@
 import re
 import enum
 from pathlib import Path
+import warnings
 
 try:
     # Python 3.9+ has native support for these types
@@ -13,16 +14,21 @@ except ImportError:
 from dataclasses import dataclass, field
 import unicodedata
 
+# Import the consolidated MediaType
+from plexomatic.core.constants import MediaType
 
-class MediaType(enum.Enum):
-    """Enum representing different types of media files."""
-
-    TV_SHOW = "tv_show"
-    TV_SPECIAL = "tv_special"
-    MOVIE = "movie"
-    ANIME = "anime"
-    ANIME_SPECIAL = "anime_special"
-    UNKNOWN = "unknown"
+# Handle deprecated attributes
+def __getattr__(name: str) -> Any:
+    """Handle deprecated attributes."""
+    if name == "MediaType":
+        warnings.warn(
+            "Importing MediaType from name_parser is deprecated. "
+            "Use 'from plexomatic.core.constants import MediaType' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return MediaType
+    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 @dataclass
