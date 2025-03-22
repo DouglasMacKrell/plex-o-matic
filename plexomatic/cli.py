@@ -16,7 +16,6 @@ from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
 from plexomatic.utils import rename_file, rollback_operation, get_preview_rename
 from plexomatic import cli_ui
-from plexomatic.utils.name_templates import TemplateManager
 
 # Initialize configuration
 config = ConfigManager()
@@ -526,9 +525,6 @@ def list_templates() -> None:
     """List all available templates."""
     cli_ui.print_heading("Available Templates")
 
-    # Initialize template manager
-    template_manager = TemplateManager()
-
     # Media type names and descriptions
     media_types = [
         ("TV_SHOW", "TV Show Episodes"),
@@ -542,9 +538,11 @@ def list_templates() -> None:
     # Print templates for each media type
     for media_type_name, description in media_types:
         from plexomatic.core.models import MediaType
+        from plexomatic.utils.template_registry import get_template
+        from plexomatic.utils.template_types import normalize_media_type
 
         media_type = getattr(MediaType, media_type_name)
-        template = template_manager.get_template(media_type)
+        template = get_template(template_type=normalize_media_type(media_type), name="default")
 
         cli_ui.print_info(f"{description} ({media_type_name}):")
         cli_ui.print_result(template)
@@ -593,12 +591,13 @@ def show_template(
         extension=".mp4",
     )
 
-    # Initialize template manager
-    template_manager = TemplateManager()
-
     # Get template and formatted result
-    template = template_manager.get_template(media_type_enum)
-    result = template_manager.format(parsed)
+    from plexomatic.utils.template_registry import get_template
+    from plexomatic.utils.template_formatter import apply_template
+    from plexomatic.utils.template_types import normalize_media_type
+
+    template = get_template(template_type=normalize_media_type(media_type_enum), name="default")
+    result = apply_template(parsed)
 
     # Print results
     cli_ui.print_heading(f"Template Preview for {media_type}")

@@ -153,14 +153,6 @@
 3. Enhance integration tests
 4. Add stress testing for edge cases
 
-### Documentation Updates
-1. Update SPEC.md with latest features
-2. Keep CHANGELOG.md current with all changes
-3. Create developer onboarding documentation
-4. Add architecture diagrams
-5. Improve inline code documentation
-6. Create troubleshooting guide
-
 ## Phase 4: UI & Polish (Sprint 7-8)
 
 ### 4.1 User Interface
@@ -257,6 +249,104 @@
 - Test coverage
 - Documentation accuracy
 - User feedback
+
+### MediaType Enum Consolidation
+
+#### Problem Statement
+The codebase currently has two separate implementations of the MediaType enum:
+1. `plexomatic.utils.name_parser.MediaType` - Uses string values like "tv_show"
+2. `plexomatic.core.models.MediaType` - Uses auto-generated integer values from enum.auto()
+
+This duplication creates type incompatibility issues, maintenance burden, cognitive overhead for developers, testing complexity, and documentation confusion.
+
+#### Consolidation Steps
+
+1. **Consolidate to a single MediaType definition**
+   - Decide on the preferred implementation (string values are more readable and stable)
+   - Create a unified MediaType in a central location (e.g., `plexomatic.core.models`)
+   - Ensure the unified enum includes all values from both existing implementations
+   - Add proper docstrings and type hints
+
+2. **Add migration code**
+   - Create helper functions to convert between old integer values and new string values
+   - Add deprecation warnings for the old enum
+   - Implement serialization/deserialization logic that handles both formats
+   - Consider database migration if enum values are stored in the database
+
+3. **Update all imports**
+   - Systematically update all import statements across the codebase
+   - Replace all instances of the old enum with the consolidated version
+   - Ensure tests use the same enum implementation as the code they test
+   - Update any code that directly relies on enum values
+
+4. **Create comprehensive tests**
+   - Write tests to verify the new enum works with all existing functionality
+   - Add tests for the migration helpers
+   - Ensure serialization/deserialization works correctly with both old and new formats
+   - Verify backward compatibility with any stored data
+
+#### Implementation Strategy
+- Follow test-driven development: write failing tests first
+- Implement changes incrementally
+- Run the full test suite after each significant change
+- Add detailed comments explaining the migration for future developers
+
+### Post-MediaType Consolidation Tasks
+
+#### 1. Address mypy typing issues
+- Fix type annotations in compatibility modules
+- Address template loading and management type errors
+- Resolve Union and Optional type handling
+- Update test files with proper type annotations
+- Ensure all functions have appropriate return type annotations
+
+#### 2. Increase test coverage in low-coverage areas
+- Target modules with <70% coverage first
+- Focus on refactored template modules (now separated from original name_templates.py)
+- Add tests for `plexomatic/utils/safe_cast.py` (0% coverage)
+- Improve `plexomatic/utils/media_type_compat.py` coverage
+- Follow TDD approach for all new tests
+- Create comprehensive type testing
+
+#### 3. Remove deprecated code
+- Identify all deprecated code with compatibility layers
+- Create migration plan for each deprecated component
+- Update documentation for breaking changes
+- Implement clean removal of redundant MediaType implementations
+- Ensure backward compatibility through proper deprecation notices
+- Verify functionality is maintained after removal
+
+### Code Refactoring Tasks
+
+#### 1. ✅ Split name_templates.py into manageable modules (COMPLETED)
+- Original file was over 1200 lines with complex functionality
+- Successfully broken down into smaller, focused modules:
+  - `template_types.py`: Enums, constants, and helper functions
+  - `template_manager.py`: Template loading and management
+  - `template_formatter.py`: Core formatting functionality
+  - `multi_episode_formatter.py`: Multi-episode handling
+  - `default_formatters.py`: Media type-specific default formatters
+  - `template_registry.py`: Public API for template registration
+  - `file_utils.py`: High-level utilities for file operations
+- Implemented clean interfaces between modules
+- Fixed existing syntax and type errors during refactoring
+- Used proper type annotations throughout
+- Eliminated duplicated code
+- Implemented comprehensive unit tests for each module
+- Complete test coverage for most modules
+
+#### 2. Improve error handling and logging
+- Implement proper exception hierarchies
+- Add comprehensive error messages
+- Ensure all exceptions are properly caught and handled
+- Add detailed logging throughout the codebase
+- Create standardized logging format
+
+#### 3. Implement comprehensive test fixtures
+- Create fixture factories for common test objects
+- Implement property-based testing for complex functions
+- Add test coverage for edge cases and error conditions
+- Create test utilities for common testing patterns
 
 ## Timeline
 - Phase 1: Weeks 1-4

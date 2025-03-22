@@ -67,15 +67,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Intelligent episode number override based on title matches
 - Updated filename generation to support multi-episode files
 - Preview rename functionality now supports multi-episode files
+- Template System for Media File Names
+  - Customizable templates for TV shows, movies, and anime
+  - Support for special episodes and different media types
+  - Template registration and management system
+  - Default templates for common naming formats (Plex, Kodi, etc.)
+  - Template application with format string parsing
+- Preview System (In Progress)
+  - Advanced preview generator for showing proposed changes
+  - Interactive diff display for file operations
+  - Batch preview functionality for multiple files
+  - Interactive approval system for changes
 
 ### Changed
-- None
+- Completed refactoring of the template system:
+  - Split large name_templates.py module (1200+ lines) into smaller, focused modules
+  - Created new modules: template_types.py, template_manager.py, template_formatter.py,
+    multi_episode_formatter.py, default_formatters.py, template_registry.py, and file_utils.py
+  - Improved type annotations and docstrings throughout
+  - Enhanced test coverage with dedicated test files for each module
+  - Fixed circular dependencies and improved code organization
+  - Added clear interfaces between modules
 
 ### Deprecated
 - None
 
 ### Removed
-- None
+- Removed name_templates.py after completing refactoring into smaller modules
+- Removed redundant backup test files that were moved to proper locations
 
 ### Fixed
 - Comprehensive type annotation improvements for test files

@@ -82,8 +82,8 @@ jobs:
         python -c "import plexomatic.utils; print('✓ plexomatic.utils')" || echo "✗ Failed to import plexomatic.utils"
         echo "Testing specific module imports..."
         python -c "from plexomatic.core import models; print('✓ models')" || echo "✗ Failed to import models"
-        python -c "from plexomatic.utils import name_templates; print('✓ name_templates')" || echo "✗ Failed to import name_templates"
-        python -c "from plexomatic.utils.name_templates import MediaType; print('✓ MediaType union type')" || echo "✗ Failed to import MediaType from name_templates"
+        python -c "from plexomatic.utils import template_types; print('✓ template_types')" || echo "✗ Failed to import template_types"
+        python -c "from plexomatic.core.models import MediaType; print('✓ MediaType enum')" || echo "✗ Failed to import MediaType from models"
 
     - name: Debug Python path and versions
       run: |
