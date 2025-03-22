@@ -14,7 +14,8 @@ from plexomatic import __version__
 from plexomatic.core.file_scanner import FileScanner
 from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
-from plexomatic.utils import rename_file, rollback_operation, get_preview_rename
+from plexomatic.utils import get_preview_rename
+from plexomatic.utils.file_ops import rename_file, rollback_operation
 from plexomatic import cli_ui
 
 # Initialize configuration
