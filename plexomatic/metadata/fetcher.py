@@ -72,7 +72,7 @@ def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
                     if item_dict is not None:
                         result.append(item_dict)
                 return result
-    
+
     # Handle list of objects
     if isinstance(data, list):
         for item in data:
@@ -86,7 +86,7 @@ def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
 # Deprecated - kept for backward compatibility
 class MediaType(Enum):
     """Enum representing different types of media.
-    
+
     DEPRECATED: Use plexomatic.core.constants.MediaType instead.
     This class is kept for database backward compatibility.
     """
@@ -96,7 +96,7 @@ class MediaType(Enum):
     ANIME = auto()
     MUSIC = auto()
     UNKNOWN = auto()
-    
+
     def to_consolidated(self) -> ConsolidatedMediaType:
         """Convert to the consolidated MediaType."""
         warnings.warn(
@@ -107,7 +107,7 @@ class MediaType(Enum):
         return ConsolidatedMediaType.from_legacy_value(self.value, "fetcher")
 
 
-# For backward compatibility 
+# For backward compatibility
 def __getattr__(name: str) -> Any:
     """Handle deprecated attributes."""
     if name == "MediaType":

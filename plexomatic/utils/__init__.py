@@ -62,33 +62,28 @@ from plexomatic.utils.preview_system import (
 
 __all__ = [
     # Template types
-    "TemplateType", 
+    "TemplateType",
     "normalize_media_type",
-    
     # Template registry
     "register_template",
     "get_template",
     "get_available_templates",
     "save_template_to_file",
     "load_templates",
-    
     # Template formatter
     "apply_template",
     "replace_variables",
     "format_field",
     "get_field_value",
-    
     # Default formatters
     "format_tv_show",
     "format_movie",
     "format_anime",
     "get_default_formatter",
-    
     # Multi episode formatter
     "ensure_episode_list",
     "format_multi_episode",
     "get_formatted_episodes",
-    
     # Template manager
     "TemplateManager",
     "TemplateError",
@@ -96,14 +91,12 @@ __all__ = [
     "InvalidTemplateError",
     "get_template_manager",
     "reset_template_manager",
-    
     # File utilities
     "sanitize_filename",
     "extract_show_info",
     "generate_tv_filename",
     "generate_movie_filename",
     "get_preview_rename",
-    
     # Preview system
     "PreviewResult",
     "DiffStyle",

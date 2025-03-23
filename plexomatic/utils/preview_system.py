@@ -3,6 +3,7 @@
 This module provides classes for generating, displaying, and exporting previews of
 file rename operations before they are applied.
 """
+
 # mypy: disable-error-code="unreachable"
 
 import json
@@ -118,16 +119,16 @@ class PreviewGenerator:
 
         # Get the preview result from name_utils
         result = get_preview_rename(path_obj)
-        
+
         # Initialize default values
         confidence = 0.9
         metadata_dict: Dict[str, Any] = {}
-        
+
         # Handle metadata extraction safely
         result_metadata = result.get("metadata")
         if result_metadata and isinstance(result_metadata, dict):
             metadata_dict = dict(result_metadata)
-            
+
             # Try to extract confidence value if it exists
             confidence_value = metadata_dict.get("confidence")
             if confidence_value is not None:
@@ -137,7 +138,7 @@ class PreviewGenerator:
                 except (ValueError, TypeError):
                     # Keep default value if conversion fails
                     pass
-        
+
         # Create the preview result object
         preview_result = PreviewResult(
             original_path=result["original_path"],
@@ -146,7 +147,7 @@ class PreviewGenerator:
             confidence=confidence,
             metadata=metadata_dict,
         )
-        
+
         logger.debug(f"Generated preview: {preview_result}")
         return preview_result
 

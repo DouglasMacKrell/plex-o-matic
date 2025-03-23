@@ -2,12 +2,12 @@
 """Standalone test for media_type_compat module."""
 
 import sys
-import unittest
 import types
 from pathlib import Path
 
 # Add the root directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
+
 
 # Setup mock modules before importing anything
 def setup_mocks():
@@ -18,7 +18,7 @@ def setup_mocks():
 
     # Create a minimal version of constants with MockMediaType
     mock_constants = types.ModuleType("plexomatic.core.constants")
-    
+
     # Define MockMediaType class inside the mock module
     class MockMediaType:
         """Mock MediaType enum for testing."""
@@ -58,9 +58,10 @@ def setup_mocks():
     # Assign MockMediaType to the constants module
     mock_constants.MediaType = MockMediaType
     sys.modules["plexomatic.core.constants"] = mock_constants
-    
+
     # Return the MockMediaType class for use in tests
     return MockMediaType
+
 
 # Set up the mock modules
 MockMediaType = setup_mocks()

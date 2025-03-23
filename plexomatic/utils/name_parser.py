@@ -1,7 +1,6 @@
 """Advanced name parsing utilities for media files."""
 
 import re
-import enum
 from pathlib import Path
 import warnings
 
@@ -16,6 +15,7 @@ import unicodedata
 
 # Import the consolidated MediaType
 from plexomatic.core.constants import MediaType
+
 
 # Handle deprecated attributes
 def __getattr__(name: str) -> Any:

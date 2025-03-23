@@ -20,7 +20,7 @@ T = TypeVar("T", bound=Any)
 # Deprecated - kept for backward compatibility
 class MediaType(Enum):
     """Enum representing types of media.
-    
+
     DEPRECATED: Use plexomatic.core.constants.MediaType instead.
     This class is kept for database backward compatibility.
     """
@@ -43,13 +43,13 @@ class MediaType(Enum):
             DeprecationWarning,
             stacklevel=2,
         )
-        
+
         value = value.upper()
         for member in cls:
             if member.name == value:
                 return member
         return cls.UNKNOWN
-    
+
     def to_consolidated(self) -> ConsolidatedMediaType:
         """Convert to the consolidated MediaType."""
         return ConsolidatedMediaType.from_legacy_value(self.value, "core")
