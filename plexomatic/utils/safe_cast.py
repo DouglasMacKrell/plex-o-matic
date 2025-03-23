@@ -28,7 +28,7 @@ def safe_cast(value: Any, target_type: Type[T], default: Optional[T] = None) -> 
     try:
         result = target_type(value)
         return result
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, OverflowError):
         return default
 
 
