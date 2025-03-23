@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- None
+- Subtitle file detection and handling:
+  - Added SubtitleFile class for subtitle representation
+  - Implemented automatic language detection from filenames
+  - Support for "forced" and "SDH" subtitle types
+  - Added matching algorithm to pair subtitles with media files
+  - Implemented Plex-compatible subtitle renaming
+  - Added comprehensive test suite for subtitle functionality
+  - Created detailed documentation for subtitle support
 
 ### Changed
 - None

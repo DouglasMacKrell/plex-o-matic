@@ -18,6 +18,8 @@ Check out our comprehensive [Getting Started Guide](docs/getting_started.md) for
   - Recursive directory traversal
   - Configurable file extensions and ignore patterns
   - Multi-episode file detection
+  - Subtitle file detection and management
+  - Language and format detection for subtitles
 
 - **Smart Naming System**:
   - Automated detection of TV shows and movies

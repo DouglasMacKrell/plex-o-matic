@@ -73,6 +73,7 @@ For more detailed usage instructions, please refer to the [CLI Documentation](cl
 - [Configuration System](configuration/README.md): Information about configuring Plex-o-matic.
 - [File Utilities](file-utils/README.md): Documentation on filename standardization and file operations.
   - [Template System](file-utils/template_system.md): Information about the template system for customizing file names.
+  - [Subtitle Support](file-utils/subtitle_support.md): Information about subtitle support.
 - [Backend Architecture](backend/README.md): Information about the backend design and components.
   - [MediaType System](backend/media_type.md): Documentation on the MediaType enum consolidation and compatibility layers.
 - [Database Schema](database/README.md): Documentation on the database structure and schema.
@@ -115,6 +116,13 @@ Plex-o-matic provides several powerful features:
 - Environment variable support
 - Extensible options
 - Interactive configuration via CLI
+
+### Media Management
+- Automated media file detection and scanning
+- Recursive directory traversal
+- Customizable file types and ignore patterns
+- Subtitle file detection and management
+- Language and format detection for subtitles
 
 ## FAQs
 
