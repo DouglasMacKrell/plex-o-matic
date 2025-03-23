@@ -218,11 +218,34 @@ plexomatic preview --media-type MOVIE
 plexomatic apply
 ```
 
+### Working with Subtitle Files
+
+Plex-o-matic automatically handles subtitle files found alongside your media:
+
+```bash
+# Scan a directory with media and subtitle files
+plexomatic scan --path /media/with-subtitles
+
+# See detailed subtitle information in the scan
+plexomatic scan --path /media/with-subtitles --show-subtitles --verbose
+
+# Preview changes including subtitle renaming
+plexomatic preview
+
+# Apply changes to both media and subtitle files
+plexomatic apply
+```
+
+Subtitle files will be automatically matched to their media files and renamed according to Plex conventions.
+
 ### Using Different File Extensions
 
 ```bash
 # Scan only specific file types
 plexomatic scan --path /media --extensions .mp4,.mkv,.avi
+
+# Define custom subtitle extensions
+plexomatic scan --path /media --subtitle-extensions .srt,.vtt,.sub
 
 # Preview and apply as usual
 plexomatic preview

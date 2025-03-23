@@ -94,6 +94,29 @@ result = replace_variables(template, parsed)
 
 For detailed documentation on the template system, see the [Template System Documentation](template_system.md).
 
+## Subtitle Support
+
+Plex-o-matic includes comprehensive subtitle file handling capabilities:
+
+- Detection of subtitle files in various formats (`.srt`, `.sub`, `.vtt`, etc.)
+- Automatic language detection from filenames
+- Support for "forced" and "SDH" subtitle types
+- Matching subtitle files to their corresponding media
+- Renaming to follow Plex naming conventions
+
+```python
+from plexomatic.core.subtitle_scanner import SubtitleFile, scan_for_subtitles, match_subtitles_to_media
+
+# Scan for subtitle files
+subtitles = scan_for_subtitles("/path/to/media", [".srt", ".sub", ".vtt"])
+
+# Work with subtitle files
+for subtitle in subtitles:
+    print(f"Found {subtitle.language} subtitle: {subtitle.path.name}")
+```
+
+For complete details on subtitle support, see the [Subtitle Support Documentation](subtitle_support.md).
+
 ## File Operations
 
 Plex-o-matic provides file operations with built-in backup functionality.
