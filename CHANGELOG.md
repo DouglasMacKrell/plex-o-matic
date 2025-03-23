@@ -29,6 +29,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - None
 
+## [0.3.2] - 2024-06-25
+
+### Fixed
+- Explicitly disabled attestations in both TestPyPI and PyPI publishing steps in the GitHub Actions workflow
+- Fixed tuple handling error in the PyPI publish action related to attestations
+
+## [0.3.1] - 2025-03-23
+
+### Fixed
+- Fixed PyPI publish workflow attestation error
+- Updated GitHub Actions workflow to disable problematic attestation feature
+- Added comprehensive configuration to PyPI publishing steps
+
 ## [0.3.0] - 2024-06-21
 
 ### Added
@@ -276,10 +289,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - None
-
-## [0.3.1] - 2025-03-23
-
-### Fixed
-- Fixed PyPI publish workflow attestation error
-- Updated GitHub Actions workflow to disable problematic attestation feature
-- Added comprehensive configuration to PyPI publishing steps
