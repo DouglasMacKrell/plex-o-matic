@@ -102,7 +102,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -e .
 ```
 
-### From PyPI (Coming Soon)
+### From PyPI
 
 ```bash
 pip install plex-o-matic
