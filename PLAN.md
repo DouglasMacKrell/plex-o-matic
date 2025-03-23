@@ -321,7 +321,7 @@
 - V2 Development: Weeks 21-28
 - Maintenance: Ongoing
 
-## Current Sprint: Documentation Overhaul and MVP Completion
+## Current Sprint: MVP Completed ✅
 
 ### Progress So Far
 1. ✅ Template System Refactoring Complete
@@ -348,43 +348,43 @@
    - Fixed type errors in template formatter
    - Ensured all tests pass with proper type annotations
 
-### Current Focus: Documentation Overhaul for MVP Completion
-1. Create Comprehensive Getting Started Guide
-   - Step-by-step installation instructions
-   - Initial configuration walkthrough
-   - Basic usage examples
-   - Troubleshooting common issues
+5. ✅ Documentation Overhaul
+   - Created comprehensive Getting Started guide
+   - Updated existing documentation
+   - Added template system documentation
+   - Improved navigation between documentation sections
+   - Enhanced README with detailed usage examples
 
-2. Update Existing Documentation
-   - Ensure all command documentation is up-to-date
-   - Add template system documentation
-   - Update CLI command reference
-   - Add screenshots for key operations
+6. ✅ Package Publication
+   - Set up PyPI project
+   - Published package to PyPI
+   - Created GitHub Actions workflow for automated publishing
+   - Made package installable via pip
 
-3. Documentation Organization
-   - Improve navigation between documentation sections
-   - Ensure consistent formatting throughout
-   - Add search functionality if possible
-   - Create quick reference cards for common operations
+7. ✅ Code Quality and Testing
+   - Integrated Codecov for coverage reporting
+   - Set up GitHub Actions for automated testing
+   - Fixed code formatting and linting issues
+   - Maintained high code quality through pre-commit hooks
 
-### Blocking Issues for MVP
+### Completed MVP Requirements
 1. ✅ Sample Media Generation
-   - Create sample media files for testing
-   - Ensure variety of naming patterns for robust testing
-   - Document sample media setup process
+   - Created sample media files for testing
+   - Ensured variety of naming patterns for robust testing
+   - Documented sample media setup process
 
-2. Documentation Completeness
+2. ✅ Documentation Completeness
    - Comprehensive coverage of all features
    - User-friendly navigation and structure
    - Clear examples and use cases
    - Installation and setup guides for different environments
 
 3. ✅ Integration Testing
-   - Test all components working together
-   - Verify API integrations function properly
-   - Test on different operating systems if possible
+   - Tested all components working together
+   - Verified API integrations function properly
+   - Tested on different operating systems
 
-### Next Steps After MVP
+### Next Steps Post-MVP
 1. Performance Optimization
    - Profile application for bottlenecks
    - Implement caching for slow operations
@@ -395,7 +395,25 @@
    - Add interactive mode for complex operations
    - Improve error display and recovery options
 
-3. Extended Functionality
+3. Subtitle File Support
+   - Subtitle file detection and scanning
+   - Language detection from filenames
+   - Matching subtitle files to media
+   - Subtitle renaming according to Plex conventions
+   - Support for language codes, forced subtitles, and SDH
+   - Preview and organization of subtitle files alongside media
+   - CLI options for subtitle handling configuration
+   - Implementation of SubtitleFile class and subtitle_scanner module
+   - Integration with existing file operations and backup system
+   - Comprehensive unit tests following TDD approach
+
+4. Extended Functionality
    - Support for more media types
    - Additional metadata sources
    - Custom template capabilities
+
+5. Community Building
+   - Create contribution guidelines
+   - Set up community discussion channels
+   - Develop plugin system for extensions
+   - Gather and implement user feedback
