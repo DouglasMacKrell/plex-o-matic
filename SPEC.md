@@ -5,6 +5,22 @@
 ## Overview
 Plex-o-matic is an intelligent media file organization tool designed to automate the process of renaming and structuring media files for optimal Plex compatibility. It handles complex scenarios such as multi-episode files, series name verification, and maintains a safety system for all operations.
 
+## Installation
+
+Plex-o-matic is available on PyPI and can be installed with pip:
+
+```bash
+pip install plex-o-matic
+```
+
+For development or the latest features, you can install from source:
+
+```bash
+git clone https://github.com/DouglasMacKrell/plex-o-matic.git
+cd plex-o-matic
+pip install -e .
+```
+
 ## Core Features
 
 ### 1. File Management
@@ -16,6 +32,12 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
 - Anthology mode for multi-segment episodes
 - Title-based episode matching
 - Directory structure inference
+- Subtitle file detection and management
+  - Support for common subtitle formats (.srt, .sub, .vtt, .ass, .ssa)
+  - Automatic language detection from filenames
+  - Handling for "forced" and "SDH" subtitle types
+  - Matching subtitles to media files
+  - Standardized Plex-compatible subtitle naming
 
 ### 2. Metadata Integration
 - TVDB API integration for TV show verification
@@ -48,10 +70,12 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
   - Integration tests for complex interactions
   - Mock-based testing for external API dependencies
   - 80%+ code coverage target
+  - Codecov integration for coverage reporting and tracking
 - Code quality tools
   - Black for code formatting
   - Ruff for linting and static analysis
   - Pre-commit hooks for automated checks
+  - Continuous integration with GitHub Actions
 
 ### 5. Special Handling
 - Multi-episode concatenation
@@ -89,7 +113,39 @@ Plex-o-matic is an intelligent media file organization tool designed to automate
   - Export preview as JSON or CSV
   - Resume previously saved preview session
 
+### 8. Subtitle Support
+- Subtitle file detection and scanning
+  - Configurable subtitle file extensions
+  - Automatic recursive scanning
+  - Integration with existing file scanning system
+- Language and format detection
+  - Automatic language code identification (en, fr, de, etc.)
+  - Detection of forced subtitles for foreign language parts
+  - Support for SDH (Subtitles for the Deaf and Hard of hearing)
+- Subtitle-to-media matching
+  - Exact filename matching algorithm
+  - Fuzzy matching for unmatched subtitles
+  - Similarity scoring system
+  - Confidence thresholds for matches
+- Plex-compatible renaming
+  - Standardized naming convention (MovieName.en.srt)
+  - Proper language code handling
+  - Support for forced and SDH flags in filenames
+  - Preservation of original language when renaming
+- Preview and organization
+  - Subtitle operations shown in preview system
+  - Batch handling of subtitles with media
+  - Detailed logging of subtitle operations
+  - Interactive approval for subtitle changes
+
 ## Configuration Options
+
+### Subtitle Handling
+- `subtitle_extensions`: List of subtitle file extensions to process
+- `subtitle_handling.enabled`: Master toggle for subtitle handling
+- `subtitle_handling.auto_match`: Enable automatic subtitle matching
+- `subtitle_handling.default_language`: Default language code for unspecified subtitles
+- `subtitle_handling.rename_with_media`: Whether to rename subtitles when media is renamed
 
 ### Anthology Mode
 - `anthology_mode`: Enable special handling for anthology shows
