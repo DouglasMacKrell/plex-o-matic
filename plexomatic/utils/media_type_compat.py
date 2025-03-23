@@ -13,12 +13,15 @@ Usage:
 
 import warnings
 import enum
-from typing import Any, Type, Dict, List, Optional, Union, Tuple, ClassVar, cast, TypeVar
+from typing import Any, Type, TypeVar
 
 # Import the consolidated MediaType
 from plexomatic.core.constants import MediaType as ConsolidatedMediaType
 
-T = TypeVar('T', bound='CoreMediaTypeCompat')
+T = TypeVar("T", bound="CoreMediaTypeCompat")
+T2 = TypeVar("T2", bound="ParserMediaTypeCompat")
+T3 = TypeVar("T3", bound="FetcherMediaTypeCompat")
+
 
 # Backward compatibility for core.models.MediaType
 class CoreMediaTypeCompat(enum.Enum):
@@ -30,31 +33,33 @@ class CoreMediaTypeCompat(enum.Enum):
     TV_SPECIAL = 4
     ANIME_SPECIAL = 5
     UNKNOWN = 6
-    
+
     # Class variable to store the consolidated MediaType instance
-    _consolidated: ClassVar[ConsolidatedMediaType]
+    # Note: In Python 3.8+, instance attributes can be set in __new__
+    # The type annotation is now just to document the expected type
+    _consolidated: ConsolidatedMediaType
 
     def __new__(cls: Type[T], value: int) -> T:
         """Create a new instance of the enum.
-        
+
         Args:
             value: The integer value for this enum member
-            
+
         Returns:
             A new enum instance
         """
         obj = object.__new__(cls)
         obj._value_ = value
-        # Store a reference to the consolidated enum instance
+        # Store a reference to the consolidated enum instance as an instance attribute
         obj._consolidated = ConsolidatedMediaType.from_legacy_value(value, "core")
         return obj
 
     def __eq__(self, other: Any) -> bool:
         """Compare equality, handling comparison with consolidated enum.
-        
+
         Args:
             other: The object to compare with
-            
+
         Returns:
             True if equal, False otherwise
         """
@@ -64,7 +69,7 @@ class CoreMediaTypeCompat(enum.Enum):
 
     def __str__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String representation of this enum member
         """
@@ -72,7 +77,7 @@ class CoreMediaTypeCompat(enum.Enum):
 
     def __repr__(self) -> str:
         """Return repr string.
-        
+
         Returns:
             String representation for debugging
         """
@@ -81,10 +86,10 @@ class CoreMediaTypeCompat(enum.Enum):
     @classmethod
     def from_string(cls, value: str) -> "CoreMediaTypeCompat":
         """Convert a string value to a MediaType enum value.
-        
+
         Args:
             value: The string value to convert
-            
+
         Returns:
             The corresponding MediaType enum value
         """
@@ -102,8 +107,6 @@ class CoreMediaTypeCompat(enum.Enum):
         return cls.UNKNOWN
 
 
-T2 = TypeVar('T2', bound='ParserMediaTypeCompat')
-
 # Backward compatibility for name_parser.MediaType
 class ParserMediaTypeCompat(enum.Enum):
     """Compatibility class for name_parser.MediaType."""
@@ -116,29 +119,31 @@ class ParserMediaTypeCompat(enum.Enum):
     UNKNOWN = "unknown"
 
     # Class variable to store the consolidated MediaType instance
-    _consolidated: ClassVar[ConsolidatedMediaType]
+    # Note: In Python 3.8+, instance attributes can be set in __new__
+    # The type annotation is now just to document the expected type
+    _consolidated: ConsolidatedMediaType
 
     def __new__(cls: Type[T2], value: str) -> T2:
         """Create a new instance of the enum.
-        
+
         Args:
             value: The string value for this enum member
-            
+
         Returns:
             A new enum instance
         """
         obj = object.__new__(cls)
         obj._value_ = value
-        # Store a reference to the consolidated enum instance
+        # Store a reference to the consolidated enum instance as an instance attribute
         obj._consolidated = ConsolidatedMediaType(value)
         return obj
 
     def __eq__(self, other: Any) -> bool:
         """Compare equality, handling comparison with consolidated enum.
-        
+
         Args:
             other: The object to compare with
-            
+
         Returns:
             True if equal, False otherwise
         """
@@ -148,7 +153,7 @@ class ParserMediaTypeCompat(enum.Enum):
 
     def __str__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String representation of this enum member
         """
@@ -156,14 +161,12 @@ class ParserMediaTypeCompat(enum.Enum):
 
     def __repr__(self) -> str:
         """Return repr string.
-        
+
         Returns:
             String representation for debugging
         """
         return repr(self._consolidated)
 
-
-T3 = TypeVar('T3', bound='FetcherMediaTypeCompat')
 
 # Backward compatibility for fetcher.MediaType
 class FetcherMediaTypeCompat(enum.Enum):
@@ -176,29 +179,31 @@ class FetcherMediaTypeCompat(enum.Enum):
     UNKNOWN = 5
 
     # Class variable to store the consolidated MediaType instance
-    _consolidated: ClassVar[ConsolidatedMediaType]
+    # Note: In Python 3.8+, instance attributes can be set in __new__
+    # The type annotation is now just to document the expected type
+    _consolidated: ConsolidatedMediaType
 
     def __new__(cls: Type[T3], value: int) -> T3:
         """Create a new instance of the enum.
-        
+
         Args:
             value: The integer value for this enum member
-            
+
         Returns:
             A new enum instance
         """
         obj = object.__new__(cls)
         obj._value_ = value
-        # Store a reference to the consolidated enum instance
+        # Store a reference to the consolidated enum instance as an instance attribute
         obj._consolidated = ConsolidatedMediaType.from_legacy_value(value, "fetcher")
         return obj
 
     def __eq__(self, other: Any) -> bool:
         """Compare equality, handling comparison with consolidated enum.
-        
+
         Args:
             other: The object to compare with
-            
+
         Returns:
             True if equal, False otherwise
         """
@@ -208,7 +213,7 @@ class FetcherMediaTypeCompat(enum.Enum):
 
     def __str__(self) -> str:
         """Return string representation.
-        
+
         Returns:
             String representation of this enum member
         """
@@ -216,8 +221,8 @@ class FetcherMediaTypeCompat(enum.Enum):
 
     def __repr__(self) -> str:
         """Return repr string.
-        
+
         Returns:
             String representation for debugging
         """
-        return repr(self._consolidated) 
+        return repr(self._consolidated)

@@ -32,8 +32,8 @@ def ensure_episode_list(episodes: Optional[Union[int, str, List[int]]]) -> List[
         try:
             return [int(episodes)]
         except ValueError:
-            # If we can't convert to int, return empty list
-            return []
+            # If the string is not a number, raise TypeError
+            raise TypeError(f"String episode must be a number, got '{episodes}'")
     elif isinstance(episodes, list):
         return episodes
     else:

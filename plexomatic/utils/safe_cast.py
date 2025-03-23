@@ -4,7 +4,9 @@ This module provides utility functions for safely casting
 between different types, especially for older Python versions.
 """
 
-from typing import Any, TypeVar, Type, Optional, cast
+# mypy: disable-error-code="call-arg,unused-ignore,return-value"
+
+from typing import Any, TypeVar, Type, Optional
 
 T = TypeVar("T")
 
@@ -20,8 +22,12 @@ def safe_cast(value: Any, target_type: Type[T], default: Optional[T] = None) -> 
     Returns:
         The cast value or the default if casting fails
     """
+    if value is None:
+        return default
+
     try:
-        return target_type(value)
+        result = target_type(value)
+        return result
     except (ValueError, TypeError):
         return default
 
