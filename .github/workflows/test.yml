@@ -155,12 +155,20 @@ jobs:
         echo "============= PYTEST RUN ============="
         echo "Pytest version: $(pytest --version)"
         echo "Running pytest..."
-        python -m pytest tests/ -v --cov=plexomatic > logs/tests/pytest.log 2>&1 || true
+        python -m pytest tests/ -v --cov=plexomatic --cov-report=xml > logs/tests/pytest.log 2>&1 || true
         echo "Pytest exit code: $?"
         echo "Test logs directory contents:"
         ls -la logs/tests/
         echo "Pytest log preview:"
         head -n 50 logs/tests/pytest.log
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
 
     - name: Run individual test modules
       continue-on-error: true
