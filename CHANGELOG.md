@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- None
+
+### Changed
+- None
+
+### Deprecated
+- None
+
+### Removed
+- None
+
+### Fixed
+- None
+
+### Security
+- None
+
+## [0.3.0] - 2024-06-21
+
+### Added
 - API Integration Package
   - TVDB API client with authentication, caching, and rate limiting
     - Supports search for TV series by name
@@ -73,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Template registration and management system
   - Default templates for common naming formats (Plex, Kodi, etc.)
   - Template application with format string parsing
-- Preview System (In Progress)
+- Preview System
   - Advanced preview generator for showing proposed changes
   - Interactive diff display for file operations
   - Batch preview functionality for multiple files
@@ -83,6 +103,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interactive template preview functionality
   - Support for viewing all registered templates
   - Enhanced test coverage for all template commands
+- Comprehensive Documentation
+  - Getting Started guide with step-by-step instructions
+  - Template System documentation
+  - Command reference for all CLI operations
+  - Troubleshooting section with common issues and solutions
 
 ### Changed
 - Completed refactoring of the template system:
