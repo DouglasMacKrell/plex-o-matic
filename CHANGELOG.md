@@ -8,7 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- None
+- Codecov Integration
+  - Added configuration for code coverage reporting
+  - Integrated with GitHub Actions workflow
+  - Added codecov.yml configuration file
+  - Enabled XML coverage report generation
 
 ### Changed
 - None
@@ -272,3 +276,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - None
+
+## [0.3.1] - 2025-03-23
+
+### Fixed
+- Fixed PyPI publish workflow attestation error
+- Updated GitHub Actions workflow to disable problematic attestation feature
+- Added comprehensive configuration to PyPI publishing steps
