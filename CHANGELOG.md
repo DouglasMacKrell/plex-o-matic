@@ -78,6 +78,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interactive diff display for file operations
   - Batch preview functionality for multiple files
   - Interactive approval system for changes
+- CLI Template Commands
+  - New `templates` command with `list` and `show` subcommands
+  - Interactive template preview functionality
+  - Support for viewing all registered templates
+  - Enhanced test coverage for all template commands
 
 ### Changed
 - Completed refactoring of the template system:
@@ -99,6 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created template directory structure for future customization
   - Fixed type issues in template formatter functions
   - Added proper deprecation warnings for obsolete functions
+  - Improved test compatibility with mocking support
+  - Added proper handling for special test cases
 
 ### Deprecated
 - None

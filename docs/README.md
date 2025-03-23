@@ -15,6 +15,8 @@ Welcome to the Plex-o-matic documentation. This guide will help you understand h
 
 Plex-o-matic is a powerful tool designed to help you organize your media files for Plex. It automates the process of scanning, renaming, and organizing media files according to Plex's preferred naming conventions.
 
+**New users**: Check out our comprehensive [Getting Started Guide](getting_started.md) for step-by-step instructions on installation, configuration, and your first media organization workflow.
+
 ### Installation
 
 #### From Source

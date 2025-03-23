@@ -7,6 +7,10 @@
 
 An intelligent media file organization tool for Plex that helps automate the process of renaming and structuring media files for optimal Plex compatibility.
 
+## New to Plex-o-matic?
+
+Check out our comprehensive [Getting Started Guide](docs/getting_started.md) for step-by-step instructions on installation, configuration, and your first media organization workflow.
+
 ## Features
 
 - **Media File Management**:
@@ -47,6 +51,13 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - Special episode and multi-episode support
   - Metadata-driven filename generation
 
+- **Template System**:
+  - Customizable templates for TV shows, movies, and anime
+  - Support for special episodes and different media types
+  - Template visualization and preview functionality
+  - Default templates for common naming conventions
+  - Multi-episode formatting support
+
 - **Robust Backup System**:
   - SQLite database integration for operation tracking
   - File checksum verification
@@ -55,6 +66,7 @@ An intelligent media file organization tool for Plex that helps automate the pro
 
 - **User-Friendly CLI**:
   - Preview system for verifying changes before applying
+  - Template management commands
   - Dry-run options for testing
   - Verbose output mode for detailed information
   - Intuitive command structure
@@ -63,6 +75,7 @@ An intelligent media file organization tool for Plex that helps automate the pro
   - JSON-based configuration system
   - Environment variable support
   - Customizable settings for file types and naming
+  - Interactive configuration wizard
 
 ## Python Compatibility
 
@@ -177,9 +190,18 @@ plexomatic preview --path /path/to/media --verbose
 
 # Dry run to see what would happen without making changes
 plexomatic apply --dry-run
+
+# List all available templates
+plexomatic templates list
+
+# Show a specific template
+plexomatic templates show --type TV_SHOW
+
+# Preview a template with sample data
+plexomatic templates show --type MOVIE --preview
 ```
 
-For more detailed usage instructions, refer to the [documentation](docs/README.md).
+For more detailed usage instructions, refer to the [documentation](docs/README.md) and the [Getting Started Guide](docs/getting_started.md).
 
 ## Development
 
@@ -218,8 +240,10 @@ mypy .
     - `backup_system.py`: Backup and rollback functionality
     - `models.py`: Database models
   - `utils/`: Utility functions
-    - `file_ops.py`: File operations
-    - `name_utils.py`: Filename handling
+    - `template_formatter.py`: Template formatting
+    - `template_registry.py`: Template registration
+    - `name_parser.py`: Filename parsing
+    - `preview_system.py`: Preview generation
   - `config/`: Configuration management
   - `cli.py`: Command-line interface
 
@@ -227,13 +251,16 @@ mypy .
 
 Comprehensive documentation is available in the [docs](docs/) directory:
 
+- [Getting Started Guide](docs/getting_started.md)
 - [CLI Documentation](docs/cli/README.md)
 - [Configuration System](docs/configuration/README.md)
 - [File Utilities](docs/file-utils/README.md)
+  - [Template System](docs/file-utils/template_system.md)
 - [Episode Handling](docs/episode_handling.md)
 - [Metadata System](docs/metadata/README.md)
 - [Metadata-Episode Integration](docs/metadata/episode_integration.md)
 - [Backend Architecture](docs/backend/README.md)
+  - [MediaType System](docs/backend/media_type.md)
 - [Database Schema](docs/database/README.md)
 - [API Integration](docs/api/README.md)
 
