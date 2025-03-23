@@ -71,6 +71,29 @@ if new:
     print(f"Would rename: {original.name} → {new.name}")
 ```
 
+## Template System
+
+Plex-o-matic provides a flexible template system for customizing filename formats. The template system allows you to define and use custom naming patterns for different media types.
+
+```python
+from plexomatic.utils.template_formatter import replace_variables
+from plexomatic.utils.name_parser import ParsedMediaName, MediaType
+
+parsed = ParsedMediaName(
+    media_type=MediaType.TV_SHOW,
+    title="Breaking Bad",
+    season=1,
+    episodes=[5],
+    extension="mp4"
+)
+
+template = "{title}.S{season:02d}E{episode:02d}{extension}"
+result = replace_variables(template, parsed)
+# Result: "Breaking.Bad.S01E05.mp4"
+```
+
+For detailed documentation on the template system, see the [Template System Documentation](template_system.md).
+
 ## File Operations
 
 Plex-o-matic provides file operations with built-in backup functionality.

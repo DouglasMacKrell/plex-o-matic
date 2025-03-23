@@ -88,6 +88,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced test coverage with dedicated test files for each module
   - Fixed circular dependencies and improved code organization
   - Added clear interfaces between modules
+- Improved MediaType enum compatibility and consolidation:
+  - Created type-safe compatibility layers for existing MediaType implementations
+  - Fixed attribute access on enum instances with proper type annotations
+  - Enhanced backward compatibility between core, parser, and fetcher MediaType variants
+  - Added type variables and improved generics for better static analysis
+- Enhanced template formatting system:
+  - Added `get_default_template` function for consistent template defaults
+  - Implemented support for multi-episode formatting in template strings
+  - Created template directory structure for future customization
+  - Fixed type issues in template formatter functions
+  - Added proper deprecation warnings for obsolete functions
 
 ### Deprecated
 - None
@@ -109,6 +120,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused variables in test files
 - Improved code quality throughout test codebase
 - Added typing_roadmap.md to track typing progress
+- Fixed various mypy typing issues:
+  - Improved type annotations in safe_cast.py with proper generic support
+  - Fixed typing in the template system and formatter modules
+  - Added proper typing for the multi-episode formatter
+  - Resolved MediaType enum typing issues across multiple modules
+  - Added mypy-specific directives where needed for compatibility with older Python versions
+  - Ensured type-safe instance attribute access on enum instances
+- Fixed template formatter tests:
+  - Resolved test failures in multi-episode formatting
+  - Fixed template application with proper error handling
+  - Ensured consistent behavior in template registry functionality
+  - Added comprehensive test cases for all template formatter functions
+  - Fixed inconsistencies between test files and implementation
 
 ### Security
 - None

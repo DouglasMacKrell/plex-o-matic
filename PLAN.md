@@ -250,55 +250,17 @@
 - Documentation accuracy
 - User feedback
 
-### MediaType Enum Consolidation
-
-#### Problem Statement
-The codebase currently has two separate implementations of the MediaType enum:
-1. `plexomatic.utils.name_parser.MediaType` - Uses string values like "tv_show"
-2. `plexomatic.core.models.MediaType` - Uses auto-generated integer values from enum.auto()
-
-This duplication creates type incompatibility issues, maintenance burden, cognitive overhead for developers, testing complexity, and documentation confusion.
-
-#### Consolidation Steps
-
-1. **Consolidate to a single MediaType definition**
-   - Decide on the preferred implementation (string values are more readable and stable)
-   - Create a unified MediaType in a central location (e.g., `plexomatic.core.models`)
-   - Ensure the unified enum includes all values from both existing implementations
-   - Add proper docstrings and type hints
-
-2. **Add migration code**
-   - Create helper functions to convert between old integer values and new string values
-   - Add deprecation warnings for the old enum
-   - Implement serialization/deserialization logic that handles both formats
-   - Consider database migration if enum values are stored in the database
-
-3. **Update all imports**
-   - Systematically update all import statements across the codebase
-   - Replace all instances of the old enum with the consolidated version
-   - Ensure tests use the same enum implementation as the code they test
-   - Update any code that directly relies on enum values
-
-4. **Create comprehensive tests**
-   - Write tests to verify the new enum works with all existing functionality
-   - Add tests for the migration helpers
-   - Ensure serialization/deserialization works correctly with both old and new formats
-   - Verify backward compatibility with any stored data
-
-#### Implementation Strategy
-- Follow test-driven development: write failing tests first
-- Implement changes incrementally
-- Run the full test suite after each significant change
-- Add detailed comments explaining the migration for future developers
-
 ### Post-MediaType Consolidation Tasks
 
-#### 1. Address mypy typing issues
-- Fix type annotations in compatibility modules
-- Address template loading and management type errors
-- Resolve Union and Optional type handling
-- Update test files with proper type annotations
-- Ensure all functions have appropriate return type annotations
+#### 1. ✅ Address mypy typing issues (COMPLETED)
+- Fixed type annotations in compatibility modules
+- Addressed template loading and management type errors
+- Resolved Union and Optional type handling
+- Updated test files with proper type annotations
+- Ensured all functions have appropriate return type annotations
+- Added mypy-specific directives where needed
+- Fixed safe_cast.py typing issues
+- Resolved enum instance attribute access type errors
 
 #### 2. Increase test coverage in low-coverage areas
 - Target modules with <70% coverage first
