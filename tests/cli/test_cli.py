@@ -174,3 +174,57 @@ def test_scan_with_verbose_flag(runner: CliRunner, media_dir: Path) -> None:
     assert "Verbose mode enabled" in result.output
     # With verbose, it should show each found file
     assert "The.Show.S01E01.mp4" in result.output
+
+
+@patch("plexomatic.cli.rename_file")
+def test_apply_command_batch_operations(
+    mock_rename: MagicMock, runner: CliRunner, media_dir: Path, mock_backup_system: MagicMock
+) -> None:
+    """Test the apply command with batch operations."""
+    # Mock rename_file to return success
+    mock_rename.return_value = True
+
+    # Create a large number of preview files to test batch operations
+    previews = []
+    for i in range(20):  # Testing with 20 files
+        original = media_dir / f"original_{i}.mp4"
+        new = media_dir / f"new_{i}.mp4"
+        previews.append((original, new))
+
+    # Skip the preview command entirely by setting up obj directly
+    obj = {"previews": previews, "backup_system": mock_backup_system}
+
+    result = runner.invoke(cli, ["apply", "--batch-size", "5"], input="y\n", obj=obj)
+
+    assert result.exit_code == 0
+    assert "Applying changes" in result.output
+    assert "Processing in batches" in result.output
+    assert "Batch 1/4" in result.output  # Should have 4 batches of 5 files
+    assert mock_rename.call_count == 20  # Should have been called for each file
+
+
+@patch("plexomatic.cli.rename_file")
+def test_apply_command_with_errors(
+    mock_rename: MagicMock, runner: CliRunner, media_dir: Path, mock_backup_system: MagicMock
+) -> None:
+    """Test the apply command handling errors during renaming."""
+    # Mock rename_file to return success for some files and failure for others
+    mock_rename.side_effect = [True, False, True, True]  # One failure in the middle
+
+    # Create preview files including some that will fail
+    previews = []
+    for i in range(4):
+        original = media_dir / f"original_{i}.mp4"
+        new = media_dir / f"new_{i}.mp4"
+        previews.append((original, new))
+
+    # Skip the preview command entirely by setting up obj directly
+    obj = {"previews": previews, "backup_system": mock_backup_system}
+
+    result = runner.invoke(cli, ["apply"], input="y\n", obj=obj)
+
+    assert result.exit_code == 0
+    assert "Applying changes" in result.output
+    assert "3 files processed successfully" in result.output
+    assert "1 errors occurred" in result.output
+    assert mock_rename.call_count == 4

@@ -17,6 +17,8 @@ from plexomatic.config import ConfigManager
 from plexomatic.utils import get_preview_rename
 from plexomatic.utils.file_ops import rename_file, rollback_operation
 from plexomatic import cli_ui
+from plexomatic.utils.template_manager import TemplateManager
+from plexomatic.core.constants import MediaType
 
 # Initialize configuration
 config = ConfigManager()
@@ -219,10 +221,19 @@ def preview_command(
     type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
     help="Path to directory containing media files",
 )
+@click.option(
+    "--batch-size",
+    "-b",
+    type=int,
+    default=0,
+    help="Process files in batches of specified size (0 for all at once)",
+)
 @click.confirmation_option(prompt="Are you sure you want to apply changes to your media files?")
 @verbose_option
 @click.pass_context
-def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbose: bool) -> bool:
+def apply_command(
+    ctx: click.Context, dry_run: bool, path: Optional[Path], batch_size: int, verbose: bool
+) -> bool:
     """Apply changes to media files."""
     if verbose:
         logger.setLevel(logging.DEBUG)
@@ -249,64 +260,108 @@ def apply_command(ctx: click.Context, dry_run: bool, path: Optional[Path], verbo
         cli_ui.format_error("Backup system not initialized. This is a bug.")
         return False
 
-    # Apply changes with progress bar
-    with cli_ui.progress_bar("Renaming files...", total=len(previews)) as progress_tuple:
-        progress, task_id = progress_tuple
-        success_count = 0
-        error_count = 0
-
-        for i, (original_path, new_path) in enumerate(previews):
-            if dry_run:
-                cli_ui.print_file_change(original_path, new_path)
-                cli_ui.console.print("  [yellow](dry run - no changes made)[/yellow]")
-                success_count += 1
-            else:
-                progress.update(task_id, description=f"Renaming file {i+1}/{len(previews)}")
-                try:
-                    success = rename_file(original_path, new_path, backup_system)
-
-                    if success:
-                        if verbose:
-                            cli_ui.print_status(
-                                f"Renamed: {original_path.name} → {new_path.name}", status="success"
-                            )
-                        success_count += 1
-                    else:
-                        cli_ui.print_status(f"Error renaming {original_path}", status="error")
-                        error_count += 1
-                except Exception as e:
-                    cli_ui.print_status(f"Exception during rename: {str(e)}", status="error")
-                    error_count += 1
-
-            # Update progress bar
-            progress.update(task_id, advance=1)
-
-    # Show summary
-    if dry_run:
+    # Determine if we're using batch processing
+    total_files = len(previews)
+    if batch_size > 0 and total_files > batch_size:
+        total_batches = (total_files + batch_size - 1) // batch_size
         cli_ui.print_status(
-            f"Dry run complete. {success_count} file(s) would be renamed.", status="info"
+            f"Processing in batches of {batch_size} files ({total_batches} batches total)",
+            status="info",
         )
+        batched_processing = True
     else:
-        cli_ui.print_summary(
-            "Rename Results",
-            {
-                "Total files": len(previews),
-                "Successfully renamed": success_count,
-                "Errors": error_count,
-            },
-        )
+        batched_processing = False
+        batch_size = total_files  # Process all files in one "batch"
+        total_batches = 1
 
-        if error_count == 0:
-            cli_ui.print_status("All files renamed successfully!", status="success")
-        elif success_count > 0:
+    # Tracking success and failures
+    success_count = 0
+    error_count = 0
+    error_files = []
+
+    # Process files in batches if needed
+    for batch_num in range(total_batches):
+        start_idx = batch_num * batch_size
+        end_idx = min(start_idx + batch_size, total_files)
+        current_batch = previews[start_idx:end_idx]
+
+        if batched_processing:
             cli_ui.print_status(
-                f"Partially successful: {success_count} renamed, {error_count} errors",
-                status="warning",
+                f"Batch {batch_num + 1}/{total_batches} ({len(current_batch)} files)", status="info"
+            )
+
+        # Apply changes with progress bar
+        with cli_ui.progress_bar("Renaming files...", total=len(current_batch)) as progress_tuple:
+            progress, task_id = progress_tuple
+
+            for i, (original_path, new_path) in enumerate(current_batch):
+                if dry_run:
+                    cli_ui.print_file_change(original_path, new_path)
+                    cli_ui.console.print("  [yellow](dry run - no changes made)[/yellow]")
+                    success_count += 1
+                else:
+                    progress.update(
+                        task_id, description=f"Renaming file {i+1}/{len(current_batch)}"
+                    )
+                    try:
+                        success = rename_file(original_path, new_path, backup_system)
+
+                        if success:
+                            if verbose:
+                                cli_ui.print_status(
+                                    f"Renamed: {original_path.name} → {new_path.name}",
+                                    status="success",
+                                )
+                            success_count += 1
+                        else:
+                            cli_ui.print_status(
+                                f"Failed to rename: {original_path.name}", status="error"
+                            )
+                            error_count += 1
+                            error_files.append(original_path)
+                    except Exception as e:
+                        logger.error(f"Error renaming {original_path}: {e}")
+                        cli_ui.print_status(
+                            f"Error renaming {original_path.name}: {e}", status="error"
+                        )
+                        error_count += 1
+                        error_files.append(original_path)
+
+                # Update progress
+                progress.update(task_id, advance=1)
+
+        # Add a newline between batches for better readability
+        if batched_processing and batch_num < total_batches - 1:
+            cli_ui.print_newline()
+
+    # Summary
+    if dry_run:
+        cli_ui.print_status("Dry run complete. No changes were made.", status="success")
+    else:
+        # Format summary based on results
+        if error_count == 0:
+            cli_ui.print_status(
+                f"All operations completed successfully. {success_count} files processed.",
+                status="success",
             )
         else:
-            cli_ui.print_status("All renames failed. See logs for details.", status="error")
+            cli_ui.print_status(
+                f"{success_count} files processed successfully. {error_count} errors occurred.",
+                status="warning" if success_count > 0 else "error",
+            )
+            if verbose and error_files:
+                cli_ui.print_status("Files with errors:", status="error")
+                for error_file in error_files:
+                    cli_ui.console.print(f"  - {error_file}")
 
-    return success_count > 0 and error_count == 0
+    # Store results in context
+    ctx.obj["rename_results"] = {
+        "success_count": success_count,
+        "error_count": error_count,
+        "error_files": error_files,
+    }
+
+    return error_count == 0
 
 
 @cli.command(name="rollback", help="Rollback the last operation")
@@ -515,98 +570,128 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
         )
 
 
-@cli.group()
-def templates() -> None:
-    """Manage file name templates."""
-    pass
+@cli.group(name="templates", help="Manage file name templates.")
+@verbose_option
+@click.pass_context
+def templates(ctx: click.Context, verbose: bool) -> None:
+    """Manage and preview file name templates.
+
+    This command provides subcommands for listing available templates
+    and previewing how they'll format a file name.
+    """
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Verbose mode enabled")
+        # Also output to console for test capture
+        cli_ui.print_status("Verbose mode enabled", status="info")
+
+    # Initialize template manager and store in context
+    manager = TemplateManager()
+    ctx.obj = ctx.obj or {}
+    ctx.obj["template_manager"] = manager
 
 
-@templates.command("list")
-def list_templates() -> None:
+@templates.command(name="list", help="List all available templates")
+@click.pass_context
+def list_templates(ctx: click.Context) -> None:
     """List all available templates."""
+    manager = ctx.obj.get("template_manager")
+    if not manager:
+        cli_ui.format_error("Template manager not initialized. This is a bug.")
+        return
+
     cli_ui.print_heading("Available Templates")
 
-    # Media type names and descriptions
-    media_types = [
-        ("TV_SHOW", "TV Show Episodes"),
-        ("MOVIE", "Movies"),
-        ("ANIME", "Anime Episodes"),
-        ("TV_SPECIAL", "TV Show Specials"),
-        ("ANIME_SPECIAL", "Anime Specials"),
-        ("UNKNOWN", "Unknown Media Types"),
-    ]
+    # Create sections for different template types
+    sections = {
+        "TV Show Episodes": MediaType.TV_SHOW,
+        "Movies": MediaType.MOVIE,
+        "Anime Episodes": MediaType.ANIME,
+    }
 
-    # Print templates for each media type
-    for media_type_name, description in media_types:
-        from plexomatic.core.models import MediaType
-        from plexomatic.utils.template_registry import get_template
-        from plexomatic.utils.template_types import normalize_media_type
+    # Print each section with its templates
+    for section_name, media_type in sections.items():
+        cli_ui.print_heading(section_name, "")
 
-        media_type = getattr(MediaType, media_type_name)
-        template = get_template(template_type=normalize_media_type(media_type), name="default")
-
-        cli_ui.print_info(f"{description} ({media_type_name}):")
-        cli_ui.print_result(template)
-        cli_ui.print_newline()
+        try:
+            template = manager.get_template(media_type)
+            cli_ui.console.print(f"  Default: [cyan]{template}[/cyan]")
+        except Exception as e:
+            logger.error(f"Error getting template for {media_type}: {e}")
+            cli_ui.print_status(f"Error loading template: {e}", status="error")
 
 
-@templates.command("show")
-@click.argument(
-    "media_type",
-    type=click.Choice(["TV_SHOW", "MOVIE", "ANIME", "TV_SPECIAL", "ANIME_SPECIAL", "UNKNOWN"]),
-)
-@click.argument("title", default="Example Title")
-@click.option("--season", type=int, default=1, help="Season number")
-@click.option("--episode", type=int, default=1, help="Episode number")
-@click.option("--episode-title", type=str, default="Example Episode", help="Episode title")
-@click.option("--year", type=int, default=2023, help="Release year (for movies)")
-@click.option("--quality", type=str, default="1080p", help="Video quality")
-@click.option("--group", type=str, default="GROUP", help="Release group (for anime)")
+@templates.command(name="show", help="Show a template preview")
+@click.argument("media_type", type=click.Choice(["TV_SHOW", "MOVIE", "ANIME"]))
+@click.argument("title")
+@click.option("--season", type=int, default=1, help="Season number (for TV shows)")
+@click.option("--episode", type=int, default=1, help="Episode number (for TV shows)")
+@click.option("--year", type=str, help="Year (for movies)")
+@click.option("--quality", type=str, help="Quality (e.g., 1080p)")
+@click.option("--episode-title", type=str, help="Episode title")
+@click.pass_context
 def show_template(
+    ctx: click.Context,
     media_type: str,
     title: str,
-    season: int,
-    episode: int,
-    episode_title: str,
-    year: int,
-    quality: str,
-    group: str,
+    season: int = 1,
+    episode: int = 1,
+    year: Optional[str] = None,
+    quality: Optional[str] = None,
+    episode_title: Optional[str] = None,
 ) -> None:
-    """Show how a template would be applied to sample data."""
-    from plexomatic.core.models import MediaType
-    from plexomatic.utils.name_parser import ParsedMediaName
+    """Show a preview of how a template will format a file name."""
+    manager = ctx.obj.get("template_manager")
+    if not manager:
+        cli_ui.format_error("Template manager not initialized. This is a bug.")
+        return
 
-    # Map string to MediaType enum
-    media_type_enum = getattr(MediaType, media_type)
+    # Map string media type to enum
+    media_type_map = {
+        "TV_SHOW": MediaType.TV_SHOW,
+        "MOVIE": MediaType.MOVIE,
+        "ANIME": MediaType.ANIME,
+    }
 
-    # Create a parsed media name
-    parsed = ParsedMediaName(
-        title=title,
-        season=season,
-        episodes=[episode],
-        episode_title=episode_title,
-        year=year,
-        quality=quality,
-        group=group,
-        media_type=media_type_enum,
-        extension=".mp4",
-    )
+    template_media_type = media_type_map.get(media_type)
+    if template_media_type is None:
+        cli_ui.format_error(f"Invalid media type: {media_type}")
+        return
 
-    # Get template and formatted result
-    from plexomatic.utils.template_registry import get_template
-    from plexomatic.utils.template_formatter import apply_template
-    from plexomatic.utils.template_types import normalize_media_type
+    # Get template
+    try:
+        template = manager.get_template(template_media_type)
+    except Exception as e:
+        cli_ui.format_error(f"Error loading template: {e}")
+        return
 
-    template = get_template(template_type=normalize_media_type(media_type_enum), name="default")
-    result = apply_template(parsed)
+    # Create format params
+    params = {
+        "title": title,
+        "season": season,
+        "episode": episode,
+    }
 
-    # Print results
-    cli_ui.print_heading(f"Template Preview for {media_type}")
-    cli_ui.print_info("Template:")
-    cli_ui.print_result(template)
-    cli_ui.print_newline()
-    cli_ui.print_info("Formatted Result:")
-    cli_ui.print_result(result)
+    if year:
+        params["year"] = year
+
+    if quality:
+        params["quality"] = quality
+
+    if episode_title:
+        params["episode_title"] = episode_title
+
+    # Format the template
+    try:
+        formatted = manager.format(template_media_type, **params)
+
+        # Display the result
+        cli_ui.print_heading("Template Preview")
+        cli_ui.console.print(f"Template: [cyan]{template}[/cyan]")
+        cli_ui.console.print(f"Result:   [green]{formatted}[/green]")
+
+    except Exception as e:
+        cli_ui.format_error(f"Error formatting template: {e}")
 
 
 if __name__ == "__main__":

@@ -320,3 +320,72 @@
 - Pre-v2 Refactoring: Weeks 17-20
 - V2 Development: Weeks 21-28
 - Maintenance: Ongoing
+
+## Current Sprint: CLI Command Implementation and MVP Refinement
+
+### Progress So Far
+1. ✅ Template System Refactoring Complete
+   - Split large name_templates.py module into smaller, focused modules
+   - Enhanced test coverage with dedicated test files
+   - Fixed circular dependencies and improved code organization
+   - All tests passing with proper type annotations
+
+2. ✅ Preview System Implementation
+   - Core preview functionality in plexomatic/utils/preview_system.py
+   - Preview commands in CLI interface
+   - Diff display for file operations
+   - Batch preview capabilities
+
+3. ✅ Configuration System
+   - Interactive CLI configuration for API keys
+   - Secure storage of credentials
+   - LLM integration settings
+
+### Current Focus: CLI Command Implementation
+1. Apply Command Enhancement
+   - Batch operation capabilities
+   - Confirm all operations work end-to-end
+   - Add dry-run capability for testing without file changes
+   - Improve user feedback during operations
+
+2. Test Coverage for CLI Commands
+   - Create comprehensive tests for CLI commands
+   - Test for edge cases and error conditions
+   - Ensure consistent behavior across commands
+
+3. Command Execution Flow
+   - Verify proper execution flow from scan → preview → apply
+   - Add progress indicators for long-running operations
+   - Ensure proper error handling and user feedback
+
+### Blocking Issues for MVP
+1. Sample Media Generation
+   - Create sample media files for testing
+   - Ensure variety of naming patterns for robust testing
+   - Document sample media setup process
+
+2. Documentation Updates
+   - Add "Getting Started" guide for first-time users
+   - Document API key acquisition process
+   - Create usage examples for common scenarios
+
+3. Integration Testing
+   - Test all components working together
+   - Verify API integrations function properly
+   - Test on different operating systems if possible
+
+### Next Steps After MVP
+1. Performance Optimization
+   - Profile application for bottlenecks
+   - Implement caching for slow operations
+   - Add parallel processing where appropriate
+
+2. UI Improvements
+   - Enhance terminal UI with better formatting
+   - Add interactive mode for complex operations
+   - Improve error display and recovery options
+
+3. Extended Functionality
+   - Support for more media types
+   - Additional metadata sources
+   - Custom template capabilities
