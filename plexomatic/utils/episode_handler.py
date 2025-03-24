@@ -859,8 +859,6 @@ def detect_segments(
     parsed_info = extract_show_info(file_path)
     show_name = parsed_info.get("show_name", os.path.basename(file_path))
     
-    # Remove special case for Chip n Dale
-    
     logger.debug(f"Extracted info from basename: {os.path.basename(file_path)}")
     if parsed_info:
         info_str = ', '.join([f"{k}={v}" for k, v in parsed_info.items() if v])
@@ -878,15 +876,27 @@ def detect_segments(
         cache_dir, f"segments_{hashlib.md5(file_path.encode()).hexdigest()}.json"
     )
     
-    # Remove testing-specific cache handling
-    
     # Check for cached segments
     if os.path.exists(cache_file):
         try:
             with open(cache_file, "r") as f:
                 segments = json.load(f)
-                logger.debug(f"Loaded {len(segments)} segments from cache: {segments}")
-                return segments
+                # Filter out thinking tags and other artifacts
+                segments = [s for s in segments 
+                          if len(s) > 1 
+                          and "<think>" not in s.lower() 
+                          and "</think>" not in s.lower()
+                          and "summary" not in s.lower() 
+                          and "approach" not in s.lower()
+                          and "confirm" not in s.lower() 
+                          and not s.startswith("In ")
+                          and "format" not in s.lower()
+                          and "episode" not in s.lower()]
+                if segments:
+                    logger.debug(f"Loaded {len(segments)} valid segments from cache: {segments}")
+                    return segments
+                else:
+                    logger.debug("No valid segments found in cache, will regenerate")
         except Exception as e:
             logger.warning(f"Error loading segment cache: {e}")
 
@@ -900,7 +910,6 @@ def detect_segments(
         llm_client = LLMClient()
         
         # Build context for the LLM request
-        # An episode might be an anthology with multiple distinct segments
         prompt = f"""
         You are a content analyzer working with TV shows. You need to identify the segments in this file:
 
@@ -957,7 +966,7 @@ def detect_segments(
         segments = [
             s.strip()
             for s in cleaned_response.strip().split("\n")
-            if s.strip() and not s.strip().startswith("-")
+            if s.strip()  # Only filter empty lines, keep bullet points
         ]
         
         # Remove bullet points and numbering
