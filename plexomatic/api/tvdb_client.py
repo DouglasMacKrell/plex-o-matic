@@ -2,6 +2,7 @@
 
 import requests
 import logging
+from urllib.parse import quote
 
 try:
     # Python 3.9+ has native support for these types
@@ -22,7 +23,7 @@ SERIES_URL = f"{BASE_URL}/series"
 EPISODES_URL = f"{BASE_URL}/series/{{series_id}}/episodes/default"
 SERIES_EXTENDED_URL = f"{BASE_URL}/series/{{series_id}}/extended"
 SEASONS_URL = f"{BASE_URL}/seasons"
-SEASON_EPISODES_URL = f"{BASE_URL}/seasons/{{season_id}}/episodes"
+SEASON_EPISODES_URL = f"{BASE_URL}/seasons/{{season_id}}/extended"
 
 
 class TVDBAuthenticationError(Exception):
@@ -200,14 +201,39 @@ class TVDBClient:
             series_name: The name of the series to search for.
 
         Returns:
-            A list of search results.
+            A list of matching series.
         """
-        url = f"{SEARCH_SERIES_URL}?query={series_name}&type=series"
+        # URL encode the series name for the query
+        encoded_name = quote(series_name)
+        url = f"{SEARCH_SERIES_URL}?query={encoded_name}&type=series"
         cache_key = url
 
+        logger.debug(f"Searching for series by name: '{series_name}' (URL: {url})")
         response = self._get_cached_key(cache_key)
+
         if "data" in response:
-            return cast(List[Dict[str, Any]], response["data"])
+            results = response["data"]
+            logger.debug(f"Found {len(results)} series matching '{series_name}'")
+
+            if results:
+                # Log the top results for debugging
+                for i, result in enumerate(results[:3]):  # Show top 3 matches
+                    logger.debug(
+                        f"Match {i+1}: {result.get('name', 'Unknown')} (ID: {result.get('id', 'Unknown')})"
+                    )
+            else:
+                # Try alternative search patterns if no results
+                logger.debug(f"No results found for '{series_name}', trying alternative search...")
+
+                # Try with just the main title part (before any colon)
+                if ":" in series_name:
+                    main_title = series_name.split(":", 1)[0].strip()
+                    logger.debug(f"Trying with main title only: '{main_title}'")
+                    return self.get_series_by_name(main_title)
+
+            return cast(List[Dict[str, Any]], results)
+
+        logger.warning(f"No valid response data for series search: '{series_name}'")
         return cast(List[Dict[str, Any]], [])
 
     def get_series(self, series_id: Any) -> Dict[str, Any]:
@@ -306,21 +332,71 @@ class TVDBClient:
             A list of episodes for the specified season.
         """
         normalized_id = self._normalize_id(series_id)
+        logger.info(
+            f"Getting episodes for series ID {normalized_id}, season {season_number}, type '{season_type}'"
+        )
 
         # First get the series to find the default season type
         logger.debug(f"Fetching extended series data for {normalized_id}")
-        series_extended = self.get_series_extended(normalized_id)
+        try:
+            series_extended = self.get_series_extended(normalized_id)
+            # Log some basic info about the series
+            series_name = series_extended.get("name", "Unknown")
+            logger.debug(f"Found series: {series_name} (ID: {normalized_id})")
+        except Exception as e:
+            logger.error(f"Failed to get extended series data: {e}")
+            return []
 
         # Get all seasons for the series
         seasons = series_extended.get("seasons", [])
         logger.debug(f"Extended series data has {len(seasons)} seasons")
+
+        # Log all season types to help diagnose issues
+        season_info: Dict[Optional[int], List[Optional[str]]] = {}
+        for season in seasons:
+            num = season.get("number")
+            type_val = (
+                season.get("type", {}).get("name")
+                if isinstance(season.get("type"), dict)
+                else season.get("type")
+            )
+            if num not in season_info:
+                season_info[num] = []
+            season_info[num].append(type_val)
+
+        logger.debug(f"Season types by number: {season_info}")
+
         if not seasons:
             # Fall back to separate seasons API call if not in extended data
             logger.debug("No seasons in extended data, falling back to seasons API call")
-            seasons = self.get_series_seasons(normalized_id)
-            logger.debug(f"Found {len(seasons)} seasons from series_seasons API")
+            try:
+                seasons = self.get_series_seasons(normalized_id)
+                logger.debug(f"Found {len(seasons)} seasons from series_seasons API")
+            except Exception as e:
+                logger.error(f"Failed to get series seasons: {e}")
+                return []
 
-        logger.debug(f"Available seasons: {[s.get('number') for s in seasons if 'number' in s]}")
+        # Get available season numbers for logging
+        available_seasons = [s.get("number") for s in seasons if "number" in s]
+        logger.debug(f"Available season numbers: {available_seasons}")
+
+        if season_number not in available_seasons:
+            logger.warning(
+                f"Season {season_number} not found in available seasons {available_seasons}"
+            )
+
+            # Try to offer a helpful message about available seasons
+            if available_seasons:
+                logger.info(f"Available seasons for {series_name}: {sorted(available_seasons)}")
+                # If they asked for season 1 but only season 0 exists, suggest that
+                if season_number == 1 and 0 in available_seasons:
+                    logger.info("Note: This series may only have a 'Specials' season (season 0)")
+
+            # Skip directly to fallback mechanism
+            logger.info(
+                f"Season {season_number} not found, falling back to get_episodes_by_series_id"
+            )
+            return self._fallback_episode_retrieval(normalized_id, season_number, series_name)
 
         # Find the season with the matching season number
         season_id = None
@@ -334,12 +410,21 @@ class TVDBClient:
                 else season.get("type")
             )
             season_id_val = season.get("id")
-            logger.debug(
-                f"Checking season: number={season_num}, type={season_type_value}, id={season_id_val}"
-            )
 
             if season_num == season_number:
-                matching_seasons.append({"id": season_id_val, "type": season_type_value})
+                logger.debug(
+                    f"Found matching season: number={season_num}, type={season_type_value}, id={season_id_val}"
+                )
+                matching_seasons.append(
+                    {"id": season_id_val, "type": season_type_value, "typeId": season.get("typeId")}
+                )
+
+        # Show all matching seasons for debugging
+        if matching_seasons:
+            logger.debug(f"All matching seasons for number {season_number}: {matching_seasons}")
+        else:
+            logger.warning(f"No matching seasons found for number {season_number}")
+            return self._fallback_episode_retrieval(normalized_id, season_number, series_name)
 
         # Prioritize seasons by type
         if matching_seasons:
@@ -360,39 +445,123 @@ class TVDBClient:
                         )
                         break
 
-            # If still no match, use the first one
+            # If still no match, try "Official" or "Default" types
             if not season_id:
+                for s in matching_seasons:
+                    if s["type"] in ["Official", "Default"]:
+                        season_id = s["id"]
+                        logger.debug(f"Using '{s['type']}' season order with ID: {season_id}")
+                        break
+
+            # If still no match, use the first one
+            if not season_id and matching_seasons:
                 season_id = matching_seasons[0]["id"]
                 logger.debug(
-                    f"Neither '{season_type}' nor 'Aired Order' found, using first matching season ID: {season_id}"
+                    f"No preferred season type found, using first matching season ID: {season_id} (type: {matching_seasons[0]['type']})"
                 )
 
         if not season_id:
             logger.warning(f"Season {season_number} not found for series {normalized_id}")
-            return []
+            return self._fallback_episode_retrieval(normalized_id, season_number, series_name)
 
         # Get episodes for the season
-        url = SEASON_EPISODES_URL.format(season_id=season_id)
-        logger.debug(f"Fetching episodes from URL: {url}")
-        cache_key = url
+        # First try using the direct season/episodes endpoint
+        try:
+            # Try with the standard endpoint first
+            url = SEASON_EPISODES_URL.format(season_id=season_id)
+            logger.debug(f"Fetching episodes from URL: {url}")
 
-        response = self._get_cached_key(cache_key)
-        logger.debug(
-            f"Season episodes response: {response.keys() if isinstance(response, dict) else 'Not a dict'}"
+            response = self._get_cached_key(url)
+            logger.debug(
+                f"Season episodes response: {response.keys() if isinstance(response, dict) else 'Not a dict'}"
+            )
+
+            # V4 API response format for the extended endpoint
+            if "data" in response:
+                if "episodes" in response["data"]:
+                    result = response["data"]["episodes"]
+                    logger.debug(
+                        f"Found {len(result)} episodes for season {season_number} in extended data"
+                    )
+                    return cast(List[Dict[str, Any]], result)
+                else:
+                    logger.warning("No 'episodes' key in response 'data'")
+            else:
+                logger.warning(f"No 'data' in response for season episodes: {response}")
+
+            # If we get here, the extended endpoint failed, so try alternate endpoints
+            if "status" in response and response.get("status") == "error":
+                logger.warning(
+                    f"Error response from season episodes endpoint: {response.get('message')}"
+                )
+                # Continue to fallback below
+
+        except Exception as e:
+            logger.error(f"Error fetching episodes for season ID {season_id}: {e}")
+            # Continue to fallback
+
+        # Fall back to filtering all episodes
+        logger.info(
+            f"Falling back to retrieving all episodes and filtering for season {season_number}"
         )
+        return self._fallback_episode_retrieval(normalized_id, season_number, series_name)
 
-        # v4 API response format
-        if "data" in response and "episodes" in response["data"]:
-            result = response["data"]["episodes"]
-        elif "data" in response:
-            result = response["data"]
-        else:
-            result = []
+    def _fallback_episode_retrieval(
+        self, series_id: int, season_number: int, series_name: str = "Unknown"
+    ) -> List[Dict[str, Any]]:
+        """Fallback method to retrieve episodes when season-specific API calls fail.
 
-        logger.debug(
-            f"Found {len(result)} episodes for season {season_number} of series {normalized_id}"
-        )
-        return cast(List[Dict[str, Any]], result)
+        Args:
+            series_id: The normalized series ID
+            season_number: The season number to filter for
+            series_name: The name of the series for logging
+
+        Returns:
+            A list of episodes for the specified season
+        """
+        try:
+            logger.debug(f"Retrieving all episodes for series {series_id}")
+            all_episodes = self.get_episodes_by_series_id(series_id)
+
+            if not all_episodes:
+                logger.warning(f"No episodes found for '{series_name}' (ID: {series_id})")
+                return []
+
+            logger.info(f"Retrieved {len(all_episodes)} total episodes for '{series_name}'")
+
+            # Count episodes by season for debugging
+            season_counts: Dict[Optional[int], int] = {}
+            for ep in all_episodes:
+                ep_season = ep.get("seasonNumber") or ep.get("airedSeason")
+                if ep_season is not None:
+                    season_counts[ep_season] = season_counts.get(ep_season, 0) + 1
+
+            logger.debug(f"Episode count by season: {season_counts}")
+
+            # Filter episodes for the given season
+            season_episodes = [
+                episode
+                for episode in all_episodes
+                if (
+                    episode.get("seasonNumber") == season_number
+                    or episode.get("airedSeason") == season_number
+                )
+            ]
+
+            if season_episodes:
+                logger.info(
+                    f"Found {len(season_episodes)} episodes for '{series_name}' season {season_number} after filtering"
+                )
+                return season_episodes
+            else:
+                logger.warning(
+                    f"No episodes found for '{series_name}' season {season_number} after filtering"
+                )
+                return []
+
+        except Exception as e:
+            logger.error(f"Error in fallback episode retrieval: {e}")
+            return []
 
     def clear_cache(self) -> None:
         """Clear the request cache."""
