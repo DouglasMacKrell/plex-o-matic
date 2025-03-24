@@ -858,21 +858,12 @@ def detect_segments(
     # Extract info from file name to use in LLM context
     parsed_info = extract_show_info(file_path)
     show_name = parsed_info.get("show_name", os.path.basename(file_path))
-
-    # Special case for Chip 'n Dale: Park Life
-    if (
-        "chip" in show_name.lower()
-        and "dale" in show_name.lower()
-        and "park life" in show_name.lower()
-    ):
-        logger.info("Detected Chip 'n Dale: Park Life, using hardcoded segment detection")
-        # Each episode typically has 3 segments, but we don't know their titles
-        # Return 3 unknown segments to trigger episode lookup
-        return ["Unknown Segment 1", "Unknown Segment 2", "Unknown Segment 3"]
-
+    
+    # Remove special case for Chip n Dale
+    
     logger.debug(f"Extracted info from basename: {os.path.basename(file_path)}")
     if parsed_info:
-        info_str = ", ".join([f"{k}={v}" for k, v in parsed_info.items() if v])
+        info_str = ', '.join([f"{k}={v}" for k, v in parsed_info.items() if v])
         logger.debug(f"Matched pattern, extracted: {info_str}")
 
     if not use_llm:
@@ -882,19 +873,13 @@ def detect_segments(
     # First try to load segments from cache
     cache_dir = os.path.join(os.path.expanduser("~"), ".plexomatic", "cache")
     os.makedirs(cache_dir, exist_ok=True)
-
+    
     cache_file = os.path.join(
         cache_dir, f"segments_{hashlib.md5(file_path.encode()).hexdigest()}.json"
     )
-
-    # For testing - remove any existing cache for this file
-    if os.path.exists(cache_file) and "chip" in show_name.lower() and "dale" in show_name.lower():
-        logger.debug("Removing cached segments for Chip 'n Dale testing")
-        try:
-            os.remove(cache_file)
-        except Exception as e:
-            logger.debug(f"Error removing cache file: {e}")
-
+    
+    # Remove testing-specific cache handling
+    
     # Check for cached segments
     if os.path.exists(cache_file):
         try:
@@ -908,12 +893,12 @@ def detect_segments(
     try:
         # If we get here, we need to use LLM
         logger.info(f"Using LLM to detect segments in: {os.path.basename(file_path)}")
-
+        
         # Create a client for the LLM
         from plexomatic.api.llm_client import LLMClient
 
         llm_client = LLMClient()
-
+        
         # Build context for the LLM request
         # An episode might be an anthology with multiple distinct segments
         prompt = f"""
@@ -927,28 +912,28 @@ def detect_segments(
         - "Daisy's Dance"
         - "Goofy's Bird"
         - "Minnie's Birthday"
-
-        If this is a "Chip 'n Dale: Park Life" episode, it likely contains 3 segments per episode.
+        
+        Other anthology shows like "Daniel Tigers Neighborhood" or "Chip 'n Dale: Park Life" typically contain 3-4 segments per episode.
 
         Please identify segment titles if this is an anthology episode. Return ONLY the segment titles, one per line.
         If you can't identify specific segment titles, return the word "Unknown" for each estimated segment.
         If this is not an anthology episode or you can't determine segments, return nothing.
-
+        
         Segments:
         """
-
+        
         logger.debug(f"Sending prompt to LLM: {prompt}")
-
+        
         # Get response from LLM
         response = llm_client.generate_text(prompt).strip()
-
+        
         logger.debug(f"LLM response: {response}")
-
+        
         # Process the response
         if not response or "." in response and len(response) < 10:
             logger.warning(f"No valid segments returned from LLM for {file_path}")
             return None
-
+        
         # Remove thinking process if present
         cleaned_response = response
         if "<think>" in response.lower() and "</think>" in response.lower():
@@ -956,17 +941,17 @@ def detect_segments(
             try:
                 start_index = response.lower().find("<think>")
                 end_index = response.lower().find("</think>") + 8
-
+                
                 # Extract content before thinking and after thinking
                 before_thinking = response[:start_index].strip()
                 after_thinking = response[end_index:].strip()
-
+                
                 # Combine parts, skipping the thinking section
                 cleaned_response = (before_thinking + " " + after_thinking).strip()
                 logger.debug(f"Response after removing thinking tags: {cleaned_response}")
             except Exception as e:
                 logger.warning(f"Error removing thinking tags: {e}")
-
+            
         # Process the segments from the response
         # Split by lines and clean up
         segments = [
@@ -974,65 +959,49 @@ def detect_segments(
             for s in cleaned_response.strip().split("\n")
             if s.strip() and not s.strip().startswith("-")
         ]
-
+        
         # Remove bullet points and numbering
         segments = [re.sub(r"^[\d\.\-\•\*]+\s*", "", s) for s in segments]
-
+        
         # Remove quotes
-        segments = [s.strip("\"'") for s in segments]
-
+        segments = [s.strip('"\'') for s in segments]
+        
         # Filter out non-segment lines and thinking process artifacts
-        segments = [
-            s
-            for s in segments
-            if len(s) > 1
-            and "<think>" not in s.lower()
-            and "</think>" not in s.lower()
-            and "segment" not in s.lower()
-            and "summary" not in s.lower()
-            and "approach" not in s.lower()
-            and "confirm" not in s.lower()
-            and not s.startswith("In ")
-            and "format" not in s.lower()
-            and "episode" not in s.lower()
-        ]
-
+        segments = [s for s in segments if len(s) > 1 
+                    and "<think>" not in s.lower() 
+                    and "</think>" not in s.lower()
+                    and "segment" not in s.lower() 
+                    and "summary" not in s.lower() 
+                    and "approach" not in s.lower()
+                    and "confirm" not in s.lower() 
+                    and not s.startswith("In ")
+                    and "format" not in s.lower()
+                    and "episode" not in s.lower()]
+        
         if "unknown" in cleaned_response.lower() and len(segments) == 0:
             # If the model responded with unknown but our filtering removed it,
-            # add it back explicitly for cases like Chip n Dale
+            # add it back based on common anthology format (3 segments)
             segments = ["Unknown 1", "Unknown 2", "Unknown 3"]
-            logger.debug("Added explicit Unknown segments based on LLM response")
-
+            logger.debug("Added generic unknown segments based on LLM response")
+            
         if not segments:
-            logger.warning(
-                f"No segments detected in {os.path.basename(file_path)} after processing LLM response"
-            )
-
-            # Special case for shows that are known to be anthology format
-            if (
-                "chip" in show_name.lower()
-                and "dale" in show_name.lower()
-                and "park life" in show_name.lower()
-            ):
-                logger.info("Forcing segment detection for Chip 'n Dale: Park Life")
-                segments = ["Unknown Segment 1", "Unknown Segment 2", "Unknown Segment 3"]
-            else:
-                return None
-
+            logger.warning(f"No segments detected in {os.path.basename(file_path)} after processing LLM response")
+            return None
+            
         # Limit number of segments
         segments = segments[:max_segments]
-
+        
         logger.info(f"Detected {len(segments)} segments: {segments}")
-
+        
         # Cache the results
         try:
             with open(cache_file, "w") as f:
                 json.dump(segments, f)
         except Exception as e:
             logger.warning(f"Error caching segments: {e}")
-
+            
         return segments
-
+        
     except Exception as e:
         logger.error(f"Error detecting segments with LLM: {e}")
         return None
