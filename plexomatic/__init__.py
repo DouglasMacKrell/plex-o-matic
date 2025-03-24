@@ -2,4 +2,14 @@
 Plex-o-matic: An intelligent media file organization tool for Plex
 """
 
-__version__ = "0.2.0"
+from importlib.metadata import version, PackageNotFoundError
+
+# Package metadata
+__app_name__ = "plex-o-matic"
+try:
+    __version__ = version(__app_name__)
+except PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"
+
+# Expose CLI entry point directly for simple imports
+from plexomatic.cli.commands import cli  # noqa: E402

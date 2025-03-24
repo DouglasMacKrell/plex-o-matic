@@ -6,26 +6,24 @@ from setuptools import setup, find_packages
 # Define package metadata
 setup(
     name="plex-o-matic",
-    version="0.2.0",
+    version="0.3.2",
     description="An intelligent media file organization tool for Plex",
     author="Douglas MacKrell",
     author_email="your.email@example.com",
     # Include all packages and subpackages
-    packages=find_packages(include=["plexomatic", "plexomatic.*", "tests", "tests.*"]),
+    packages=find_packages(),
     # Include package data
-    package_data={
-        "": ["*.yaml", "*.yml", "*.json", "*.txt"],
-    },
+    include_package_data=True,
     # Define dependencies
     install_requires=[
         "click>=8.1.0",
-        "rich>=13.0.0",
         "pathlib>=1.0.1",
-        "requests>=2.31.0",
-        "pyyaml>=6.0.1",
-        "sqlalchemy>=2.0.0",
         "python-dotenv>=1.0.0",
-        "typing_extensions>=4.0.0",
+        "pyyaml>=6.0.1",
+        "requests>=2.31.0",
+        "rich>=13.0.0",
+        "sqlalchemy>=2.0.0",
+        "typing-extensions>=4.0.0",
     ],
     # Define extra dependencies
     extras_require={
@@ -36,14 +34,16 @@ setup(
         ],
         "dev": [
             "black>=23.7.0",
-            "ruff>=0.0.284",
             "mypy>=1.5.1",
+            "flake8>=6.1.0",
+            "pre-commit>=3.3.3",
+            "ruff>=0.0.287",
         ],
     },
     # Define entry points
     entry_points={
         "console_scripts": [
-            "plexomatic=plexomatic.cli:cli",
+            "plexomatic=plexomatic.cli.commands:cli",
         ],
     },
     # Python requirements
