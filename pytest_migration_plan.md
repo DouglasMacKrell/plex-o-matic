@@ -18,6 +18,19 @@
 
 ## Current Test Status
 
+- ✅ `TestMultiEpisodeDetection` - Fixed detection of multi-episodes in various formats:
+  - Added support for "S01E01 E02" format with spaces
+  - Added support for "S01E01-E02" format with dashes
+  - Added support for "S01E01-02" format without 'E' prefix in second episode
+  - Added support for "S01E01 to E02" format using 'to' text
+  - Added support for "&", "+", and "," separators
+
+- ✅ `test_detect_multi_episodes_standard_format`
+- ✅ `test_detect_multi_episodes_alternative_formats`
+- ✅ `test_parse_episode_range`
+- ✅ `test_format_multi_episode_filename`
+- ✅ `test_detect_special_episodes`
+- ✅ `test_organize_season_pack`
 - 509 passing tests
 - 24 failing tests
 - 51 skipped tests

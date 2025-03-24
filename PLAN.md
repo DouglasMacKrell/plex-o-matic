@@ -507,6 +507,16 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
 
 ### Future Planned Features
 
+## Multi-Episode Detection
+
+COMPLETED: Enhanced the multi-episode detection functionality to handle additional formats:
+- Added support for episodes with spaces between season and episode numbers (e.g., "S01 E01 E02")
+- Improved detection of episodes with various separators (e.g., "S01E01-E03", "S01E01 to E03")
+- Added support for additional separator formats: ampersand (&), plus (+), comma (,)
+- Fixed handling of episodes with mixed formats (e.g., "S01E01-E03E05E07-E09")
+
+All tests for multi-episode detection are now passing successfully.
+
 ## Standardize Testing (COMPLETED)
 
 The project now uses pytest for all tests, providing a more modern testing approach with:
