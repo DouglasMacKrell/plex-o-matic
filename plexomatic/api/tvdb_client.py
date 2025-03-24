@@ -16,12 +16,12 @@ from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
-# TVDB API endpoints
-BASE_URL = "https://api.thetvdb.com"
+# TVDB API v4 endpoints
+BASE_URL = "https://api4.thetvdb.com/v4"
 AUTH_URL = f"{BASE_URL}/login"
-SEARCH_SERIES_URL = f"{BASE_URL}/search/series"
+SEARCH_SERIES_URL = f"{BASE_URL}/search"
 SERIES_URL = f"{BASE_URL}/series"
-EPISODES_URL = f"{BASE_URL}/series/{{series_id}}/episodes"
+EPISODES_URL = f"{BASE_URL}/series/{{series_id}}/episodes/default"
 
 
 class TVDBAuthenticationError(Exception):
@@ -43,35 +43,60 @@ class TVDBRateLimitError(Exception):
 
 
 class TVDBClient:
-    """Client for interacting with the TVDB API."""
+    """Client for interacting with the TVDB API v4."""
 
-    def __init__(self, api_key: str, cache_size: int = 100, auto_retry: bool = False):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        cache_size: int = 100,
+        auto_retry: bool = False,
+        pin: Optional[str] = None,
+    ):
         """Initialize the TVDB API client.
 
         Args:
-            api_key: The TVDB API key.
+            api_key: The TVDB API key. If None, will attempt to load from config.
             cache_size: Maximum number of responses to cache.
             auto_retry: Whether to automatically retry requests when rate limited.
+            pin: Optional subscriber PIN for v4 API (user-supported model)
         """
+        # If no API key provided, try to load from config
+        if api_key is None:
+            from plexomatic.config.config_manager import ConfigManager
+
+            config = ConfigManager()
+            api_key = config.get("api", {}).get("tvdb", {}).get("api_key")
+            pin = pin or config.get("api", {}).get("tvdb", {}).get("pin")
+            if not api_key:
+                raise TVDBAuthenticationError("No API key provided and none found in config")
+
         self.api_key = api_key
+        self.pin = pin
         self.token: Optional[str] = None
         self.token_expires_at: Optional[datetime] = None
         self.auto_retry = auto_retry
         self.cache_size = cache_size
 
     def authenticate(self) -> None:
-        """Authenticate with the TVDB API and get an access token."""
+        """Authenticate with the TVDB API v4 and get an access token."""
+        # Build payload based on available credentials
         payload = {"apikey": self.api_key}
+        if self.pin:
+            payload["pin"] = self.pin
 
         try:
             response = requests.post(AUTH_URL, json=payload)
 
             if response.status_code == 200:
                 data = response.json()
-                self.token = data["data"]["token"]
-                # Token expires after 24 hours
-                self.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
-                logger.info("Successfully authenticated with TVDB API")
+                if "data" in data and "token" in data["data"]:
+                    self.token = data["data"]["token"]
+                    # v4 API token typically expires after 1 month, but we'll set it to 24 hours to be safe
+                    self.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+                    logger.info("Successfully authenticated with TVDB API v4")
+                else:
+                    logger.error(f"TVDB authentication response missing token: {data}")
+                    raise TVDBAuthenticationError("Authentication response missing token")
             else:
                 logger.error(
                     f"TVDB authentication failed: {response.status_code} - {response.text}"
@@ -102,6 +127,18 @@ class TVDBClient:
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
+
+    def is_authenticated(self) -> bool:
+        """Check if the client is authenticated with a valid token.
+
+        Returns:
+            bool: True if the client has a valid token, False otherwise.
+        """
+        return (
+            self.token is not None
+            and self.token_expires_at is not None
+            and datetime.now(timezone.utc) < self.token_expires_at
+        )
 
     def _get(self, url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Make a GET request to the TVDB API.
@@ -191,11 +228,12 @@ class TVDBClient:
         Returns:
             A list of matching series, or an empty list if none found.
         """
-        params = {"name": name}
+        params = {"query": name, "type": "series"}
         cache_key = f"{SEARCH_SERIES_URL}::{json.dumps(params, sort_keys=True)}"
 
         try:
             response = self._get_cached_key(cache_key)
+            # v4 API returns data in a different structure
             result = response.get("data", [])
             return cast(List[Dict[str, Any]], result)
         except TVDBRateLimitError:
@@ -239,7 +277,11 @@ class TVDBClient:
         cache_key = url
 
         response = self._get_cached_key(cache_key)
-        result = response.get("data", [])
+        # v4 API nests episodes under episodeData.episodes
+        if "data" in response and "episodes" in response["data"]:
+            result = response["data"]["episodes"]
+        else:
+            result = []
         return cast(List[Dict[str, Any]], result)
 
     def clear_cache(self) -> None:
