@@ -11,6 +11,7 @@ import csv
 import pytest
 from unittest.mock import MagicMock
 
+from plexomatic.core.constants import MediaType
 from plexomatic.utils.preview_system import (
     PreviewGenerator,
     DiffDisplay,
@@ -19,7 +20,6 @@ from plexomatic.utils.preview_system import (
     PreviewResult,
     DiffStyle,
 )
-from plexomatic.core.models import MediaType
 
 
 @pytest.fixture

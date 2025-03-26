@@ -76,7 +76,7 @@ if new:
 Plex-o-matic provides a flexible template system for customizing filename formats. The template system allows you to define and use custom naming patterns for different media types.
 
 ```python
-from plexomatic.utils.template_formatter import replace_variables
+from plexomatic.utils.templates.template_formatter import replace_variables
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
 
 parsed = ParsedMediaName(

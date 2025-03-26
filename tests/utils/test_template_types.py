@@ -1,15 +1,18 @@
-"""Tests for the template_types module."""
+"""Tests for the template type enumeration and utilities."""
 
 import os
 import pytest
 from unittest.mock import patch
 from pathlib import Path
+from enum import Enum
 
 # Importing from the module we will create later
 # This will fail until we implement the module
-from plexomatic.utils.template_types import (
+from plexomatic.utils.templates.template_types import (
     TemplateType,
     normalize_media_type,
+    get_default_template_dir,
+    get_custom_template_dir,
     DEFAULT_TEMPLATES_DIR,
     get_default_template_for_media_type,
     DEFAULT_TV_TEMPLATE,

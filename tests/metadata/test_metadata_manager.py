@@ -3,7 +3,7 @@ import unittest.mock as mock
 from typing import Dict, Any
 
 from plexomatic.metadata.manager import MetadataManager
-from plexomatic.metadata.fetcher import MediaType
+from plexomatic.core.constants import MediaType
 
 
 class TestMetadataManager:

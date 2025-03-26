@@ -565,3 +565,65 @@ The project now uses pytest for all tests, providing a more modern testing appro
 5. Fix the preview generator directory test mismatch
 
 These issues will be addressed in a follow-up PR to maintain a clean and focused approach to the migration.
+
+## Recovery Plan for Current Branch
+
+After fixing specific test failures related to filename formatting and preview systems, we've encountered cascading test failures in other areas. This section outlines a plan to systematically address these issues and get back on track with our roadmap.
+
+### Current Status Assessment
+1. We have successfully fixed specific tests:
+   - `test_tv_show_with_changes` in name_utils.py
+   - `test_format_multi_episode_filename` in episode_handler.py
+   - `test_format_tv_show_multi_episode` in default_formatters.py
+
+2. However, these changes have introduced new failures in other areas:
+   - `sanitize_filename` function now replaces special characters with underscores, breaking tests that expected removal
+   - Format style tests expect different behavior than what our changes implemented
+   - Template formatting tests are failing due to inconsistent special character handling
+   - Episode info extraction tests expect dots and dashes to be converted to spaces
+
+### Systematic Recovery Approach
+
+#### 1. Create a Clean Branch Structure
+```
+git checkout -b bugfix/test-fixes-rebase
+git checkout -b temp-backup  # Backup current changes if needed
+```
+
+#### 2. Follow Focused Test-Driven Development
+For each issue:
+1. Write a test that clearly demonstrates the issue
+2. Make the minimal change needed to fix that test
+3. Verify the fix doesn't break other tests
+4. Commit the change with a clear message
+
+#### 3. Targeted Fixes for Current Issues
+- For `sanitize_filename`:
+  - Create a new test specifically for the colon case
+  - Add a specific fix that preserves backward compatibility
+  - Consider adding a parameter to control replacement behavior
+
+- For format style issues:
+  - Review test expectations to match intended behavior
+  - Focus on fixing one formatter at a time
+  - Use feature flags for incompatible changes
+
+#### 4. Incremental Testing
+After each fix:
+- Run affected tests first
+- Run full test suite before committing
+- Document any test adjustments made
+
+#### 5. Return to Roadmap Tasks
+Once tests are stable, continue with the planned tasks:
+- Fix parameter mismatches in anthology processing
+- Update file operation tests
+- Fix integration tests with formatting expectations
+- Address missing functions
+- Fix directory test mismatches
+
+### Estimated Timeline
+- Test stabilization: 1-2 days
+- Return to roadmap implementation: 3-5 days
+
+This approach ensures we maintain code quality while making progress on our planned features, following proper test-driven development practices throughout.

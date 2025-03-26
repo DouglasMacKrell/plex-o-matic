@@ -7,6 +7,11 @@ This helps diagnose CI failures related to imports.
 import sys
 import importlib
 from pathlib import Path
+import logging
+import os
+from typing import List, Optional
+
+from plexomatic.core.constants import MediaType
 
 
 def print_section(title):
@@ -129,8 +134,6 @@ def check_enum_values():
     print_section("ENUM VALUES")
 
     try:
-        from plexomatic.core.models import MediaType
-
         print("MediaType enum values:")
         for name, value in MediaType.__members__.items():
             print(f"  - {name} = {value}")

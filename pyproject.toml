@@ -20,7 +20,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 
 [project.scripts]
-plexomatic = "plexomatic.cli:cli"
+plexomatic = "plexomatic_cli:main"
 
 [project.optional-dependencies]
 test = [

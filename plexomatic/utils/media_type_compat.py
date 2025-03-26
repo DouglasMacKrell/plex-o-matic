@@ -13,7 +13,7 @@ Usage:
 
 import warnings
 import enum
-from typing import Any, Type, TypeVar
+from typing import Any, Type, TypeVar, Optional, Union
 
 # Import the consolidated MediaType
 from plexomatic.core.constants import MediaType as ConsolidatedMediaType
@@ -226,3 +226,34 @@ class FetcherMediaTypeCompat(enum.Enum):
             String representation for debugging
         """
         return repr(self._consolidated)
+
+
+# Deprecated imports for backward compatibility
+def get_media_type(value: Optional[Union[str, int]]) -> Optional[ConsolidatedMediaType]:
+    """Convert a string or int to a MediaType enum value.
+
+    Args:
+        value: String or int to convert
+
+    Returns:
+        MediaType enum value or None if not found
+    """
+    if value is None:
+        return None
+
+    # Handle string values
+    if isinstance(value, str):
+        value = value.upper()
+        try:
+            return ConsolidatedMediaType[value]
+        except KeyError:
+            pass
+
+    # Handle integer values
+    if isinstance(value, int):
+        try:
+            return ConsolidatedMediaType(value)
+        except ValueError:
+            pass
+
+    return None

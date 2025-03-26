@@ -211,7 +211,7 @@ class TestNameParser:
         """Test initialization of the NameParser class."""
         parser = NameParser()
         assert parser.strict_mode is False
-        assert parser.use_llm is False
+        assert parser.use_llm is True
         assert parser.confidence_threshold == 0.5
 
         parser = NameParser(strict_mode=True)

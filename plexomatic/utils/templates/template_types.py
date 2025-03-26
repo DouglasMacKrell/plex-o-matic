@@ -104,3 +104,21 @@ def get_default_template_for_media_type(template_type: Optional[TemplateType]) -
         return DEFAULT_TV_TEMPLATE
 
     return DEFAULT_TEMPLATES.get(template_type, DEFAULT_TV_TEMPLATE)
+
+
+def get_default_template_dir() -> Path:
+    """Get the default templates directory.
+
+    Returns:
+        Path to the default templates directory
+    """
+    return DEFAULT_TEMPLATES_DIR
+
+
+def get_custom_template_dir() -> Path:
+    """Get the custom templates directory.
+
+    Returns:
+        Path to the custom templates directory
+    """
+    return DEFAULT_TEMPLATES_DIR / "custom"

@@ -1,10 +1,10 @@
 """Utilities for the plexomatic application."""
 
 # Importing from template_types.py
-from plexomatic.utils.template_types import TemplateType, normalize_media_type
+from plexomatic.utils.templates.template_types import TemplateType, normalize_media_type
 
 # Importing from template_registry.py
-from plexomatic.utils.template_registry import (
+from plexomatic.utils.templates.template_registry import (
     register_template,
     get_template,
     get_available_templates,
@@ -13,7 +13,7 @@ from plexomatic.utils.template_registry import (
 )
 
 # Importing from template_formatter.py
-from plexomatic.utils.template_formatter import (
+from plexomatic.utils.templates.template_formatter import (
     apply_template,
     replace_variables,
     format_field,
@@ -36,7 +36,7 @@ from plexomatic.utils.multi_episode_formatter import (
 )
 
 # Importing from template_manager.py
-from plexomatic.utils.template_manager import (
+from plexomatic.utils.templates.template_manager import (
     TemplateManager,
     TemplateError,
     TemplateNotFoundError,
@@ -48,7 +48,6 @@ from plexomatic.utils.template_manager import (
 # Importing from file_utils.py
 from plexomatic.utils.file_utils import (
     sanitize_filename,
-    extract_show_info,
     generate_tv_filename,
     generate_movie_filename,
     get_preview_rename,
@@ -93,7 +92,6 @@ __all__ = [
     "reset_template_manager",
     # File utilities
     "sanitize_filename",
-    "extract_show_info",
     "generate_tv_filename",
     "generate_movie_filename",
     "get_preview_rename",

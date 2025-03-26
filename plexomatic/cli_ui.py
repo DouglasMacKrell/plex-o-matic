@@ -9,6 +9,7 @@ except ImportError:
 from pathlib import Path
 import logging
 from contextlib import contextmanager
+import os
 
 from rich.console import Console
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn, TaskID
@@ -80,8 +81,15 @@ def print_file_change(original: Union[str, Path], new: Union[str, Path]) -> None
     # Get just the filename if Path objects are provided
     if isinstance(original, Path):
         original = original.name
+    else:
+        # If it's a string that might be a path, extract just the filename
+        original = os.path.basename(str(original))
+
     if isinstance(new, Path):
         new = new.name
+    else:
+        # If it's a string that might be a path, extract just the filename
+        new = os.path.basename(str(new))
 
     text = Text()
     text.append(str(original), style=STYLES["filename"])

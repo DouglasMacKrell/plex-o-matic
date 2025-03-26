@@ -64,7 +64,7 @@ class LLMClient:
             True if the model is available, False otherwise.
         """
         try:
-            response = requests.post(self._list_models_url)
+            response = requests.get(self._list_models_url)
 
             if response.status_code != 200:
                 logger.warning(f"Failed to list models: {response.status_code} - {response.text}")

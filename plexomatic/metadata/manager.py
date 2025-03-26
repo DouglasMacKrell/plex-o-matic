@@ -331,7 +331,7 @@ class MetadataManager:
         """
         # Check for special episodes if it's a TV show
         if media_type == MediaType.TV_SHOW or media_type is None:
-            from plexomatic.utils.episode_handler import (
+            from plexomatic.utils.episode_detector import (
                 detect_special_episodes,
                 detect_multi_episodes,
             )

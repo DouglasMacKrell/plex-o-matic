@@ -45,144 +45,94 @@ SPECIAL_PATTERNS = [
 
 
 def extract_show_info(filename: str) -> Optional[Dict[str, Any]]:
-    """
-    Extract show information from a filename.
+    """Extract show information from a filename.
 
     Args:
         filename: The filename to extract information from
 
     Returns:
-        Dictionary with show name, season, episode, and title information,
-        or None if no information could be extracted
+        A dictionary with extracted information or None if extraction fails
     """
     logger = logging.getLogger(__name__)
+    logger.debug(f"Extracting info from basename: {filename}")
 
-    # Get just the basename without the directory path
     basename = os.path.basename(filename)
-    logger.debug(f"Extracting info from basename: {basename}")
 
-    # Remove file extension
-    name_without_ext, extension = os.path.splitext(basename)
+    # Try different extraction patterns
+    # 1. Standard SxxExx pattern: "Show.Name.S01E01.Episode.Title.mp4"
+    pattern1 = re.compile(
+        r"(?P<show>.+?)[.\s_-]*S(?P<season>\d+)[.\s_-]*E(?P<episode>\d+)[.\s_-]*(?P<title>.*?)(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
-    # Replace dots and hyphens with spaces to make parsing easier
-    name_with_spaces = name_without_ext.replace(".", " ").replace("-", " ")
+    # 2. Old 1x01 format: "Show.Name.1x01.Episode.Title.mp4"
+    pattern2 = re.compile(
+        r"(?P<show>.+?)[.\s_-]*(?P<season>\d+)x(?P<episode>\d+)[.\s_-]*(?P<title>.*?)(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
-    # Try to find season and episode information using regex patterns
+    # 3. Verbose format: "Show Name - Season 1 Episode 1 - Episode Title.mp4"
+    pattern3 = re.compile(
+        r"(?P<show>.+?)[.\s_-]+Season[.\s_-]+(?P<season>\d+)[.\s_-]+Episode[.\s_-]+(?P<episode>\d+)[.\s_-]*(?:[-:.\s_]+(?P<title>.*?))?(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
-    # Pattern 1: Standard format "Show Name S01E02 Title"
-    pattern1 = r"(.+?)(?:[-_\s.]*)(s|season\s+)(\d+)(e|episode\s+)(\d+)(?:[-_\s.]*)(.+)?"
+    # 4. Multi-episode pattern: "Show.Name.S01E01E02.mp4"
+    pattern4 = re.compile(
+        r"(?P<show>.+?)[.\s_-]*S(?P<season>\d+)E(?P<episode>\d+)(?:E\d+)+[.\s_-]*(?P<title>.*?)(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
-    # Pattern 2: Format with no explicit markers, "Show Name 1x02 Title"
-    pattern2 = r"(.+?)(?:[-_\s.]*)(\d+)x(\d+)(?:[-_\s.]*)(.+)?"
+    # 5. Separated format: "Show.Name.S01.E01.mp4"
+    pattern5 = re.compile(
+        r"(?P<show>.+?)[.\s_-]*S(?P<season>\d+)[.\s_-]*E(?P<episode>\d+)[.\s_-]*(?P<title>.*?)(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
-    # Pattern 3: Format with dash, "Show Name - S01E02 - Title"
-    pattern3 = r"(.+?)(?:-\s*)(s|season\s+)(\d+)(e|episode\s+)(\d+)(?:\s*-)(?:[-_\s.]*)(.+)?"
+    # 6. Movie format: "Movie.Name.2020.mp4"
+    pattern6 = re.compile(
+        r"(?P<movie>.*?)[.\s_-]*(?P<year>19\d{2}|20\d{2})[.\s_-]*(?P<quality>\d+p)?(?P<extension>\.\w+)?$",
+        re.IGNORECASE,
+    )
 
     # Try each pattern
-    for pattern, group_indices in [
-        (pattern1, {"show": 1, "season": 3, "episode": 5, "title": 6}),
-        (pattern2, {"show": 1, "season": 2, "episode": 3, "title": 4}),
-        (pattern3, {"show": 1, "season": 3, "episode": 5, "title": 6}),
-    ]:
-        match = re.search(pattern, name_with_spaces, re.IGNORECASE)
+    for pattern in [pattern1, pattern2, pattern3, pattern4, pattern5]:
+        match = pattern.search(basename)
         if match:
-            # Extract basic info
-            show_name = match.group(group_indices["show"]).strip()
-            # Normalize show name (replace dots and hyphens with spaces)
-            show_name = re.sub(r"[-._]+", " ", show_name).strip()
+            info = match.groupdict()
+            # Clean up the data
+            if "show" in info and info["show"]:
+                info["show_name"] = clean_show_name(info["show"])
+            if "season" in info and info["season"]:
+                info["season"] = int(info["season"])
+            if "episode" in info and info["episode"]:
+                info["episode"] = int(info["episode"])
 
-            season = int(match.group(group_indices["season"]))
-            episode = int(match.group(group_indices["episode"]))
-
-            # Get the raw title text
-            raw_title = (
-                match.group(group_indices["title"]).strip()
-                if match.group(group_indices["title"])
-                else ""
-            )
-
-            # Check for multi-episodes - using the direct pattern detection
-            multi_episodes = detect_multi_episodes_direct(basename)
-
-            # Clean title for multi-episode files by removing episode markers
-            title = raw_title
-            if len(multi_episodes) > 1:
-                # Remove "E01", "E02", etc. from the title
-                title = re.sub(r"\s*E\d+\s*", " ", raw_title, flags=re.IGNORECASE)
-                # Remove "to E01", "& E02", etc.
-                title = re.sub(r"\s*(?:to|&|\+|,)\s*E\d+\s*", " ", title, flags=re.IGNORECASE)
-                # Clean up multiple spaces
-                title = re.sub(r"\s+", " ", title).strip()
-
+            # Log what we've extracted
             logger.debug(
-                f"Matched pattern, extracted: show={show_name}, season={season}, episode={episode}, title={title}"
+                f"Matched pattern, extracted: show={info.get('show_name', '')}, "
+                f"season={info.get('season', '')}, episode={info.get('episode', '')}, "
+                f"title={info.get('title', '')}"
             )
+            return info
 
-            result = {
-                "show_name": show_name,
-                "season": season,
-                "episode": episode,
-                "title": title,
-                "extension": extension,
-            }
+    # Check for movie pattern
+    match = pattern6.search(basename)
+    if match:
+        info = match.groupdict()
+        if "movie" in info and info["movie"]:
+            info["movie_name"] = clean_show_name(info["movie"])
+        if "year" in info and info["year"]:
+            info["year"] = int(info["year"])
 
-            if len(multi_episodes) > 1:
-                result["multi_episodes"] = multi_episodes
+        # Log what we've extracted for movies
+        logger.debug(
+            f"Matched movie pattern, extracted: movie={info.get('movie_name', '')}, "
+            f"year={info.get('year', '')}"
+        )
+        return info
 
-            return result
-
-    # If no pattern matched, try a more lenient approach
-    # Look for just the season and episode numbers
-    season_ep_pattern = r"[Ss](\d+)[Ee](\d+)"
-    alt_pattern = r"(\d+)x(\d+)"
-
-    for pattern in [season_ep_pattern, alt_pattern]:
-        match = re.search(pattern, name_without_ext)
-        if match:
-            season = int(match.group(1))
-            episode = int(match.group(2))
-
-            # Try to extract show name and title
-            parts = re.split(pattern, name_without_ext, maxsplit=1)
-
-            # Normalize show name (replace dots and hyphens with spaces)
-            show_name = re.sub(r"[-._]+", " ", parts[0].strip())
-
-            # Get raw title
-            raw_title = (
-                parts[-1].strip().replace(".", " ").replace("-", " ") if len(parts) > 2 else ""
-            )
-
-            # Check for multi-episodes
-            multi_episodes = detect_multi_episodes_direct(basename)
-
-            # Clean title for multi-episode files
-            title = raw_title
-            if len(multi_episodes) > 1:
-                # Remove "E01", "E02", etc. from the title
-                title = re.sub(r"\s*E\d+\s*", " ", raw_title, flags=re.IGNORECASE)
-                # Remove "to E01", "& E02", etc.
-                title = re.sub(r"\s*(?:to|&|\+|,)\s*E\d+\s*", " ", title, flags=re.IGNORECASE)
-                # Clean up multiple spaces
-                title = re.sub(r"\s+", " ", title).strip()
-
-            logger.debug(
-                f"Matched fallback pattern, extracted: show={show_name}, season={season}, episode={episode}, title={title}"
-            )
-
-            result = {
-                "show_name": show_name,
-                "season": season,
-                "episode": episode,
-                "title": title,
-                "extension": extension,
-            }
-
-            if len(multi_episodes) > 1:
-                result["multi_episodes"] = multi_episodes
-
-            return result
-
+    # If no patterns match, return None
     logger.warning(f"Could not extract episode info from {basename}")
     return None
 
@@ -593,3 +543,24 @@ def split_title_by_separators(title: str) -> List[str]:
 
     # No segments found, return the whole title
     return [title]
+
+
+def clean_show_name(name: str) -> str:
+    """Clean a show name by removing dots and normalizing spaces.
+    
+    Args:
+        name: The raw show name to clean
+    
+    Returns:
+        Cleaned show name
+    """
+    # Replace dots, underscores, and hyphens with spaces
+    cleaned = name.replace(".", " ").replace("_", " ").replace("-", " ")
+    
+    # Normalize multiple spaces into single spaces
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    
+    # Trim leading/trailing whitespace
+    cleaned = cleaned.strip()
+    
+    return cleaned

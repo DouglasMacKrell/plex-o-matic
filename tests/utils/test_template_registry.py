@@ -1,9 +1,9 @@
-"""Tests for the template_registry module."""
+"""Tests for the template registry module."""
 
+import pytest
 from unittest.mock import patch, MagicMock
-
-from plexomatic.utils.template_types import TemplateType
-from plexomatic.utils.template_registry import (
+from plexomatic.utils.templates.template_types import TemplateType
+from plexomatic.utils.templates.template_registry import (
     register_template,
     get_template,
     get_available_templates,
@@ -12,7 +12,7 @@ from plexomatic.utils.template_registry import (
 )
 
 
-@patch("plexomatic.utils.template_registry.get_template_manager")
+@patch("plexomatic.utils.templates.template_registry.get_template_manager")
 class TestTemplateRegistry:
     """Tests for the template registry module."""
 

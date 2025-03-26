@@ -193,6 +193,11 @@ plexomatic preview --path /path/to/media --verbose
 # Dry run to see what would happen without making changes
 plexomatic apply --dry-run
 
+# Use anthology mode for shows with multiple episodes per file
+plexomatic scan --path /path/to/anthology/show --anthology-mode
+plexomatic preview --path /path/to/anthology/show --anthology-mode
+plexomatic apply --path /path/to/anthology/show --anthology-mode --yes
+
 # List all available templates
 plexomatic templates list
 
@@ -280,3 +285,39 @@ This product uses the TVDB API but is not endorsed or certified by TheTVDB.com o
 ## License
 
 This project is licensed under the GPL-2.0 License - see the [LICENSE](LICENSE) file for details.
+
+## Testing
+
+We've standardized our testing approach using pytest. The project aims to have comprehensive test coverage for all components.
+
+### Current Test Status
+
+- 509 passing tests
+- 24 failing tests (being addressed)
+- 51 skipped tests
+
+### Running Tests
+
+To run all tests:
+
+```bash
+python -m pytest
+```
+
+To run a specific test:
+
+```bash
+python -m pytest tests/path/to/test_file.py
+```
+
+For verbose output:
+
+```bash
+python -m pytest -v
+```
+
+For coverage report:
+
+```bash
+python -m pytest --cov=plexomatic
+```

@@ -12,4 +12,3 @@ except PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 
 # Expose CLI entry point directly for simple imports
-from plexomatic.cli.commands import cli  # noqa: E402

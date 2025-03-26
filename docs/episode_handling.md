@@ -31,10 +31,28 @@ The system can detect various multi-episode formats in filenames:
 
 Plex-o-matic provides special support for anthology shows where multiple episodes are combined into a single file but may be labeled with a single episode number. This is common in animated shows and certain TV series.
 
+### Command-Line Flag
+
+You can enable anthology mode directly from the command line for any operation:
+
+```bash
+# Enable anthology mode for scanning
+plexomatic scan --path /path/to/anthology/show --anthology-mode
+
+# Enable anthology mode for preview
+plexomatic preview --path /path/to/anthology/show --anthology-mode
+
+# Enable anthology mode for applying changes
+plexomatic apply --path /path/to/anthology/show --anthology-mode --yes
+```
+
+The `--anthology-mode` flag temporarily enables anthology mode just for that command, without modifying your configuration file. This is useful when you're working with a mix of regular and anthology shows.
+
 ### Configuration
 
-```python
-# In config.json or via CLI
+For permanent settings, you can configure anthology mode in your config.json:
+
+```json
 {
     "episode_handling": {
         "anthology_mode": true,

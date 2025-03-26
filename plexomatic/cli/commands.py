@@ -3,6 +3,9 @@
 import click
 import logging
 import sys
+import os
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 try:
     # Python 3.9+ has native support for these types
@@ -10,17 +13,25 @@ try:
 except ImportError:
     # For Python 3.8 support
     from typing_extensions import Optional, List, Tuple, Any
-from pathlib import Path
 
-from plexomatic import __version__, __app_name__
-from plexomatic.core.file_scanner import FileScanner, MediaFile
+from plexomatic import __version__
+from plexomatic.core.file_scanner import FileScanner
 from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config import ConfigManager
 from plexomatic.utils.name_utils import preview_rename
 from plexomatic.utils.file_ops import rename_file, rollback_operation
 from plexomatic import cli_ui
-from plexomatic.utils.template_manager import TemplateManager
+from plexomatic.utils.templates.template_manager import TemplateManager
 from plexomatic.core.constants import MediaType
+
+# Import command modules from the new structure
+from plexomatic.cli.commands import (
+    preview_command,
+    apply_command,
+    scan_command,
+    rollback_command,
+    configure_command,
+)
 
 # Initialize configuration
 config = ConfigManager()
@@ -88,7 +99,13 @@ def cli(ctx: click.Context, verbose: bool) -> None:
 @verbose_option
 @click.pass_context
 def scan_command(
-    ctx: click.Context, path: Path, recursive: bool, extensions: str, anthology_mode: bool, no_llm: bool, verbose: bool
+    ctx: click.Context,
+    path: Path,
+    recursive: bool,
+    extensions: str,
+    anthology_mode: bool,
+    no_llm: bool,
+    verbose: bool,
 ) -> List[Any]:
     """Scan a directory for media files."""
     if verbose:
@@ -198,8 +215,15 @@ def scan_command(
 @verbose_option
 @click.pass_context
 def preview_command(
-    ctx: click.Context, path: Optional[Path], recursive: bool, extensions: str, 
-    anthology_mode: bool, no_llm: bool, no_api_lookup: bool, season_type: str, verbose: bool
+    ctx: click.Context,
+    path: Optional[Path],
+    recursive: bool,
+    extensions: str,
+    anthology_mode: bool,
+    no_llm: bool,
+    no_api_lookup: bool,
+    season_type: str,
+    verbose: bool,
 ) -> List[Tuple[Path, Path]]:
     """Preview changes that would be made to media files."""
     if verbose:
@@ -207,7 +231,7 @@ def preview_command(
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
         cli_ui.print_status("Verbose mode enabled", status="info")
-    
+
     # Handle anthology mode flag
     if anthology_mode:
         if "episode_handling" not in config.config:
@@ -220,24 +244,25 @@ def preview_command(
 
     # If no media files in context and if path is provided
     media_files = ctx.obj.get("media_files")
-    
+
     if not media_files and path:
         if path.is_file():
             # Process a single file directly without scanning
             logger.debug(f"Processing single file: {path}")
             from plexomatic.core.file_scanner import MediaFile
+
             media_files = [MediaFile(path=path)]
         else:
             # Scan a directory
             logger.debug("No media files in context, scanning directory")
             media_files = ctx.invoke(
-                scan_command, 
-                path=path, 
-                recursive=recursive, 
-                extensions=extensions, 
+                scan_command,
+                path=path,
+                recursive=recursive,
+                extensions=extensions,
                 anthology_mode=anthology_mode,
                 no_llm=no_llm,
-                verbose=verbose
+                verbose=verbose,
             )
 
     if not media_files:
@@ -252,23 +277,23 @@ def preview_command(
         original_path = media_file.path
         use_dots = config.get("formatting", {}).get("use_dots", False)
         result = preview_rename(
-            file_path=str(original_path), 
-            anthology_mode=anthology_mode, 
+            file_path=str(original_path),
+            anthology_mode=anthology_mode,
             use_llm=not no_llm,
             use_dots=use_dots,
             api_lookup=not no_api_lookup,
-            season_type=season_type
+            season_type=season_type,
         )
-        
+
         if result is None:
             # No changes needed
             if verbose:
                 cli_ui.console.print(f"[dim]No changes needed for {original_path.name}[/dim]")
             continue
-            
+
         original = Path(result["original_path"])
         new = Path(result["new_path"])
-        
+
         # Debug output to see what's happening
         if "Chip" in str(original_path) and verbose:
             logger.debug(f"Preview result for {original_path.name}:")
@@ -351,8 +376,14 @@ def preview_command(
 @verbose_option
 @click.pass_context
 def apply_command(
-    ctx: click.Context, dry_run: bool, path: Optional[Path], batch_size: int, 
-    anthology_mode: bool, no_llm: bool, no_api_lookup: bool, verbose: bool
+    ctx: click.Context,
+    dry_run: bool,
+    path: Optional[Path],
+    batch_size: int,
+    anthology_mode: bool,
+    no_llm: bool,
+    no_api_lookup: bool,
+    verbose: bool,
 ) -> bool:
     """Apply changes to media files."""
     if verbose:
@@ -376,14 +407,14 @@ def apply_command(
     if not previews and path:
         logger.debug("No previews in context, generating first")
         previews = ctx.invoke(
-            preview_command, 
-            path=path, 
-            recursive=True, 
-            extensions=",".join(config.get_allowed_extensions()), 
+            preview_command,
+            path=path,
+            recursive=True,
+            extensions=",".join(config.get_allowed_extensions()),
             anthology_mode=anthology_mode,
             no_llm=no_llm,
             no_api_lookup=no_api_lookup,
-            verbose=verbose
+            verbose=verbose,
         )
 
     if not previews:
@@ -603,7 +634,7 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
         show_default=False,
     )
     api_config["tvdb"]["api_key"] = tvdb_key
-    
+
     # Add TVDB PIN configuration for v4 API
     current_tvdb_pin = api_config["tvdb"].get("pin", "")
     tvdb_pin = click.prompt(
@@ -697,7 +728,9 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
             if api_config["tvdb"]["pin"]:
                 cli_ui.print_status("TVDB subscriber PIN is set", status="success")
             else:
-                cli_ui.print_status("TVDB subscriber PIN is not set (may be required for v4 API)", status="warning")
+                cli_ui.print_status(
+                    "TVDB subscriber PIN is not set (may be required for v4 API)", status="warning"
+                )
         else:
             cli_ui.print_status("TVDB API key is not set", status="error")
 
@@ -843,5 +876,15 @@ def show_template(
         cli_ui.format_error(f"Error formatting template: {e}")
 
 
+# Register the imported commands
+cli.add_command(preview_command)
+cli.add_command(apply_command)
+cli.add_command(scan_command)
+cli.add_command(rollback_command)
+cli.add_command(configure_command)
+
+# Export the cli object for main.py
+__all__ = ["cli"]
+
 if __name__ == "__main__":
-    cli() 
+    cli()

@@ -23,16 +23,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created detailed documentation for subtitle support
 
 ### Changed
-- None
+- Completed template system refactoring:
+  - Moved template-related files to dedicated utils/templates directory
+  - Improved organization and module separation
+  - Enhanced type annotations throughout template code
+- Code cleanup and organization:
+  - Removed deprecated functions and duplicate code
+  - Standardized MediaType imports to use canonical version from core.constants
+  - Fixed import issues in integration tests
+  - Removed unnecessary backup files
+- Consolidated project management documentation:
+  - Merged multiple roadmap files into single PLAN.md document
+  - Created systematic recovery plan for addressing test failures
+  - Enhanced consistency in tracking project progress
 
 ### Deprecated
 - None
 
 ### Removed
-- None
+- Removed deprecated extract_show_info function from file_utils.py
+- Removed deprecated format_template function from template_formatter.py
+- Removed episode_handler.py.bak backup file
+- Removed duplicate roadmap files (typing_roadmap.md, pytest_migration_plan.md)
 
 ### Fixed
-- None
+- Fixed import issues in integration tests
+- Resolved duplicate functions across multiple modules
+- Updated incorrect imports in tests and utility modules
+- Enhanced preview and filename formatting tests:
+  - Fixed `preview_rename` function to correctly handle the 's1e01' pattern format
+  - Improved `format_multi_episode_filename` to strictly adhere to Plex naming conventions for sequential episodes
+  - Enhanced `sanitize_filename` to properly handle special characters, particularly colons
+  - Updated `format_show_name` and `format_episode_title` to replace colons with underscores
+  - Improved format handling for show names and episode titles with special characters
+  - Added validation to ensure multi-episode files only contain sequential episodes
+  - Fixed inconsistencies in preview result format and type compatibility
+  - Added proper error handling for invalid episode number inputs
 
 ### Security
 - None

@@ -107,8 +107,8 @@ You can create and register your own templates. The system stores templates in t
 The primary function for formatting strings is `replace_variables`:
 
 ```python
-from plexomatic.utils.template_formatter import replace_variables
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
+from plexomatic.utils.templates.template_formatter import replace_variables
 
 parsed = ParsedMediaName(
     media_type=MediaType.TV_SHOW,
@@ -128,8 +128,8 @@ result = replace_variables(template, parsed)
 You can use the higher-level `apply_template` function to apply a named template:
 
 ```python
-from plexomatic.utils.template_formatter import apply_template
 from plexomatic.utils.name_parser import ParsedMediaName, MediaType
+from plexomatic.utils.templates.template_formatter import apply_template
 
 parsed = ParsedMediaName(
     media_type=MediaType.TV_SHOW,

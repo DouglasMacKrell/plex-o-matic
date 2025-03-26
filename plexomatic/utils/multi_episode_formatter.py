@@ -1,11 +1,8 @@
-"""Formatter for handling multiple episodes in templates.
-
-This module provides functions to handle formatting multiple episodes in templates.
-It can detect ranges of sequential episodes and format them appropriately.
-"""
+"""Formatter utilities for multi-episode files."""
 
 from typing import List, Optional, Union
 import logging
+import re
 
 from plexomatic.utils.name_parser import ParsedMediaName
 

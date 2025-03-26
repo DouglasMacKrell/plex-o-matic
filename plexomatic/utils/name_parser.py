@@ -3,6 +3,7 @@
 import re
 from pathlib import Path
 import warnings
+import logging
 
 try:
     # Python 3.9+ has native support for these types
@@ -688,13 +689,13 @@ def parse_media_name(filename: str) -> ParsedMediaName:
 class NameParser:
     """Class for parsing media filenames with configuration options."""
 
-    def __init__(self, strict_mode: bool = False, use_llm: bool = False):
+    def __init__(self, strict_mode: bool = False, use_llm: bool = True):
         """
         Initialize the NameParser.
 
         Args:
             strict_mode: If True, require higher confidence threshold
-            use_llm: If True, use LLM for verification
+            use_llm: If True, use LLM for verification (default True)
         """
         self.strict_mode = strict_mode
         self.use_llm = use_llm
@@ -734,8 +735,127 @@ class NameParser:
         Returns:
             ParsedMediaName: Enhanced parsed result
         """
-        # Implementation would depend on the actual LLM client
-        # This is a placeholder - the actual implementation would be added later
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Verifying filename with LLM: {original_filename}")
 
-        # For now, just return the original result
-        return result
+        try:
+            # Import LLMClient here to avoid circular imports
+            from plexomatic.api.llm_client import (
+                LLMClient,
+                LLMRequestError,
+                LLMModelNotAvailableError,
+            )
+
+            # Create LLM client
+            client = LLMClient(
+                model_name="deepseek-r1:8b",  # Could be configurable in the future
+                temperature=0.3,  # Lower temperature for more consistent outputs
+            )
+
+            # Check if model is available
+            if not client.check_model_available():
+                logger.warning("LLM model not available, skipping verification")
+                return result
+
+            # Analyze the filename with LLM
+            llm_analysis = client.analyze_filename(original_filename)
+            logger.debug(f"LLM analysis result: {llm_analysis}")
+
+            # If LLM couldn't parse the filename, return original result
+            if (
+                not llm_analysis
+                or not isinstance(llm_analysis, dict)
+                or llm_analysis.get("parsed") is False
+            ):
+                logger.warning("LLM couldn't parse the filename")
+                return result
+
+            # Enhance the result with LLM analysis
+            enhanced_result = result
+
+            # Update media type if LLM detected it
+            if "media_type" in llm_analysis:
+                llm_media_type = llm_analysis["media_type"].lower()
+                if (
+                    llm_media_type == "tv"
+                    or llm_media_type == "tv show"
+                    or llm_media_type == "series"
+                ):
+                    enhanced_result.media_type = MediaType.TV
+                    enhanced_result.confidence = max(enhanced_result.confidence, 0.8)
+                elif llm_media_type == "movie" or llm_media_type == "film":
+                    enhanced_result.media_type = MediaType.MOVIE
+                    enhanced_result.confidence = max(enhanced_result.confidence, 0.8)
+
+            # Update TV show specific fields
+            if enhanced_result.media_type == MediaType.TV:
+                # Update show name
+                if "title" in llm_analysis and llm_analysis["title"]:
+                    if not enhanced_result.title or len(llm_analysis["title"]) > len(
+                        enhanced_result.title
+                    ):
+                        enhanced_result.title = llm_analysis["title"]
+                        enhanced_result.confidence = max(enhanced_result.confidence, 0.7)
+
+                # Update season number
+                if "season" in llm_analysis and llm_analysis["season"]:
+                    if not enhanced_result.season or enhanced_result.season == 0:
+                        try:
+                            enhanced_result.season = int(llm_analysis["season"])
+                            enhanced_result.confidence = max(enhanced_result.confidence, 0.8)
+                        except (ValueError, TypeError):
+                            pass
+
+                # Update episode number
+                if "episode" in llm_analysis and llm_analysis["episode"]:
+                    if not enhanced_result.episodes or enhanced_result.episodes == []:
+                        try:
+                            enhanced_result.episodes = [int(llm_analysis["episode"])]
+                            enhanced_result.confidence = max(enhanced_result.confidence, 0.8)
+                        except (ValueError, TypeError):
+                            pass
+
+                # Update episode title
+                if "episode_title" in llm_analysis and llm_analysis["episode_title"]:
+                    if not enhanced_result.episode_title:
+                        enhanced_result.episode_title = llm_analysis["episode_title"]
+                        enhanced_result.confidence = max(enhanced_result.confidence, 0.7)
+
+            # Update movie specific fields
+            elif enhanced_result.media_type == MediaType.MOVIE:
+                # Update movie title
+                if "title" in llm_analysis and llm_analysis["title"]:
+                    if not enhanced_result.title or len(llm_analysis["title"]) > len(
+                        enhanced_result.title
+                    ):
+                        enhanced_result.title = llm_analysis["title"]
+                        enhanced_result.confidence = max(enhanced_result.confidence, 0.7)
+
+                # Update year
+                if "year" in llm_analysis and llm_analysis["year"]:
+                    if not enhanced_result.year or enhanced_result.year == 0:
+                        try:
+                            enhanced_result.year = int(llm_analysis["year"])
+                            enhanced_result.confidence = max(enhanced_result.confidence, 0.8)
+                        except (ValueError, TypeError):
+                            pass
+
+            # Update quality information
+            if "quality" in llm_analysis and llm_analysis["quality"]:
+                enhanced_result.quality = llm_analysis["quality"]
+
+            if "resolution" in llm_analysis and llm_analysis["resolution"]:
+                enhanced_result.resolution = llm_analysis["resolution"]
+
+            if "codec" in llm_analysis and llm_analysis["codec"]:
+                enhanced_result.codec = llm_analysis["codec"]
+
+            logger.debug(f"Enhanced result with LLM: {enhanced_result}")
+            return enhanced_result
+
+        except (ImportError, LLMRequestError, LLMModelNotAvailableError) as e:
+            logger.error(f"Error using LLM for verification: {e}")
+            return result
+        except Exception as e:
+            logger.exception(f"Unexpected error in LLM verification: {e}")
+            return result

@@ -17,7 +17,7 @@ import dataclasses
 from typing import Dict, List, Any, Optional, Union
 
 from plexomatic.core.constants import MediaType
-from plexomatic.utils.name_utils import get_preview_rename
+from plexomatic.utils.name_utils import preview_rename
 from plexomatic.utils.name_parser import detect_media_type
 
 
@@ -46,6 +46,16 @@ class DiffStyle(str, Enum):
     MINIMAL = "minimal"
 
 
+class ChangeType(str, Enum):
+    """Enum for different types of changes in preview results."""
+
+    NO_CHANGE = "no_change"
+    TV_SHOW_RENAME = "tv_show_rename"
+    MOVIE_RENAME = "movie_rename"
+    ANIME_RENAME = "anime_rename"
+    GENERAL_RENAME = "general_rename"
+
+
 @dataclasses.dataclass
 class PreviewResult:
     """Class representing a preview result for a single file."""
@@ -55,6 +65,9 @@ class PreviewResult:
     media_type: MediaType
     confidence: float = 1.0
     metadata: Optional[Dict[str, Any]] = None
+    change_type: ChangeType = ChangeType.NO_CHANGE
+    original_name: Optional[str] = None
+    new_name: Optional[str] = None
 
     def __post_init__(self) -> None:
         """Initialize derived data after initialization."""
@@ -68,15 +81,25 @@ class PreviewResult:
         # Initialize metadata if None
         if self.metadata is None:
             self.metadata = {}
+            
+        # Set original_name and new_name from paths if not provided
+        if self.original_name is None:
+            self.original_name = file_basename(self.original_path)
+            
+        if self.new_name is None:
+            self.new_name = file_basename(self.new_path)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert the preview result to a dictionary."""
         return {
             "original_path": str(self.original_path),
             "new_path": str(self.new_path),
+            "original_name": self.original_name,
+            "new_name": self.new_name,
             "media_type": self.media_type.value,
             "confidence": self.confidence,
             "metadata": self.metadata or {},
+            "change_type": self.change_type.value,
         }
 
     @classmethod
@@ -88,6 +111,9 @@ class PreviewResult:
             media_type=MediaType(data["media_type"]),
             confidence=data["confidence"],
             metadata=data.get("metadata", {}),
+            change_type=ChangeType(data.get("change_type", ChangeType.NO_CHANGE.value)),
+            original_name=data.get("original_name"),
+            new_name=data.get("new_name"),
         )
 
 
@@ -118,38 +144,58 @@ class PreviewGenerator:
         media_type = detect_media_type(filename)
 
         # Get the preview result from name_utils
-        result = get_preview_rename(path_obj)
+        result = preview_rename(path_obj)
 
         # Initialize default values
         confidence = 0.9
         metadata_dict: Dict[str, Any] = {}
 
+        # Handle the case when preview_rename returns None
+        if result is None:
+            # Create a dummy result with minimal information
+            return PreviewResult(
+                original_path=str(path_obj),
+                new_path=str(path_obj),  # No change
+                media_type=media_type,
+                confidence=0.0,  # Low confidence
+                metadata={},
+                change_type=ChangeType.NO_CHANGE,
+            )
+
         # Handle metadata extraction safely
         result_metadata = result.get("metadata")
-        if result_metadata and isinstance(result_metadata, dict):
-            metadata_dict = dict(result_metadata)
+        if result_metadata:
+            metadata_dict = result_metadata
 
-            # Try to extract confidence value if it exists
-            confidence_value = metadata_dict.get("confidence")
-            if confidence_value is not None:
-                # Try to parse the confidence value as a float
-                try:
-                    confidence = float(confidence_value)
-                except (ValueError, TypeError):
-                    # Keep default value if conversion fails
-                    pass
+        # Determine if there's a change
+        original_name = result.get("original_name", path_obj.name)
+        new_name = result.get("new_name", path_obj.name)
+        original_path = result.get("original_path", str(path_obj))
+        new_path = result.get("new_path", str(path_obj))
 
-        # Create the preview result object
-        preview_result = PreviewResult(
-            original_path=result["original_path"],
-            new_path=result["new_path"],
+        change_type = ChangeType.NO_CHANGE
+        if original_path != new_path:
+            # Determine the type of change
+            if media_type == MediaType.TV_SHOW:
+                change_type = ChangeType.TV_SHOW_RENAME
+            elif media_type == MediaType.MOVIE:
+                change_type = ChangeType.MOVIE_RENAME
+            elif media_type == MediaType.ANIME:
+                change_type = ChangeType.ANIME_RENAME
+            else:
+                change_type = ChangeType.GENERAL_RENAME
+
+        # Create and return the preview result
+        return PreviewResult(
+            original_path=original_path,
+            new_path=new_path,
             media_type=media_type,
             confidence=confidence,
             metadata=metadata_dict,
+            change_type=change_type,
+            original_name=original_name,
+            new_name=new_name,
         )
-
-        logger.debug(f"Generated preview: {preview_result}")
-        return preview_result
 
     def generate_preview_for_directory(self, directory: Union[str, Path]) -> List[PreviewResult]:
         """Generate preview results for all media files in a directory.
@@ -594,6 +640,8 @@ class PreviewExporter:
                 media_type=media_type,
                 confidence=item["confidence"],
                 metadata=item.get("metadata", {}),
+                original_name=item.get("original_name"),
+                new_name=item.get("new_name"),
             )
             results.append(result)
 

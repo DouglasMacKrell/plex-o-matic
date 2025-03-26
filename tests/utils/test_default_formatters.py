@@ -1,5 +1,11 @@
-"""Tests for the default_formatters module."""
+"""Tests for the default media formatters."""
 
+import pytest
+from unittest.mock import patch
+
+from plexomatic.utils.name_parser import ParsedMediaName
+from plexomatic.core.constants import MediaType
+from plexomatic.utils.templates.template_types import TemplateType
 from plexomatic.utils.default_formatters import (
     format_tv_show,
     format_movie,
@@ -7,9 +13,6 @@ from plexomatic.utils.default_formatters import (
     get_default_formatter,
     DEFAULT_FORMATTERS,
 )
-from plexomatic.utils.template_types import TemplateType
-from plexomatic.core.constants import MediaType
-from plexomatic.utils.name_parser import ParsedMediaName
 
 
 class TestDefaultFormatters:

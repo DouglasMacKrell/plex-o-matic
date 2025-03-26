@@ -1,20 +1,18 @@
-"""Template manager for handling name templates.
+"""Template Manager for handling templates based on media type."""
 
-This module provides functionality for loading, storing, and retrieving
-templates for different media types. It handles template files and
-provides a global template manager instance.
-"""
-
-import os
 import logging
+import os
 import re
+import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Set, Type, Union
 
-from plexomatic.utils.template_types import (
+from plexomatic.utils.name_parser import ParsedMediaName
+from plexomatic.utils.templates.template_types import (
     TemplateType,
     DEFAULT_TEMPLATES_DIR,
     get_default_template_for_media_type,
+    normalize_media_type,
 )
 
 logger = logging.getLogger(__name__)

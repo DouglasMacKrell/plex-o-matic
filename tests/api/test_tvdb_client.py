@@ -6,9 +6,10 @@ import requests
 from plexomatic.api.tvdb_client import (
     TVDBClient,
     TVDBAuthenticationError,
+    TVDBRequestError,
+    TVDBRateLimitError,
     SERIES_URL,
     SERIES_EXTENDED_URL,
-    SEASONS_URL,
     SEASON_EPISODES_URL,
 )
 
@@ -19,7 +20,8 @@ class TestTVDBClient:
     def setup_method(self) -> None:
         """Set up test fixtures before each test method."""
         self.api_key = "test_api_key"
-        self.client = TVDBClient(api_key=self.api_key)
+        self.pin = "test_pin"
+        self.client = TVDBClient(api_key=self.api_key, pin=self.pin)
         # Pre-set a token to avoid automatic authentication
         self.client.token = "pre_auth_token"
         self.client.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
@@ -43,6 +45,71 @@ class TestTVDBClient:
         assert self.client.token_expires_at is not None
 
     @patch("plexomatic.api.tvdb_client.requests.post")
+    def test_authentication_v4(self, mock_post: MagicMock) -> None:
+        """Test that authenticate method correctly uses the v4 API."""
+        # Reset the token for authentication testing
+        self.client.token = None
+        self.client.token_expires_at = None
+        
+        # Setup mock response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "data": {
+                "token": "test_token"
+            }
+        }
+        mock_post.return_value = mock_response
+        
+        # Call the authenticate method
+        self.client.authenticate()
+        
+        # Verify correct endpoint and payload
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        
+        # Verify the URL is v4
+        assert args[0] == "https://api4.thetvdb.com/v4/login"
+        
+        # Verify the payload contains both api_key and pin
+        payload = kwargs.get('json', {})
+        assert payload["apikey"] == self.api_key
+        assert payload["pin"] == self.pin
+        
+        # Verify token is stored
+        assert self.client.token == "test_token"
+        assert self.client.token_expires_at is not None
+
+    @patch("plexomatic.api.tvdb_client.requests.post")
+    def test_authentication_no_pin(self, mock_post: MagicMock) -> None:
+        """Test authentication without a PIN."""
+        # Create client without PIN
+        client_no_pin = TVDBClient(api_key=self.api_key)
+        
+        # Reset the token for authentication testing
+        client_no_pin.token = None
+        client_no_pin.token_expires_at = None
+        
+        # Setup mock response
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "data": {
+                "token": "test_token"
+            }
+        }
+        mock_post.return_value = mock_response
+        
+        # Call the authenticate method
+        client_no_pin.authenticate()
+        
+        # Verify payload only contains api_key
+        args, kwargs = mock_post.call_args
+        payload = kwargs.get('json', {})
+        assert payload["apikey"] == self.api_key
+        assert "pin" not in payload
+
+    @patch("plexomatic.api.tvdb_client.requests.post")
     def test_authentication_failure(self, mock_post: MagicMock) -> None:
         """Test authentication failure."""
         # Reset the token for authentication testing
@@ -51,11 +118,35 @@ class TestTVDBClient:
 
         mock_failure_response = MagicMock()
         mock_failure_response.status_code = 401
+        # Mock both text and json response to ensure compatibility
+        mock_failure_response.text = "Invalid API key"
         mock_failure_response.json.return_value = {"error": "Invalid credentials"}
         mock_post.return_value = mock_failure_response
 
         with pytest.raises(TVDBAuthenticationError):
             self.client.authenticate()
+
+    def test_is_authenticated(self) -> None:
+        """Test the is_authenticated method."""
+        # Not authenticated
+        self.client.token = None
+        self.client.token_expires_at = None
+        assert not self.client.is_authenticated()
+        
+        # Token but no expiration
+        self.client.token = "test_token"
+        self.client.token_expires_at = None
+        assert not self.client.is_authenticated()
+        
+        # Expired token
+        self.client.token = "test_token"
+        self.client.token_expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
+        assert not self.client.is_authenticated()
+        
+        # Valid token
+        self.client.token = "test_token"
+        self.client.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        assert self.client.is_authenticated()
 
     @patch("plexomatic.api.tvdb_client.requests.get")
     def test_get_series_by_name(self, mock_get: MagicMock) -> None:
@@ -290,30 +381,20 @@ class TestTVDBClient:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "data": [
-                {
-                    "id": 1001,
-                    "number": 1,
-                    "name": "Season 1",
-                    "episodeCount": 10
-                },
-                {
-                    "id": 1002,
-                    "number": 2,
-                    "name": "Season 2",
-                    "episodeCount": 8
-                }
+                {"id": 1001, "number": 1, "name": "Season 1", "episodeCount": 10},
+                {"id": 1002, "number": 2, "name": "Season 2", "episodeCount": 8},
             ]
         }
         mock_get.return_value = mock_response
-    
+
         # Test successful seasons retrieval
         result = self.client.get_series_seasons(12345)
-        
+
         assert len(result) == 2
         assert result[0]["id"] == 1001
         assert result[0]["number"] == 1
         assert result[1]["id"] == 1002
-        
+
         # Verify get was called with correct URL
         mock_get.assert_called_once()
 
@@ -381,54 +462,34 @@ class TestTVDBClient:
                 "id": 12345,
                 "name": "Test Show",
                 "seasons": [
-                    {
-                        "id": 1001,
-                        "number": 1,
-                        "type": "Aired Order",
-                        "name": "Season 1 (Aired)"
-                    },
-                    {
-                        "id": 1002,
-                        "number": 1,
-                        "type": "DVD Order",
-                        "name": "Season 1 (DVD)"
-                    }
-                ]
+                    {"id": 1001, "number": 1, "type": "Aired Order", "name": "Season 1 (Aired)"},
+                    {"id": 1002, "number": 1, "type": "DVD Order", "name": "Season 1 (DVD)"},
+                ],
             }
         }
-        
+
         # Aired order episodes response
         aired_episodes_response = MagicMock()
         aired_episodes_response.status_code = 200
         aired_episodes_response.json.return_value = {
             "data": {
                 "episodes": [
-                    {
-                        "id": 5001,
-                        "name": "Aired Episode 1",
-                        "seasonNumber": 1,
-                        "episodeNumber": 1
-                    }
+                    {"id": 5001, "name": "Aired Episode 1", "seasonNumber": 1, "episodeNumber": 1}
                 ]
             }
         }
-        
+
         # DVD order episodes response
         dvd_episodes_response = MagicMock()
         dvd_episodes_response.status_code = 200
         dvd_episodes_response.json.return_value = {
             "data": {
                 "episodes": [
-                    {
-                        "id": 6001,
-                        "name": "DVD Episode 1",
-                        "seasonNumber": 1,
-                        "episodeNumber": 1
-                    }
+                    {"id": 6001, "name": "DVD Episode 1", "seasonNumber": 1, "episodeNumber": 1}
                 ]
             }
         }
-        
+
         # Configure mock to return different responses based on URL
         def side_effect(url, headers):
             if SERIES_EXTENDED_URL.format(series_id=12345) in url:
@@ -442,18 +503,18 @@ class TestTVDBClient:
             response.status_code = 200
             response.json.return_value = {"data": {}}
             return response
-            
+
         mock_get.side_effect = side_effect
-        
+
         # Test with default (Aired Order)
         result_default = self.client.get_season_episodes(12345, 1)
         assert len(result_default) == 1
         assert result_default[0]["name"] == "Aired Episode 1"
-        
+
         # Test with explicit DVD Order
         result_dvd = self.client.get_season_episodes(12345, 1, season_type="DVD Order")
         assert len(result_dvd) == 1
         assert result_dvd[0]["name"] == "DVD Episode 1"
-        
+
         # Verify get was called multiple times (once for extended series, once for each season type)
         assert mock_get.call_count == 3
