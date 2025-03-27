@@ -571,3 +571,56 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
 
 ## API Integration Verification
 - Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
+
+3. API Integration Tasks
+   a. API Client Testing (feature/api-client-testing)
+      - Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
+      - Create comprehensive test suite for each client
+      - Document any issues found
+      - Add proper error handling and logging
+      - Follow TDD approach for all new tests
+      - Ensure backward compatibility
+      - Add integration tests for each client
+
+   b. MusicBrainz Integration (feature/musicbrainz-integration)
+      - Create plexomatic/api/musicbrainz_client.py
+      - Implement artist, album, and track search functions
+      - Add comprehensive error handling
+      - Write unit tests following TDD approach
+      - Document API endpoints and response formats
+      - Add integration with existing media type detection
+      - Ensure proper rate limiting compliance
+
+   c. API Error Handling (feature/api-error-handling)
+      - Run practical test sweep to verify no 4XX errors
+      - Implement proper error handling for all API responses
+      - Add retry mechanisms for transient failures
+      - Create error reporting system
+      - Add logging for API errors
+      - Implement graceful degradation
+      - Add error recovery strategies
+
+   d. API Rate Limiting (feature/api-rate-limiting)
+      - Implement rate limiting for all API clients
+      - Add rate limit tracking and backoff strategies
+      - Create rate limit configuration system
+      - Add tests for rate limiting behavior
+      - Document rate limit policies
+      - Implement rate limit monitoring
+      - Add rate limit statistics
+
+   e. API Caching (feature/api-caching)
+      - Implement comprehensive caching system
+      - Add cache invalidation strategies
+      - Create cache configuration options
+      - Add cache statistics and monitoring
+      - Implement cache persistence
+      - Add cache warming capabilities
+      - Create cache debugging tools
+
+4. Media Type Determination Improvement
+   - Replace simplistic filename pattern matching with robust detection
+   - Use API clients to verify and refine media type detection
+   - Implement confidence scoring for media type determination
+   - Use LLM to help with ambiguous cases
+   - Create fallback strategies for uncertain cases
