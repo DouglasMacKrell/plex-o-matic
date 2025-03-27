@@ -29,8 +29,9 @@ ANIDB_UDP_PORT = 9000
 ANIDB_HTTP_BASE_URL = "https://anidb.net/api"
 ANIDB_CLIENT_VER = 1
 ANIDB_PROTOCOL_VER = 3
-ANIDB_RETRY_WAIT = 2  # seconds
+ANIDB_RETRY_WAIT = 4  # Increased base wait time to 4 seconds
 ANIDB_MAX_PACKET_SIZE = 1400
+ANIDB_MAX_RETRIES = 3  # Maximum number of retries with exponential backoff
 
 
 class AniDBError(Exception):
@@ -174,34 +175,46 @@ class AniDBUDPClient:
             logger.warning(f"AniDB client is banned for {ban_time:.1f} more seconds")
             raise AniDBRateLimitError(f"Client is banned for {ban_time:.1f} more seconds")
 
-        # Respect rate limiting
+        # Respect rate limiting with exponential backoff
         wait_time = self.last_command_time + ANIDB_RETRY_WAIT - time.time()
         if wait_time > 0:
             logger.debug(f"Rate limiting - waiting {wait_time:.1f} seconds")
             time.sleep(wait_time)
 
-        try:
-            self._connect()
+        retries = 0
+        while retries < ANIDB_MAX_RETRIES:
+            try:
+                self._connect()
 
-            if self.socket is None:
-                raise AniDBError("Socket not connected")
+                if self.socket is None:
+                    raise AniDBError("Socket not connected")
 
-            encoded_cmd = self._encode_command(command)
-            self.socket.sendto(encoded_cmd, (ANIDB_UDP_HOST, ANIDB_UDP_PORT))
-            self.last_command_time = time.time()
+                encoded_cmd = self._encode_command(command)
+                self.socket.sendto(encoded_cmd, (ANIDB_UDP_HOST, ANIDB_UDP_PORT))
+                self.last_command_time = time.time()
 
-            response, _ = self.socket.recvfrom(ANIDB_MAX_PACKET_SIZE)
-            return self._parse_response(response)
+                response, _ = self.socket.recvfrom(ANIDB_MAX_PACKET_SIZE)
+                return self._parse_response(response)
 
-        except socket.timeout:
-            logger.error("AniDB connection timed out")
-            raise AniDBError("Connection timed out")
-        except socket.error as e:
-            logger.error(f"AniDB socket error: {e}")
-            raise AniDBError(f"Socket error: {e}")
-        finally:
-            # We don't close the socket between commands to maintain session
-            pass
+            except socket.timeout:
+                logger.error("AniDB connection timed out")
+                retries += 1
+                if retries < ANIDB_MAX_RETRIES:
+                    backoff = ANIDB_RETRY_WAIT * (2**retries)  # Exponential backoff
+                    logger.info(f"Retrying after {backoff} seconds...")
+                    time.sleep(backoff)
+                else:
+                    raise AniDBError("Connection timed out after maximum retries")
+            except socket.error as e:
+                logger.error(f"AniDB socket error: {e}")
+                raise AniDBError(f"Socket error: {e}")
+            finally:
+                # We don't close the socket between commands to maintain session
+                pass
+
+        # This should never be reached due to the raise in the while loop,
+        # but mypy needs it for type checking
+        raise AniDBError("Maximum retries exceeded")
 
     def authenticate(self) -> None:
         """Authenticate with the AniDB API.
