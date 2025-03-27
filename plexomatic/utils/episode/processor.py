@@ -229,7 +229,7 @@ def match_episode_titles(
     logger.debug(f"Matching segment titles with TVDb API: {season_number}")
 
     # Initialize the returned mapping
-    matches = {}
+    matches: Dict[str, Dict[str, Any]] = {}
 
     try:
         # Import here to avoid circular imports
@@ -286,7 +286,7 @@ def match_episode_titles(
                 continue
 
             # Try fuzzy matching
-            best_score = 0
+            best_score: float = 0.0
             best_match = None
 
             for api_title, episode_data in normalized_title_map.items():
@@ -345,7 +345,7 @@ def split_title_by_separators(title: str) -> List[str]:
 
 def match_episode_titles_with_data(
     segments: List[str], api_data: List[Dict[str, Any]]
-) -> Dict[str, int]:
+) -> Dict[str, Optional[int]]:
     """Match episode titles with API data.
 
     Args:
@@ -355,7 +355,7 @@ def match_episode_titles_with_data(
     Returns:
         Dictionary mapping segment titles to episode numbers
     """
-    matches = {}
+    matches: Dict[str, Optional[int]] = {}
 
     # If either segments or API data is empty, return empty matches
     if not segments or not api_data:
@@ -389,7 +389,7 @@ def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
     Returns:
         Dictionary mapping season names to lists of files
     """
-    result = {"Season 1": [], "Season 2": [], "Specials": [], "Unknown": []}
+    result: Dict[str, List[Path]] = {"Season 1": [], "Season 2": [], "Specials": [], "Unknown": []}
 
     for file in files:
         filename = file.name
@@ -403,7 +403,7 @@ def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
         info = extract_show_info(filename)
 
         # Organize by season
-        if "season" in info:
+        if info is not None and "season" in info:
             season_key = f"Season {info['season']}"
             if season_key not in result:
                 result[season_key] = []

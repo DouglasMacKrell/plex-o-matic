@@ -26,8 +26,8 @@ def sanitize_filename(
     Returns:
         Sanitized filename
     """
-    # Early return for None values
-    if filename is None:
+    # Early return for None or empty values
+    if not filename:
         return ""
 
     # Handle special case for tests expecting colons to be replaced with underscores
@@ -38,11 +38,11 @@ def sanitize_filename(
         cleaned = re.sub(r'[<>"/\\|?*]', replace_with, intermediate)
         # Remove leading/trailing periods and spaces
         return cleaned.strip(". ")
-
-    # Default case: replace all invalid characters
-    cleaned = re.sub(r'[<>:"/\\|?*]', replace_with, filename)
-    # Remove leading/trailing periods and spaces
-    return cleaned.strip(". ")
+    else:
+        # Default case: replace all invalid characters
+        cleaned = re.sub(r'[<>:"/\\|?*]', replace_with, filename)
+        # Remove leading/trailing periods and spaces
+        return cleaned.strip(". ")
 
 
 def format_show_name(show_name: str, style: str = "spaces") -> str:
