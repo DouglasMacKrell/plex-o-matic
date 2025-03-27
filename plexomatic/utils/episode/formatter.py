@@ -60,7 +60,7 @@ def format_show_name(show_name: str, style: str = "spaces") -> str:
     name = show_name.strip()
 
     # Replace colons with underscores first (special handling for Plex)
-    if ":" in name:
+    if ":" in name and style != "mixed":
         name = name.replace(":", "_")
 
     # Preserve underscores from sanitization, as they replace invalid characters
@@ -77,8 +77,8 @@ def format_show_name(show_name: str, style: str = "spaces") -> str:
             name = "".join(c if c.isalnum() or c.isspace() else " " for c in name)
             # Normalize spaces
             name = re.sub(r"\s+", " ", name).strip()
-            # Now replace spaces with dots for final format
-            name = name.replace(" ", ".")
+            # For "dots" style, remove spaces entirely instead of replacing with dots
+            name = name.replace(" ", "")
     elif style == "spaces":
         if has_underscores:
             # If there are already underscores (from sanitization), keep them
@@ -89,14 +89,10 @@ def format_show_name(show_name: str, style: str = "spaces") -> str:
             # Normalize spaces (replace multiple spaces with a single space)
             name = re.sub(r"\s+", " ", name).strip()
     elif style == "mixed":
-        if has_underscores:
-            # If there are already underscores (from sanitization), keep them
-            name = re.sub(r"\s+", " ", name).strip()
-        else:
-            # Replace any special characters with spaces
-            name = "".join(c if c.isalnum() or c.isspace() else " " for c in name)
-            # Normalize spaces
-            name = re.sub(r"\s+", " ", name).strip()
+        # For mixed style, replace special characters with spaces
+        name = "".join(c if c.isalnum() or c.isspace() else " " for c in name)
+        # Normalize spaces
+        name = re.sub(r"\s+", " ", name).strip()
 
     return name
 
@@ -147,35 +143,35 @@ def format_episode_title(title: str, style: str = "spaces") -> str:
     # Remove any leading/trailing whitespace
     clean_title = title.strip()
 
-    # Replace colons with underscores first (special handling for Plex)
+    # Handle colons based on style
     if ":" in clean_title:
-        clean_title = clean_title.replace(":", "_")
-
-    # Preserve underscores from sanitization, as they replace invalid characters
-    has_underscores = "_" in clean_title
+        if style == "dots":
+            # For dots style, replace colons with underscores
+            clean_title = clean_title.replace(":", "_")
+        elif style == "spaces":
+            # For spaces style, replace colons with spaces
+            clean_title = clean_title.replace(":", " ")
+        # For mixed style, leave colons as-is
 
     if style == "dots":
-        if has_underscores:
-            # If there are already underscores (from sanitization), replace spaces with dots but keep underscores
-            formatted = re.sub(r"\s+", ".", clean_title)
-        else:
-            # Replace special characters with spaces first
-            formatted = "".join(c if c.isalnum() or c.isspace() else " " for c in clean_title)
-            # Normalize spaces
-            formatted = re.sub(r"\s+", " ", formatted).strip()
-            # Replace spaces with dots
-            formatted = formatted.replace(" ", ".")
+        # Replace special characters with spaces first
+        formatted = "".join(c if c.isalnum() or c.isspace() else " " for c in clean_title)
+        # Normalize spaces
+        formatted = re.sub(r"\s+", " ", formatted).strip()
+        # Replace spaces with dots
+        formatted = formatted.replace(" ", ".")
     elif style == "spaces":
-        if has_underscores:
-            # If there are already underscores (from sanitization), keep them
-            formatted = re.sub(r"\s+", " ", clean_title).strip()
-        else:
-            # Replace special characters with spaces
-            formatted = "".join(c if c.isalnum() or c.isspace() else " " for c in clean_title)
-            # Normalize spaces (replace multiple spaces with a single space)
-            formatted = re.sub(r"\s+", " ", formatted).strip()
+        # Remove quotes
+        clean_title = clean_title.replace('"', "").replace("'", "")
+
+        # Replace special characters (except underscores) with spaces
+        formatted = "".join(
+            c if c.isalnum() or c.isspace() or c == "_" else " " for c in clean_title
+        )
+        # Normalize spaces (replace multiple spaces with a single space)
+        formatted = re.sub(r"\s+", " ", formatted).strip()
     elif style == "mixed":
-        if has_underscores:
+        if "_" in clean_title:
             # If there are already underscores (from sanitization), keep them
             formatted = re.sub(r"\s+", " ", clean_title).strip()
         else:
@@ -268,7 +264,7 @@ def format_multi_episode_filename(
     titles: Optional[Union[str, List[str]]] = None,
     extension: str = ".mp4",
     style: str = "spaces",
-    concatenated: bool = False,
+    concatenated: bool = True,
 ) -> str:
     """
     Format a filename for a multi-episode file according to Plex naming convention.
@@ -280,7 +276,7 @@ def format_multi_episode_filename(
         titles: Episode titles (can be a single string or list of strings)
         extension: File extension (with leading dot)
         style: Formatting style ('dots', 'spaces', or 'mixed')
-        concatenated: Whether to use concatenated format for sequential episodes (unused)
+        concatenated: Whether to use concatenated format for sequential episodes
 
     Returns:
         Formatted filename
@@ -302,17 +298,25 @@ def format_multi_episode_filename(
     # Format the show name according to style
     formatted_show = format_show_name(show_name, style)
 
-    # Format the episode part
-    if len(sorted_episodes) == 1:
-        # Single episode
+    # Format the episode part based on concatenated parameter
+    if len(sorted_episodes) == 1 or not concatenated:
+        # Single episode or non-concatenated format (just use the first episode)
         episode_str = f"S{season:02d}E{sorted_episodes[0]:02d}"
     else:
-        # Sequential episodes - format with hyphen: S01E01-E03
+        # Sequential episodes with concatenated format - use hyphen: S01E01-E03
         episode_str = f"S{season:02d}E{sorted_episodes[0]:02d}-E{sorted_episodes[-1]:02d}"
+
+    # Handle title formatting
+    # Special case: for consistency with show_name, always replace colons in titles with underscores
+    # This ensures both show names and titles follow the same sanitization rules
+    if isinstance(titles, str) and ":" in titles and style != "mixed":
+        titles = titles.replace(":", "_")
 
     # Format episode titles
     if isinstance(titles, list):
-        # Multiple titles (for anthology episodes)
+        # For list of titles, we need to sanitize each one before formatting
+        if style != "mixed":
+            titles = [t.replace(":", "_") if ":" in t else t for t in titles]
         title_str = format_multi_episode_title(titles, style)
     elif titles:
         # Single title

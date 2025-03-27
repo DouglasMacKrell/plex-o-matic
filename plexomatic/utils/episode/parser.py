@@ -44,14 +44,14 @@ SPECIAL_PATTERNS = [
 ]
 
 
-def extract_show_info(filename: str) -> Optional[Dict[str, Any]]:
+def extract_show_info(filename: str) -> Dict[str, Any]:
     """Extract show information from a filename.
 
     Args:
         filename: The filename to extract information from
 
     Returns:
-        A dictionary with extracted information or None if extraction fails
+        A dictionary with extracted information or an empty dictionary if extraction fails
     """
     logger = logging.getLogger(__name__)
     logger.debug(f"Extracting info from basename: {filename}")
@@ -132,9 +132,9 @@ def extract_show_info(filename: str) -> Optional[Dict[str, Any]]:
         )
         return info
 
-    # If no patterns match, return None
+    # If no patterns match, return an empty dictionary
     logger.warning(f"Could not extract episode info from {basename}")
-    return None
+    return {}
 
 
 def detect_multi_episodes_direct(filename: str) -> List[int]:
