@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Moved template-related files to dedicated utils/templates directory
   - Improved organization and module separation
   - Enhanced type annotations throughout template code
+- MediaType enum consolidation:
+  - Removed deprecated MediaType implementations from core.models and metadata.fetcher
+  - Removed compatibility layer in utils.media_type_compat
+  - Updated all imports to reference the canonical MediaType from core.constants
+  - Updated tests to reflect the consolidated implementation
+  - Simplified codebase by eliminating deprecation warnings and compatibility code
 - Code cleanup and organization:
   - Removed deprecated functions and duplicate code
   - Standardized MediaType imports to use canonical version from core.constants

@@ -256,7 +256,7 @@ When working with TV specials or anime specials, you'll need special handling in
 
 ```python
 from plexomatic.metadata.manager import MetadataManager
-from plexomatic.core.models import MediaType
+from plexomatic.core.constants import MediaType
 
 # Initialize the manager
 manager = MetadataManager()

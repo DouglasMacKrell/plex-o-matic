@@ -13,8 +13,8 @@ class TestLLMClient:
         self.model_name = "deepseek-r1:8b"
         self.client = LLMClient(model_name=self.model_name, base_url="http://localhost:11434")
 
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_check_model_available(self, mock_post: MagicMock) -> None:
+    @patch("plexomatic.api.llm_client.requests.get")
+    def test_check_model_available(self, mock_get: MagicMock) -> None:
         """Test checking if a model is available."""
         # Mock successful model list response
         mock_response = MagicMock()
@@ -28,15 +28,15 @@ class TestLLMClient:
                 }
             ]
         }
-        mock_post.return_value = mock_response
+        mock_get.return_value = mock_response
 
         # Test successful model availability check
         assert self.client.check_model_available() is True
-        mock_post.assert_called_once()
+        mock_get.assert_called_once()
 
         # Test model not found
         mock_response.json.return_value = {"models": [{"name": "llama2"}]}
-        mock_post.reset_mock()
+        mock_get.reset_mock()
         assert self.client.check_model_available() is False
 
     @patch("plexomatic.api.llm_client.requests.post")

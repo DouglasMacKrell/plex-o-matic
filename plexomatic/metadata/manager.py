@@ -17,8 +17,8 @@ from plexomatic.metadata.fetcher import (
     TMDBMetadataFetcher,
     AniDBMetadataFetcher,
     TVMazeMetadataFetcher,
-    MediaType,
 )
+from plexomatic.core.constants import MediaType
 
 logger = logging.getLogger(__name__)
 

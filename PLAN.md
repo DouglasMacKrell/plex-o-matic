@@ -527,10 +527,13 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
   - ✅ Fixed multi-episode range detection and segment counting issues
   - ✅ Improved logging throughout the detector module
   - ✅ Created proper tests for all episode detection functionality
-- Clean up deprecated MediaType compatibility layers
-  - Identify all instances of MediaType enums across the codebase
-  - Ensure all usages reference the consolidated version from core.constants
-  - Add tests to verify compatibility layer functionality
+- ✅ Clean up deprecated MediaType compatibility layers (COMPLETED)
+  - ✅ Identified all instances of MediaType enums across the codebase
+  - ✅ Removed deprecated implementations in core.models and metadata.fetcher 
+  - ✅ Deleted the compatibility layer in utils.media_type_compat
+  - ✅ Updated all imports to reference the consolidated version from core.constants
+  - ✅ Updated tests to verify proper MediaType usage
+  - ✅ Added entries to CHANGELOG.md to document the changes
 
 ### 2. Refactor Large Files
 - Split fetcher.py into modules by metadata source
