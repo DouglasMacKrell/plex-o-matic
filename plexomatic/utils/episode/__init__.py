@@ -24,7 +24,7 @@ from plexomatic.utils.episode.formatter import (
 )
 
 # Detector module exports
-from plexomatic.utils.episode.episode_detector import (
+from plexomatic.utils.episode.detector import (
     is_anthology_episode,
     get_segment_count,
     detect_season_finale,

@@ -40,6 +40,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed unreachable code issues detected by static analysis
   - Resolved comparison issues (using `is True` instead of `== True`)
   - Added missing imports for proper IDE resolution
+  - Resolved code duplication in episode detection modules:
+    - Consolidated functionality from plexomatic/utils/episode_detector.py and plexomatic/utils/episode/episode_detector.py
+    - Created a unified detector module with all episode detection functionality
+    - Added proper deprecation warnings and compatibility layer in the old module
+    - Updated imports across the codebase to use the consolidated module
+    - Improved test coverage for the detector functionality
+    - Fixed multi-episode range detection and segment counting
 - Consolidated project management documentation:
   - Merged multiple roadmap files into single PLAN.md document
   - Created systematic recovery plan for addressing test failures

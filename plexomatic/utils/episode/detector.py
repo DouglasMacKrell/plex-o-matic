@@ -5,13 +5,15 @@ import os
 import json
 import hashlib
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Union
 
 from plexomatic.utils.episode.parser import (
     extract_show_info,
-    detect_multi_episodes,
     split_title_by_separators,
 )
+
+# Set up global logger
+logger = logging.getLogger(__name__)
 
 
 def is_thinking_section(text: str) -> bool:
@@ -52,7 +54,6 @@ def process_thinking_tags(text: str) -> str:
     if not text:
         return ""
 
-    logger = logging.getLogger(__name__)
     cleaned_text = text
 
     # Process different thinking tag variants
@@ -128,8 +129,6 @@ def filter_segments(segments: List[str]) -> List[str]:
     if not segments:
         return ["Unknown"]
 
-    logger = logging.getLogger(__name__)
-
     # Filter out thinking sections and other artifacts
     filtered_segments = []
 
@@ -183,7 +182,6 @@ def detect_segments(transcript: str) -> List[str]:
     if not transcript or not transcript.strip():
         return ["Unknown"]
 
-    logger = logging.getLogger(__name__)
     logger.debug(f"Processing transcript: {transcript[:100]}...")  # Log first 100 chars
 
     # Process transcript to remove thinking tags
@@ -263,7 +261,6 @@ def detect_segments_from_file(
     Returns:
         List of segment titles or ["Unknown"] if no segments detected
     """
-    logger = logging.getLogger(__name__)
     logger.debug(f"Detecting segments in: {file_path}")
 
     # Extract info from file name to use in detection
@@ -385,8 +382,6 @@ def detect_segments_from_file(
 
 def _load_segments_from_cache(file_path: str) -> Optional[List[str]]:
     """Load segments from cache if available."""
-    logger = logging.getLogger(__name__)
-
     cache_dir = os.path.join(os.path.expanduser("~"), ".plexomatic", "cache")
     cache_file = os.path.join(
         cache_dir, f"segments_{hashlib.md5(file_path.encode()).hexdigest()}.json"
@@ -414,8 +409,6 @@ def _load_segments_from_cache(file_path: str) -> Optional[List[str]]:
 
 def _cache_segments(file_path: str, segments: List[str]) -> None:
     """Cache segments for future use."""
-    logger = logging.getLogger(__name__)
-
     try:
         cache_dir = os.path.join(os.path.expanduser("~"), ".plexomatic", "cache")
         os.makedirs(cache_dir, exist_ok=True)
@@ -442,8 +435,6 @@ def is_anthology_episode(filename: str) -> bool:
     Returns:
         True if the episode appears to be an anthology, False otherwise
     """
-    logger = logging.getLogger(__name__)
-
     # Extract show info
     show_info = extract_show_info(filename)
     if not show_info:
@@ -491,6 +482,10 @@ def get_segment_count(filename: str) -> int:
     # Check if there are multiple episodes in one file
     multi_episodes = detect_multi_episodes(filename)
     if len(multi_episodes) > 1:
+        # If we have a range (exactly 2 episodes with a difference > 1), count as a range
+        if len(multi_episodes) == 2 and multi_episodes[1] - multi_episodes[0] > 1:
+            # For patterns like S01E01-E03, return difference + 1 (3 episodes: 1, 2, 3)
+            return multi_episodes[1] - multi_episodes[0] + 1
         return len(multi_episodes)
 
     # Check title segments
@@ -514,11 +509,16 @@ def detect_season_finale(filename: str) -> bool:
         True if the episode appears to be a season finale, False otherwise
     """
     # Check if the title contains "finale" keywords
-    title_patterns = [r"(?:season|series)[\s-]*finale", r"final[\s-]*episode", r"finale"]
+    title_patterns = [
+        r"(?:season|series)[\s-]*finale",
+        r"final[\s.-]*episode",  # Match "Final Episode"
+        r"finale",
+    ]
 
     # Get the lowercase filename for easier matching
     lower_filename = filename.lower()
 
+    # Try each pattern
     for pattern in title_patterns:
         if re.search(pattern, lower_filename):
             return True
@@ -551,11 +551,7 @@ def detect_season_premiere(filename: str) -> bool:
         if re.search(pattern, lower_filename):
             return True
 
-    # Also check if it's episode 1
-    show_info = extract_show_info(filename)
-    if show_info and show_info.get("episode") == 1:
-        return True
-
+    # Do NOT automatically consider episode 1 to be a premiere unless specified in the filename
     return False
 
 
@@ -571,14 +567,16 @@ def is_multi_part_episode(filename: str) -> bool:
     """
     # Check for common multi-part indicators
     part_patterns = [
-        r"part[\s-]*(\d+|one|two|three|four|five|i|ii|iii|iv|v)",
+        r"part[\s.-]*(\d+|one|two|three|four|five|i|ii|iii|iv|v)",
         r"pt[\s.-]*(\d+|one|two|three|four|five|i|ii|iii|iv|v)",
-        r"\((\d+|one|two|three|four|five|i|ii|iii|iv|v) of (\d+|one|two|three|four|five|i|ii|iii|iv|v)\)",
+        r"(\d+|one|two|three|four|five|i|ii|iii|iv|v)\s*of\s*(\d+|one|two|three|four|five|i|ii|iii|iv|v)",
+        r"\((\d+|one|two|three|four|five|i|ii|iii|iv|v)[ .]of[ .](\d+|one|two|three|four|five|i|ii|iii|iv|v)\)",
     ]
 
     # Get the lowercase filename for easier matching
     lower_filename = filename.lower()
 
+    # Try each pattern
     for pattern in part_patterns:
         if re.search(pattern, lower_filename):
             return True
@@ -596,8 +594,6 @@ def get_episode_type(filename: str) -> Dict[str, Any]:
     Returns:
         Dictionary with episode type information
     """
-    logger = logging.getLogger(__name__)
-
     result = {
         "is_anthology": False,
         "segment_count": 1,
@@ -636,3 +632,174 @@ def detect_episode_type(
     from plexomatic.utils.episode.processor import determine_episode_type
 
     return determine_episode_type(media_info, segments, anthology_mode)
+
+
+# Constants for multi-episode and special episode detection
+MULTI_EPISODE_PATTERNS = [
+    # Standard multi-episode format: S01E01E02
+    r"S\d+E(\d+)E(\d+)(?:E(\d+))?",
+    # Hyphen format: S01E01-E02 or S01E01-E03
+    r"S\d+E(\d+)-E(\d+)",
+    # Hyphen format without second E: S01E01-03
+    r"S\d+E(\d+)-(\d+)",
+    # X format with hyphen: 1x01-03
+    r"\d+x(\d+)-(\d+)",
+    # Space separator: S01E01 E02
+    r"S\d+E(\d+)\s+E(\d+)",
+    # "to" separator: S01E01 to E03
+    r"S\d+E(\d+)\s+to\s+E(\d+)",
+    # Special character separators: & + ,
+    r"S\d+E(\d+)(?:\s*[&+,]\s*E(\d+))",
+]
+
+# Regular expressions for detecting special episodes
+SPECIAL_PATTERNS: List[Tuple[str, str]] = [
+    # Season 0 specials: S00E01
+    (r"S00E(\d+)", "special"),
+    # Special keyword with number
+    (r"Special\.(\d+)", "special"),
+    # Special keyword with number after word
+    (r"Special\s*(\d+)", "special"),
+    # Special keyword general
+    (r"Special(?:s)?", "special"),
+    # OVA keyword with number after dot
+    (r"OVA\.(\d+)", "ova"),
+    # OVA keyword with number after word
+    (r"OVA\s*(\d+)", "ova"),
+    # OVA keyword general
+    (r"OVA(?:s)?", "ova"),
+    # Movie/Film specials with number
+    (r"Movie\.(\d+)|Film\.(\d+)", "movie"),
+    # Movie/Film specials with number after word
+    (r"Movie\s*(\d+)|Film\s*(\d+)", "movie"),
+    # Movie/Film specials general
+    (r"Movie|Film", "movie"),
+]
+
+
+def detect_multi_episodes(filename: str) -> List[int]:
+    """
+    Detect if a filename contains multiple episodes.
+
+    Args:
+        filename: The filename to check
+
+    Returns:
+        List of episode numbers if found, empty list otherwise
+    """
+    logger.debug(f"Checking for multi-episodes in: {filename}")
+
+    # Standard multi-episode format: S01E01E02E03
+    match = re.search(r"S\d+E(\d+)E(\d+)(?:E(\d+))?", filename, re.IGNORECASE)
+    if match:
+        episodes = []
+        for group in match.groups():
+            if group is not None:
+                episodes.append(int(group))
+
+        # For S01E01E02E03 style, every episode should be preserved as is
+        logger.debug(f"Found multi-episodes: {episodes}")
+        return episodes
+
+    # Hyphen format: S01E01-E03
+    match = re.search(r"S\d+E(\d+)-E(\d+)", filename, re.IGNORECASE)
+    if match:
+        start, end = int(match.group(1)), int(match.group(2))
+        # For ranges, we return start and end only
+        episodes = [start, end]
+        logger.debug(f"Found multi-episodes (range): {episodes}")
+        return episodes
+
+    # X format with hyphen: 1x01-03
+    match = re.search(r"\d+x(\d+)-(\d+)", filename, re.IGNORECASE)
+    if match:
+        start, end = int(match.group(1)), int(match.group(2))
+        episodes = [start, end]
+        logger.debug(f"Found multi-episodes (x-format): {episodes}")
+        return episodes
+
+    # Hyphen format without second E: S01E01-03
+    match = re.search(r"S\d+E(\d+)-(\d+)", filename, re.IGNORECASE)
+    if match:
+        start, end = int(match.group(1)), int(match.group(2))
+        episodes = [start, end]
+        logger.debug(f"Found multi-episodes (short-range): {episodes}")
+        return episodes
+
+    # Space separator: S01E01 E02
+    match = re.search(r"S\d+E(\d+)\s+E(\d+)", filename, re.IGNORECASE)
+    if match:
+        episodes = [int(match.group(1)), int(match.group(2))]
+        logger.debug(f"Found multi-episodes (space): {episodes}")
+        return episodes
+
+    # "to" separator: S01E01 to E03
+    match = re.search(r"S\d+E(\d+)\s+to\s+E(\d+)", filename, re.IGNORECASE)
+    if match:
+        start, end = int(match.group(1)), int(match.group(2))
+        episodes = [start, end]
+        logger.debug(f"Found multi-episodes (to): {episodes}")
+        return episodes
+
+    # Special character separators: & + ,
+    match = re.search(r"S\d+E(\d+)(?:\s*[&+,]\s*E(\d+))", filename, re.IGNORECASE)
+    if match:
+        episodes = [int(match.group(1)), int(match.group(2))]
+        logger.debug(f"Found multi-episodes (special-char): {episodes}")
+        return episodes
+
+    # Single episode check as fallback
+    match = re.search(r"S\d+E(\d+)|(\d+)x\d+|Episode\s*(\d+)", filename, re.IGNORECASE)
+    if match:
+        for group in match.groups():
+            if group is not None:
+                episode_number = int(group)
+                logger.debug(f"Found single episode: {episode_number}")
+                return [episode_number]
+
+    logger.debug("No episodes found")
+    return []
+
+
+def detect_special_episodes(filename: str) -> Optional[Dict[str, Union[str, int, None]]]:
+    """
+    Detect if a filename represents a special episode.
+
+    Args:
+        filename: The filename to check
+
+    Returns:
+        Dictionary with special episode info if found, None otherwise
+    """
+    logger.debug(f"Checking for special episodes in: {filename}")
+
+    # Extract digits that might be referring to a special episode number
+    standalone_number_match = re.search(r"\.(\d+)\.", filename)
+    standalone_number = None
+    if standalone_number_match:
+        standalone_number = int(standalone_number_match.group(1))
+
+    # Try each pattern
+    for pattern, special_type in SPECIAL_PATTERNS:
+        match = re.search(pattern, filename, re.IGNORECASE)
+        if match:
+            # Extract the number if present in the match groups
+            number = None
+            for group in match.groups():
+                if group is not None:
+                    number = int(group)
+                    break
+
+            # If no number found in the direct match but we have a standalone number
+            # from the filename (like in "Show.Special.1.mp4"), use that
+            if number is None and standalone_number is not None:
+                number = standalone_number
+
+            logger.debug(f"Found special episode: type={special_type}, number={number}")
+            return {
+                "type": special_type,
+                "number": number,
+            }
+
+    logger.debug("No special episode found")
+    return None
