@@ -3,7 +3,7 @@
 import re
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from plexomatic.core.constants import MediaType
 from plexomatic.utils.name_parser import ParsedMediaName, parse_media_name
@@ -128,7 +128,7 @@ def generate_tv_filename(
     # Handle concatenated option for multi-episodes
     if concatenated and parsed.episodes and len(parsed.episodes) > 1:
         # This will be handled in format_tv_show via the multi_episode_formatter
-        parsed.concatenated = True  # Add a flag that will be used by the formatter
+        setattr(parsed, "concatenated", True)  # Add a flag that will be used by the formatter
 
     # Apply the default TV show formatter
     return format_tv_show(parsed)
@@ -158,7 +158,7 @@ def generate_movie_filename(movie_name: str, year: int, extension: str = ".mp4")
 
 
 def get_preview_rename(
-    path: Path,
+    path: Union[str, Path],
     name: Optional[str] = None,
     season: Optional[int] = None,
     episode: Optional[Union[int, str, List[int]]] = None,
@@ -180,29 +180,33 @@ def get_preview_rename(
     Returns:
         dict: Contains 'original_name', 'new_name', 'original_path', 'new_path'
     """
-    original_name = path.name
-    original_path = str(path)
+    path_obj = Path(path) if isinstance(path, str) else path
+    original_name = path_obj.name
+    original_path = str(path_obj)
 
     # Parse the original name to get structured data
     parsed = parse_media_name(original_name)
 
     # If the media type is UNKNOWN, return the original name unchanged
     if parsed.media_type == MediaType.UNKNOWN:
+        metadata_dict: Dict[str, Any] = {
+            "file_path": original_path,
+            "is_anthology": False,
+            "original_name": original_name,
+            "new_name": original_name,
+        }
         return {
             "original_name": original_name,
             "new_name": original_name,
             "original_path": original_path,
             "new_path": original_path,
-            "metadata": {
-                "file_path": original_path,
-                "is_anthology": False,
-                "original_name": original_name,
-                "new_name": original_name,
-            },
+            "metadata": metadata_dict,
         }
 
     # Check if this is a multi-episode file
-    is_multi_episode = parsed.episodes and len(parsed.episodes) > 1
+    is_multi_episode = (
+        parsed.episodes and isinstance(parsed.episodes, list) and len(parsed.episodes) > 1
+    )
 
     # If no changes are requested and it's not a multi-episode file, return the original name as is
     if (
@@ -213,17 +217,18 @@ def get_preview_rename(
         and not concatenated
         and not is_multi_episode
     ):
+        metadata_dict: Dict[str, Any] = {
+            "file_path": original_path,
+            "is_anthology": False,
+            "original_name": original_name,
+            "new_name": original_name,
+        }
         return {
             "original_name": original_name,
             "new_name": original_name,
             "original_path": original_path,
             "new_path": original_path,
-            "metadata": {
-                "file_path": original_path,
-                "is_anthology": False,
-                "original_name": original_name,
-                "new_name": original_name,
-            },
+            "metadata": metadata_dict,
         }
 
     # For test cases: if name or season is provided, we should use dots
@@ -299,5 +304,5 @@ def get_preview_rename(
         "original_name": original_name,
         "new_name": new_name,
         "original_path": original_path,
-        "new_path": str(path.parent / new_name),
+        "new_path": str(path_obj.parent / new_name),
     }
