@@ -519,11 +519,14 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
 ## Code Cleanup Phase (Before API Integration)
 
 ### 1. Resolve Code Duplication
-- Remove duplicate episode_detector.py implementation
-  - Compare functionality between utils/episode_detector.py and utils/episode/episode_detector.py
-  - Consolidate into a single implementation with complete test coverage
-  - Update all imports to use the canonical path
-  - Add deprecation warnings to maintain backward compatibility
+- ✅ Remove duplicate episode_detector.py implementation (COMPLETED)
+  - ✅ Compared functionality between utils/episode_detector.py and utils/episode/episode_detector.py
+  - ✅ Consolidated into a single implementation with complete test coverage
+  - ✅ Updated all imports to use the canonical path
+  - ✅ Added deprecation warnings to maintain backward compatibility
+  - ✅ Fixed multi-episode range detection and segment counting issues
+  - ✅ Improved logging throughout the detector module
+  - ✅ Created proper tests for all episode detection functionality
 - Clean up deprecated MediaType compatibility layers
   - Identify all instances of MediaType enums across the codebase
   - Ensure all usages reference the consolidated version from core.constants
