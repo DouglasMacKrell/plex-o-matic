@@ -8,7 +8,10 @@ from plexomatic.metadata.manager import MetadataManager, MetadataMatchResult
 from plexomatic.core.constants import MediaType
 from plexomatic.utils.episode_detector import detect_special_episodes
 from plexomatic.utils.episode.detector import detect_multi_episodes
-from plexomatic.utils.episode.formatter import format_multi_episode_filename, generate_filename_from_metadata
+from plexomatic.utils.episode.formatter import (
+    format_multi_episode_filename,
+    generate_filename_from_metadata,
+)
 from plexomatic.utils.name_utils import generate_tv_filename
 
 
@@ -347,7 +350,7 @@ class TestMetadataEpisodeIntegration:
             episode=special_info.get("number", 1) or 1,
             title="Special Episode",
             extension=".mp4",
-            style="dots"
+            style="dots",
         )
 
         # Verify the results - special episodes should use S00Exx format
@@ -368,7 +371,7 @@ class TestMetadataEpisodeIntegration:
             episode=special_info["number"],
             title=f"OVA {special_info['number']}",
             extension=".mp4",
-            style="dots"
+            style="dots",
         )
 
         # Verify the results
@@ -388,7 +391,7 @@ class TestMetadataEpisodeIntegration:
             episode_numbers=episodes,
             titles="Multi Episode",
             extension=".mp4",
-            style="dots"
+            style="dots",
         )
 
         # Verify the results - multi-episodes should use a range format if sequential
@@ -419,7 +422,7 @@ class TestMetadataEpisodeIntegration:
             "season": 2,
             "episode": 5,
             "episode_title": "Regular Episode",
-            "use_dots": True
+            "use_dots": True,
         }
 
         filename = generate_filename_from_metadata("original.mp4", regular_metadata)
@@ -431,7 +434,7 @@ class TestMetadataEpisodeIntegration:
             "special_type": "special",
             "special_number": 3,
             "special_episode": {"title": "Behind the Scenes"},
-            "use_dots": True
+            "use_dots": True,
         }
 
         filename = generate_filename_from_metadata("original.mp4", special_metadata)
@@ -442,7 +445,7 @@ class TestMetadataEpisodeIntegration:
             "title": "Test Show",
             "special_type": "ova",
             "special_number": 2,
-            "use_dots": True
+            "use_dots": True,
         }
 
         filename = generate_filename_from_metadata("original.mp4", special_metadata_no_title)
@@ -454,7 +457,7 @@ class TestMetadataEpisodeIntegration:
             "season": 3,
             "episode_numbers": [7, 8, 9],
             "multi_episodes": [{"title": "Part 1"}, {"title": "Part 2"}, {"title": "Part 3"}],
-            "use_dots": True
+            "use_dots": True,
         }
 
         filename = generate_filename_from_metadata("original.mp4", multi_episode_metadata)

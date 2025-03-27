@@ -2,7 +2,7 @@
 
 import re
 import logging
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,6 @@ def detect_multi_episodes(filename: str) -> List[int]:
             # For the first pattern, we need special handling to avoid duplicates
             if pattern == r"S(\d+)E(\d+)(?:E(\d+))+":
                 # This is the "S01E01E02" pattern
-                season_num = int(match.group(1)) if match.group(1) else None
                 groups = match.groups()
                 # Skip the season group and start from first episode
                 episode_numbers = [int(g) for g in groups[1:] if g is not None]
@@ -78,7 +77,7 @@ def detect_multi_episodes(filename: str) -> List[int]:
                 for group in match.groups():
                     if group is not None:
                         episode_numbers.append(int(group))
-            
+
             if episode_numbers:
                 logger.debug(f"Found multi-episodes: {episode_numbers}")
                 return episode_numbers
@@ -111,7 +110,7 @@ def detect_special_episodes(filename: str) -> Optional[Dict[str, Union[str, int,
     logger.debug(f"Checking for special episodes in: {filename}")
 
     # Extract digits that might be referring to a special episode number
-    standalone_number_match = re.search(r'\.(\d+)\.', filename)
+    standalone_number_match = re.search(r"\.(\d+)\.", filename)
     standalone_number = None
     if standalone_number_match:
         standalone_number = int(standalone_number_match.group(1))
@@ -126,7 +125,7 @@ def detect_special_episodes(filename: str) -> Optional[Dict[str, Union[str, int,
                 if group is not None:
                     number = int(group)
                     break
-            
+
             # If no number found in the direct match but we have a standalone number
             # from the filename (like in "Show.Special.1.mp4"), use that
             if number is None and standalone_number is not None:
@@ -139,4 +138,4 @@ def detect_special_episodes(filename: str) -> Optional[Dict[str, Union[str, int,
             }
 
     logger.debug("No special episode found")
-    return None 
+    return None

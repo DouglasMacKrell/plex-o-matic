@@ -1,14 +1,12 @@
 """Tests for the template formatter module."""
 
 from plexomatic.utils.templates.template_formatter import (
-    apply_template,
     replace_variables,
     format_field,
     get_field_value,
 )
 from plexomatic.utils.name_parser import ParsedMediaName
 from plexomatic.core.models import MediaType
-import pytest
 
 
 class TestTemplateFormatter:

@@ -81,11 +81,11 @@ class PreviewResult:
         # Initialize metadata if None
         if self.metadata is None:
             self.metadata = {}
-            
+
         # Set original_name and new_name from paths if not provided
         if self.original_name is None:
             self.original_name = file_basename(self.original_path)
-            
+
         if self.new_name is None:
             self.new_name = file_basename(self.new_path)
 

@@ -5,17 +5,12 @@ from different parts of the application. It acts as a facade for the
 template manager.
 """
 
-import json
-import logging
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict
 
 from plexomatic.utils.templates.template_types import TemplateType
 from plexomatic.utils.templates.template_manager import (
     get_template_manager,
-    InvalidTemplateError,
-    TemplateNotFoundError,
 )
 
 

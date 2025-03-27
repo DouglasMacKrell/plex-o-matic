@@ -547,20 +547,20 @@ def split_title_by_separators(title: str) -> List[str]:
 
 def clean_show_name(name: str) -> str:
     """Clean a show name by removing dots and normalizing spaces.
-    
+
     Args:
         name: The raw show name to clean
-    
+
     Returns:
         Cleaned show name
     """
     # Replace dots, underscores, and hyphens with spaces
     cleaned = name.replace(".", " ").replace("_", " ").replace("-", " ")
-    
+
     # Normalize multiple spaces into single spaces
     cleaned = re.sub(r"\s+", " ", cleaned)
-    
+
     # Trim leading/trailing whitespace
     cleaned = cleaned.strip()
-    
+
     return cleaned

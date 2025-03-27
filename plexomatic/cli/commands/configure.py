@@ -1,12 +1,12 @@
 """Command to configure API keys and application settings."""
 
 import logging
-from pathlib import Path
 
 import click
 from rich.console import Console
 
 from plexomatic.config.config_manager import ConfigManager
+
 
 @click.command()
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output.")
@@ -29,7 +29,7 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
 
     # Load config
     config = ConfigManager()
-    
+
     # Use existing config as a base
     config_data = config.config
 
@@ -164,4 +164,4 @@ def configure_command(ctx: click.Context, verbose: bool) -> None:
 
         console.print(
             f"[success]LLM configured to use {api_config['llm']['model_name']} at {api_config['llm']['base_url']}[/success]"
-        ) 
+        )

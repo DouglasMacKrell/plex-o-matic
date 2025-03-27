@@ -12,4 +12,4 @@ __all__ = [
     "scan_command",
     "rollback_command",
     "configure_command",
-] 
+]

@@ -6,8 +6,6 @@ import requests
 from plexomatic.api.tvdb_client import (
     TVDBClient,
     TVDBAuthenticationError,
-    TVDBRequestError,
-    TVDBRateLimitError,
     SERIES_URL,
     SERIES_EXTENDED_URL,
     SEASON_EPISODES_URL,
@@ -50,32 +48,28 @@ class TestTVDBClient:
         # Reset the token for authentication testing
         self.client.token = None
         self.client.token_expires_at = None
-        
+
         # Setup mock response
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "data": {
-                "token": "test_token"
-            }
-        }
+        mock_response.json.return_value = {"data": {"token": "test_token"}}
         mock_post.return_value = mock_response
-        
+
         # Call the authenticate method
         self.client.authenticate()
-        
+
         # Verify correct endpoint and payload
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
-        
+
         # Verify the URL is v4
         assert args[0] == "https://api4.thetvdb.com/v4/login"
-        
+
         # Verify the payload contains both api_key and pin
-        payload = kwargs.get('json', {})
+        payload = kwargs.get("json", {})
         assert payload["apikey"] == self.api_key
         assert payload["pin"] == self.pin
-        
+
         # Verify token is stored
         assert self.client.token == "test_token"
         assert self.client.token_expires_at is not None
@@ -85,27 +79,23 @@ class TestTVDBClient:
         """Test authentication without a PIN."""
         # Create client without PIN
         client_no_pin = TVDBClient(api_key=self.api_key)
-        
+
         # Reset the token for authentication testing
         client_no_pin.token = None
         client_no_pin.token_expires_at = None
-        
+
         # Setup mock response
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "data": {
-                "token": "test_token"
-            }
-        }
+        mock_response.json.return_value = {"data": {"token": "test_token"}}
         mock_post.return_value = mock_response
-        
+
         # Call the authenticate method
         client_no_pin.authenticate()
-        
+
         # Verify payload only contains api_key
         args, kwargs = mock_post.call_args
-        payload = kwargs.get('json', {})
+        payload = kwargs.get("json", {})
         assert payload["apikey"] == self.api_key
         assert "pin" not in payload
 
@@ -132,17 +122,17 @@ class TestTVDBClient:
         self.client.token = None
         self.client.token_expires_at = None
         assert not self.client.is_authenticated()
-        
+
         # Token but no expiration
         self.client.token = "test_token"
         self.client.token_expires_at = None
         assert not self.client.is_authenticated()
-        
+
         # Expired token
         self.client.token = "test_token"
         self.client.token_expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert not self.client.is_authenticated()
-        
+
         # Valid token
         self.client.token = "test_token"
         self.client.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)

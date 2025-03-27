@@ -2,9 +2,9 @@
 
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from functools import lru_cache
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any, Tuple
 
 import requests
 from requests.exceptions import RequestException, Timeout
@@ -73,12 +73,12 @@ class MusicBrainzClient:
 
         now = datetime.now()
         time_since_last_request = (now - self.last_request_time).total_seconds()
-        
+
         if time_since_last_request < self.RATE_LIMIT:
             sleep_time = self.RATE_LIMIT - time_since_last_request
             logger.debug(f"Rate limiting: sleeping for {sleep_time:.2f} seconds")
             time.sleep(sleep_time)
-        
+
         self.last_request_time = datetime.now()
 
     def _make_request(
@@ -98,20 +98,20 @@ class MusicBrainzClient:
             MusicBrainzRateLimitError: When rate limit is exceeded
         """
         url = f"{self.BASE_URL}/{endpoint}"
-        
+
         # Ensure fmt=json is in params
         if params is None:
             params = {"fmt": "json"}
         else:
             params["fmt"] = "json"
-            
+
         # Enforce rate limiting
         self._enforce_rate_limit()
-        
+
         try:
             logger.debug(f"Making request to {url} with params {params}")
             response = requests.get(url, headers=self.headers, params=params)
-            
+
             # Handle rate limiting
             if response.status_code == 429:
                 logger.warning("MusicBrainz rate limit exceeded")
@@ -122,16 +122,16 @@ class MusicBrainzClient:
                     return self._make_request(endpoint, params)
                 else:
                     raise MusicBrainzRateLimitError("Rate limit exceeded")
-                    
+
             # Handle other errors
             if response.status_code != 200:
                 logger.error(f"MusicBrainz API error: {response.status_code} - {response.text}")
                 raise MusicBrainzRequestError(
                     f"API request failed with status {response.status_code}: {response.text}"
                 )
-                
+
             return response.json()
-            
+
         except Timeout:
             logger.error("MusicBrainz API request timed out")
             raise MusicBrainzRequestError("Request timed out")
@@ -167,7 +167,7 @@ class MusicBrainzClient:
         params = {}
         if include_releases:
             params["inc"] = "releases"
-            
+
         return self._make_request(f"artist/{mbid}", params)
 
     @lru_cache(maxsize=100)
@@ -198,7 +198,7 @@ class MusicBrainzClient:
         params = {}
         if include_recordings:
             params["inc"] = "recordings"
-            
+
         return self._make_request(f"release/{mbid}", params)
 
     @lru_cache(maxsize=100)
@@ -226,15 +226,17 @@ class MusicBrainzClient:
             Track details
         """
         return self._make_request(f"recording/{mbid}")
-    
-    def verify_music_file(self, artist: str, album: Optional[str] = None, track: Optional[str] = None) -> Tuple[Dict[str, Any], float]:
+
+    def verify_music_file(
+        self, artist: str, album: Optional[str] = None, track: Optional[str] = None
+    ) -> Tuple[Dict[str, Any], float]:
         """Verify a music file by searching for the artist, album, and track.
-        
+
         Args:
             artist: Artist name
             album: Album name (optional)
             track: Track name (optional)
-            
+
         Returns:
             Tuple of (best match metadata, confidence score)
         """
@@ -243,34 +245,40 @@ class MusicBrainzClient:
         if not artists:
             logger.warning(f"No artists found matching '{artist}'")
             return {}, 0.0
-            
+
         # Simple matching for now - first result
         best_artist = artists[0]
         artist_score = 0.8  # Default confidence
-        
+
         result = {
             "artist": best_artist["name"],
             "artist_id": best_artist["id"],
             "artist_score": artist_score,
         }
-        
+
         # If album provided, search for it
         if album:
             # Build query with artist to improve results
             query = f"release:{album} AND artist:{best_artist['name']}"
             releases = self.search_release(query)
-            
+
             if releases:
                 best_release = releases[0]
                 album_score = 0.8  # Default confidence
-                
-                result.update({
-                    "album": best_release["title"],
-                    "album_id": best_release["id"],
-                    "album_score": album_score,
-                    "year": best_release.get("date", "").split("-")[0] if "date" in best_release else None,
-                })
-                
+
+                result.update(
+                    {
+                        "album": best_release["title"],
+                        "album_id": best_release["id"],
+                        "album_score": album_score,
+                        "year": (
+                            best_release.get("date", "").split("-")[0]
+                            if "date" in best_release
+                            else None
+                        ),
+                    }
+                )
+
                 # If track provided, search for it within this release
                 if track and "id" in best_release:
                     release_details = self.get_release(best_release["id"], include_recordings=True)
@@ -279,21 +287,23 @@ class MusicBrainzClient:
                             for track_info in medium.get("tracks", []):
                                 if track.lower() in track_info["title"].lower():
                                     track_score = 0.8  # Default confidence
-                                    
-                                    result.update({
-                                        "track": track_info["title"],
-                                        "track_id": track_info["id"],
-                                        "track_score": track_score,
-                                        "track_number": track_info["number"],
-                                        "disc_number": medium["position"],
-                                    })
+
+                                    result.update(
+                                        {
+                                            "track": track_info["title"],
+                                            "track_id": track_info["id"],
+                                            "track_score": track_score,
+                                            "track_number": track_info["number"],
+                                            "disc_number": medium["position"],
+                                        }
+                                    )
                                     break
-        
+
         # Calculate overall confidence score
         confidence = artist_score
         if "album_score" in result:
             confidence = (confidence + result["album_score"]) / 2
         if "track_score" in result:
             confidence = (confidence + result["track_score"]) / 3
-            
-        return result, confidence 
+
+        return result, confidence

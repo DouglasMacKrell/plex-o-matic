@@ -1,18 +1,16 @@
 """Tests for the template manager module."""
 
-import json
 import os
 import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import patch
 
 import pytest
 
 from plexomatic.utils.templates.template_types import TemplateType, DEFAULT_TEMPLATES_DIR
 from plexomatic.utils.templates.template_manager import (
     TemplateManager,
-    TemplateError,
     TemplateNotFoundError,
     InvalidTemplateError,
     get_template_manager,

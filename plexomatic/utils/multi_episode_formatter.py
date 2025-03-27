@@ -2,7 +2,6 @@
 
 from typing import List, Optional, Union
 import logging
-import re
 
 from plexomatic.utils.name_parser import ParsedMediaName
 

@@ -10,6 +10,7 @@ from plexomatic.core.backup_system import BackupSystem
 from plexomatic.config.config_manager import ConfigManager
 from plexomatic.utils.file_ops import rollback_operation
 
+
 @click.command()
 @click.option(
     "--operation-id", type=int, help="ID of the operation to roll back (defaults to last operation)"
@@ -31,7 +32,7 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
 
     # Load config
     config = ConfigManager()
-    
+
     # Initialize the backup system
     db_path = config.get_db_path()
     backup_system = BackupSystem(db_path)
@@ -73,4 +74,4 @@ def rollback_command(ctx: click.Context, operation_id: Optional[int], verbose: b
         return success
     else:
         console.print("[warning]No operation to roll back.[/warning]")
-        return False 
+        return False

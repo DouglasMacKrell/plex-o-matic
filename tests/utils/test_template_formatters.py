@@ -1,13 +1,11 @@
 """Comprehensive tests for the template formatter system."""
 
 import pytest
-from unittest.mock import patch, MagicMock
-from typing import Dict, Any, Optional
+from unittest.mock import patch
 
 from plexomatic.core.constants import MediaType
 from plexomatic.utils.name_parser import ParsedMediaName
-from plexomatic.utils.templates.template_formatter import format_template
-from plexomatic.utils.templates.template_formatter import apply_template
+from plexomatic.utils.templates.template_formatter import apply_template, format_template
 
 
 class TestTemplateFormatters:
@@ -15,7 +13,6 @@ class TestTemplateFormatters:
 
     def test_format_template_basic(self):
         """Test formatting a template with basic substitution."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -31,7 +28,6 @@ class TestTemplateFormatters:
 
     def test_format_template_with_dots(self):
         """Test formatting a template with dots in the template."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -47,7 +43,6 @@ class TestTemplateFormatters:
 
     def test_format_template_with_episode_title(self):
         """Test formatting a template with an episode title."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -66,7 +61,6 @@ class TestTemplateFormatters:
 
     def test_format_template_movie(self):
         """Test formatting a template for a movie."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.MOVIE, title="Test Movie", year=2020, extension=".mp4"
@@ -78,7 +72,6 @@ class TestTemplateFormatters:
 
     def test_format_template_anime(self):
         """Test formatting a template for an anime."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.ANIME,
@@ -95,7 +88,6 @@ class TestTemplateFormatters:
 
     def test_format_template_custom_spaces(self):
         """Test formatting a template with custom spacing."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -114,7 +106,6 @@ class TestTemplateFormatters:
 
     def test_format_template_missing_field(self):
         """Test formatting a template with a missing field."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -133,7 +124,6 @@ class TestTemplateFormatters:
 
     def test_format_template_with_multi_episode(self):
         """Test formatting a template with multiple episodes."""
-        from plexomatic.utils.templates.template_formatter import format_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -151,8 +141,6 @@ class TestTemplateFormatters:
     def test_apply_template_tv_basic(self, mock_get_template):
         """Test applying a template to a TV show."""
         mock_get_template.return_value = "{title}.S{season:02d}E{episode:02d}{extension}"
-
-        from plexomatic.utils.templates.template_formatter import apply_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.TV_SHOW,
@@ -173,8 +161,6 @@ class TestTemplateFormatters:
         """Test applying a template to a movie."""
         mock_get_template.return_value = "{title}.{year}{extension}"
 
-        from plexomatic.utils.templates.template_formatter import apply_template
-
         parsed = ParsedMediaName(
             media_type=MediaType.MOVIE, title="Test Movie", year=2020, extension=".mp4"
         )
@@ -189,8 +175,6 @@ class TestTemplateFormatters:
     def test_apply_template_anime_basic(self, mock_get_template):
         """Test applying a template to an anime."""
         mock_get_template.return_value = "[{group}] {title} - {episode:02d} [{quality}]{extension}"
-
-        from plexomatic.utils.templates.template_formatter import apply_template
 
         parsed = ParsedMediaName(
             media_type=MediaType.ANIME,
@@ -210,7 +194,6 @@ class TestTemplateFormatters:
     @patch("plexomatic.utils.templates.template_formatter.get_template")
     def test_apply_template_nonexistent(self, mock_get_template):
         """Test applying a nonexistent template."""
-        from plexomatic.utils.templates.template_formatter import apply_template
 
         mock_get_template.side_effect = ValueError("Template not found")
 
@@ -230,8 +213,6 @@ class TestTemplateFormatters:
         """Test that apply_template uses the template registry."""
         mock_get_template.return_value = "{title}.custom{extension}"
 
-        from plexomatic.utils.templates.template_formatter import apply_template
-
         parsed = ParsedMediaName(media_type=MediaType.TV_SHOW, title="Test Show", extension=".mp4")
 
         result = apply_template(parsed, "custom")
@@ -243,7 +224,6 @@ class TestTemplateFormatters:
     @patch("plexomatic.utils.templates.template_formatter.get_template")
     def test_apply_template(self, mock_get_template):
         """Test applying a template to a parsed media name."""
-        from plexomatic.utils.templates.template_formatter import apply_template
 
         mock_get_template.return_value = "{title}.S{season:02d}E{episode:02d}{extension}"
 

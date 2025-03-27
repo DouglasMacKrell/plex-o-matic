@@ -9,7 +9,7 @@ from rich.console import Console
 
 from plexomatic.core.file_scanner import FileScanner
 from plexomatic.config.config_manager import ConfigManager
-from plexomatic import cli_ui
+
 
 @click.command()
 @click.option(
@@ -54,7 +54,7 @@ def scan_command(
         logger.setLevel(logging.DEBUG)
         logger.debug("Verbose mode enabled")
         console.print("[info]Verbose mode enabled[/info]")
-        
+
     if anthology_mode:
         console.print("[info]Anthology mode enabled for this operation[/info]")
 
@@ -68,7 +68,7 @@ def scan_command(
         extension_list = [ext.strip() for ext in extensions.split(",")]
 
     # Ensure extensions have dots
-    extension_list = [ext if ext.startswith('.') else f'.{ext}' for ext in extension_list]
+    extension_list = [ext if ext.startswith(".") else f".{ext}" for ext in extension_list]
 
     # Create file scanner
     scanner = FileScanner(path, extension_list)
@@ -121,4 +121,4 @@ def scan_command(
         f"  LLM assistance: {not no_llm}"
     )
 
-    return media_files 
+    return media_files

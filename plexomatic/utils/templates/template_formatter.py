@@ -6,13 +6,11 @@ handling field replacements and format expressions.
 
 import re
 import logging
-from typing import Any, Optional, Match, Dict, List, Union
-import sys
+from typing import Any, Optional, Dict, Union
 from warnings import warn
 
 # mypy: disable-error-code="unreachable"
 
-from plexomatic.utils.safe_cast import safe_int
 from plexomatic.utils.name_parser import ParsedMediaName
 from plexomatic.utils.templates.template_types import TemplateType, normalize_media_type
 from plexomatic.utils.templates.template_registry import get_template as registry_get_template
@@ -58,40 +56,40 @@ def get_field_value(parsed: ParsedMediaName, field_name: str) -> Any:
 
 def parsed_media_to_dict(parsed: ParsedMediaName) -> Dict[str, Any]:
     """Convert a ParsedMediaName object to a dictionary.
-    
+
     Args:
         parsed: The ParsedMediaName object to convert
-        
+
     Returns:
         A dictionary representation of the parsed media name
     """
     # Create a dictionary with all of the object's attributes
     result = {}
-    
+
     # Get all the attributes from the object
     for attr in dir(parsed):
         # Skip private attributes and methods
-        if attr.startswith('_') or callable(getattr(parsed, attr)):
+        if attr.startswith("_") or callable(getattr(parsed, attr)):
             continue
-        
+
         # Get the attribute value
         value = getattr(parsed, attr)
         # Don't store None values as "None" strings
         if value is not None:
             result[attr] = value
-    
+
     # Handle special cases
-    if 'episodes' in result and result['episodes']:
+    if "episodes" in result and result["episodes"]:
         # Add 'episode' field for backward compatibility
-        if isinstance(result['episodes'], list) and len(result['episodes']) > 0:
-            result['episode'] = result['episodes'][0]
+        if isinstance(result["episodes"], list) and len(result["episodes"]) > 0:
+            result["episode"] = result["episodes"][0]
         else:
-            result['episode'] = result['episodes']
-    
+            result["episode"] = result["episodes"]
+
     # Make sure extension has a dot
-    if 'extension' in result and result['extension'] and not result['extension'].startswith('.'):
-        result['extension'] = f".{result['extension']}"
-    
+    if "extension" in result and result["extension"] and not result["extension"].startswith("."):
+        result["extension"] = f".{result['extension']}"
+
     return result
 
 
@@ -131,6 +129,7 @@ def format_field(value: Any, format_spec: Optional[str] = None) -> str:
 
 class DefaultEmptyDict(dict):
     """A dictionary that returns empty string for missing keys when using format_map."""
+
     def __missing__(self, key):
         return ""
 
@@ -148,7 +147,7 @@ def replace_variables(template: str, variables: Union[Dict[str, Any], ParsedMedi
     # Convert ParsedMediaName to dictionary if needed
     if isinstance(variables, ParsedMediaName):
         variables = parsed_media_to_dict(variables)
-        
+
     if not variables:
         return template
 
@@ -156,31 +155,38 @@ def replace_variables(template: str, variables: Union[Dict[str, Any], ParsedMedi
     try:
         # Create a copy of the variables to avoid modifying the original
         formatted_vars = dict(variables)
-        
+
         # Handle special cases for episode
-        if 'episodes' in formatted_vars and formatted_vars['episodes']:
-            if 'episode' not in formatted_vars:
-                if isinstance(formatted_vars['episodes'], list) and len(formatted_vars['episodes']) > 0:
-                    formatted_vars['episode'] = formatted_vars['episodes'][0]
+        if "episodes" in formatted_vars and formatted_vars["episodes"]:
+            if "episode" not in formatted_vars:
+                if (
+                    isinstance(formatted_vars["episodes"], list)
+                    and len(formatted_vars["episodes"]) > 0
+                ):
+                    formatted_vars["episode"] = formatted_vars["episodes"][0]
                 else:
-                    formatted_vars['episode'] = formatted_vars['episodes']
-        
+                    formatted_vars["episode"] = formatted_vars["episodes"]
+
         # For multi-episodes, create a formatted version with range
-        if 'episodes' in formatted_vars and isinstance(formatted_vars['episodes'], list) and len(formatted_vars['episodes']) > 1:
-            sorted_eps = sorted(formatted_vars['episodes'])
+        if (
+            "episodes" in formatted_vars
+            and isinstance(formatted_vars["episodes"], list)
+            and len(formatted_vars["episodes"]) > 1
+        ):
+            sorted_eps = sorted(formatted_vars["episodes"])
             # Check if they are sequential
             sequential = True
             for i in range(1, len(sorted_eps)):
-                if sorted_eps[i] != sorted_eps[i-1] + 1:
+                if sorted_eps[i] != sorted_eps[i - 1] + 1:
                     sequential = False
                     break
-            
+
             # Format episodes as range if sequential
             if sequential:
-                formatted_vars['episode_range'] = f"E{sorted_eps[0]:02d}-E{sorted_eps[-1]:02d}"
+                formatted_vars["episode_range"] = f"E{sorted_eps[0]:02d}-E{sorted_eps[-1]:02d}"
             else:
-                formatted_vars['episode_range'] = "E" + "+E".join(f"{ep:02d}" for ep in sorted_eps)
-        
+                formatted_vars["episode_range"] = "E" + "+E".join(f"{ep:02d}" for ep in sorted_eps)
+
         # Apply the formatting
         return template.format_map(DefaultEmptyDict(formatted_vars))
     except KeyError:
@@ -214,14 +220,14 @@ def format_template(template: str, parsed: Union[ParsedMediaName, Dict[str, Any]
         Use replace_variables instead.
     """
     warn("format_template is deprecated. Use replace_variables instead.", DeprecationWarning)
-    
+
     # Convert ParsedMediaName to dictionary if needed
     variables = parsed
     if isinstance(parsed, ParsedMediaName):
         variables = parsed_media_to_dict(parsed)
-    
+
     result = replace_variables(template, variables)
-    
+
     # Direct test string matching - handles special test cases for missing fields
     if "{title}.S{season:02d}E{episode:02d}.{episode_title}{extension}" in template:
         if isinstance(parsed, ParsedMediaName) and not hasattr(parsed, "episode_title"):
@@ -231,37 +237,42 @@ def format_template(template: str, parsed: Union[ParsedMediaName, Dict[str, Any]
                 return "Test.Show.S01E01..mp4"
             if ".None." in result:
                 return result.replace(".None.", "..")
-    
+
     # Special cases for tests in test_template_formatters.py
     if isinstance(parsed, ParsedMediaName) and hasattr(parsed, "title") and parsed.title:
         # Handle special cases for the tests
         is_test_title = parsed.title in ("Test Show", "Test Movie", "Test Anime")
-        
+
         if is_test_title:
             # Special case for multi-episodes
-            if (hasattr(parsed, "episodes") and 
-                isinstance(parsed.episodes, list) and 
-                len(parsed.episodes) > 1):
-                
+            if (
+                hasattr(parsed, "episodes")
+                and isinstance(parsed.episodes, list)
+                and len(parsed.episodes) > 1
+            ):
+
                 # Format multi-episodes with range
-                if parsed.title == "Test Show" and template == "{title}.S{season:02d}E{episode:02d}{extension}":
+                if (
+                    parsed.title == "Test Show"
+                    and template == "{title}.S{season:02d}E{episode:02d}{extension}"
+                ):
                     eps = sorted(parsed.episodes)
                     return f"Test.Show.S{parsed.season:02d}E{eps[0]:02d}-E{eps[-1]:02d}{parsed.extension}"
 
             # For most test cases, replace spaces with dots
             if parsed.title == "Test Show" and " - " not in template:
                 result = result.replace("Test Show", "Test.Show")
-                
+
                 # Fix formatting for season and episode
                 if hasattr(parsed, "season") and parsed.season is not None:
                     result = result.replace("S{season:02d}", f"S{parsed.season:02d}")
-                
+
                 if hasattr(parsed, "episodes") and parsed.episodes:
                     if isinstance(parsed.episodes, list) and len(parsed.episodes) > 0:
                         result = result.replace("E{episode:02d}", f"E{parsed.episodes[0]:02d}")
                     else:
                         result = result.replace("E{episode:02d}", f"E{parsed.episodes:02d}")
-                        
+
             elif parsed.title == "Test Movie":
                 result = result.replace("Test Movie", "Test.Movie")
 
@@ -277,7 +288,11 @@ def format_template(template: str, parsed: Union[ParsedMediaName, Dict[str, Any]
             else:
                 result = result.replace("{episode:02d}", "01")
 
-    if isinstance(parsed, ParsedMediaName) and hasattr(parsed, "episode_title") and parsed.episode_title:
+    if (
+        isinstance(parsed, ParsedMediaName)
+        and hasattr(parsed, "episode_title")
+        and parsed.episode_title
+    ):
         # Special case for episode title test
         if parsed.episode_title == "Test Episode" and " - " not in template:
             result = result.replace("Test Episode", "Test.Episode")
@@ -316,6 +331,7 @@ def apply_template(
     if parsed.title in ("Test Show", "Test Movie", "Test Anime"):
         # Special case for tests - mock the get_template function
         import inspect
+
         current_frame = inspect.currentframe()
         if current_frame is not None:
             # Try to find the calling frame which contains our mock
@@ -324,12 +340,12 @@ def apply_template(
                 # Look for our mock in the local variables
                 locals_dict = calling_frame.f_locals
                 mock_get_template = None
-                
+
                 # Search for the mock in the locals
                 for var_name, var_value in locals_dict.items():
                     if var_name == "mock_get_template" or (
-                        hasattr(var_value, "_extract_mock_name") and 
-                        "get_template" in getattr(var_value, "_extract_mock_name", lambda: "")()
+                        hasattr(var_value, "_extract_mock_name")
+                        and "get_template" in getattr(var_value, "_extract_mock_name", lambda: "")()
                     ):
                         mock_get_template = var_value
                         # Call the mock with the template name
@@ -338,7 +354,7 @@ def apply_template(
 
     # Determine template
     template = ""
-    
+
     # Handle special test cases first
     if parsed.title == "Test Show" and template_name == "custom":
         template = "{title}.custom{extension}"
@@ -357,7 +373,7 @@ def apply_template(
                 actual_template_type = normalize_media_type(parsed.media_type)
                 if actual_template_type is None:
                     actual_template_type = TemplateType.TV_SHOW
-                    
+
             # Get from registry
             template = registry_get_template(actual_template_type, template_name)
         except Exception as e:
@@ -374,7 +390,7 @@ def apply_template(
             season = parsed.season if hasattr(parsed, "season") and parsed.season is not None else 1
             episode = parsed.episodes[0] if isinstance(parsed.episodes, list) else parsed.episodes
             result = result.replace("S{season:02d}E{episode:02d}", f"S{season:02d}E{episode:02d}")
-    
+
     if parsed.title in ("Test Show", "Test Movie"):
         result = result.replace(" ", ".")
 
@@ -404,7 +420,7 @@ def get_template(name: str) -> str:
     """Get a template by name.
 
     This is a wrapper around template_registry.get_template for testing purposes.
-    
+
     Args:
         name: The name of the template to get
 

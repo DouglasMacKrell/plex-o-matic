@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import patch
 import os
 import sys
 
@@ -7,24 +6,23 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from plexomatic.utils.episode.parser import extract_show_info
-from plexomatic.utils.episode.processor import split_title_by_separators, match_episode_titles_with_data
+from plexomatic.utils.episode.processor import (
+    split_title_by_separators,
+    match_episode_titles_with_data,
+)
 
 
-@pytest.mark.parametrize("filename, expected_show, expected_season, expected_episode, expected_title", [
-    (
-        "Show Name S01E02 Episode Title.mkv",
-        "Show Name", 1, 2, "Episode Title"
-    ),
-    (
-        "Show Name - S01E02 - Episode Title.mkv",
-        "Show Name", 1, 2, "Episode Title"
-    ),
-    (
-        "Show Name 1x02 Episode Title.mkv",
-        "Show Name", 1, 2, "Episode Title"
-    ),
-])
-def test_extract_show_info(filename, expected_show, expected_season, expected_episode, expected_title):
+@pytest.mark.parametrize(
+    "filename, expected_show, expected_season, expected_episode, expected_title",
+    [
+        ("Show Name S01E02 Episode Title.mkv", "Show Name", 1, 2, "Episode Title"),
+        ("Show Name - S01E02 - Episode Title.mkv", "Show Name", 1, 2, "Episode Title"),
+        ("Show Name 1x02 Episode Title.mkv", "Show Name", 1, 2, "Episode Title"),
+    ],
+)
+def test_extract_show_info(
+    filename, expected_show, expected_season, expected_episode, expected_title
+):
     """Test extracting show information from various filename formats."""
     info = extract_show_info(filename)
     assert info.get("show_name") == expected_show
@@ -39,36 +37,21 @@ def test_extract_show_info_no_match():
     assert info == {}
 
 
-@pytest.mark.parametrize("title, expected_segments", [
-    (
-        "Segment 1 & Segment 2 & Segment 3",
-        ["Segment 1", "Segment 2", "Segment 3"]
-    ),
-    (
-        "Segment 1, Segment 2, Segment 3",
-        ["Segment 1", "Segment 2", "Segment 3"]
-    ),
-    (
-        "Segment 1 + Segment 2 + Segment 3",
-        ["Segment 1", "Segment 2", "Segment 3"]
-    ),
-    (
-        "Segment 1 - Segment 2 - Segment 3",
-        ["Segment 1", "Segment 2", "Segment 3"]
-    ),
-    (
-        "Segment 1 and Segment 2 and Segment 3",
-        ["Segment 1", "Segment 2", "Segment 3"]
-    ),
-    (
-        "Single Segment",
-        ["Single Segment"]
-    ),
-    (
-        "First Segment Second Segment Third Segment",
-        ["First Segment Second Segment Third Segment"]
-    ),
-])
+@pytest.mark.parametrize(
+    "title, expected_segments",
+    [
+        ("Segment 1 & Segment 2 & Segment 3", ["Segment 1", "Segment 2", "Segment 3"]),
+        ("Segment 1, Segment 2, Segment 3", ["Segment 1", "Segment 2", "Segment 3"]),
+        ("Segment 1 + Segment 2 + Segment 3", ["Segment 1", "Segment 2", "Segment 3"]),
+        ("Segment 1 - Segment 2 - Segment 3", ["Segment 1", "Segment 2", "Segment 3"]),
+        ("Segment 1 and Segment 2 and Segment 3", ["Segment 1", "Segment 2", "Segment 3"]),
+        ("Single Segment", ["Single Segment"]),
+        (
+            "First Segment Second Segment Third Segment",
+            ["First Segment Second Segment Third Segment"],
+        ),
+    ],
+)
 def test_split_title_by_separators(title, expected_segments):
     """Test splitting titles by various separators."""
     segments = split_title_by_separators(title)
@@ -121,6 +104,7 @@ def test_match_episode_titles_with_data_empty_segments():
 
     result = match_episode_titles_with_data(segments, api_data)
     assert result == {}
+
 
 # TODO: Implement proper tests for the following functions when mocking issues are resolved:
 # - detect_segments

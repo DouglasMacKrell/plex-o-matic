@@ -3,16 +3,13 @@
 import logging
 import os
 import re
-import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Type, Union
+from typing import Dict, Optional
 
-from plexomatic.utils.name_parser import ParsedMediaName
 from plexomatic.utils.templates.template_types import (
     TemplateType,
     DEFAULT_TEMPLATES_DIR,
     get_default_template_for_media_type,
-    normalize_media_type,
 )
 
 logger = logging.getLogger(__name__)

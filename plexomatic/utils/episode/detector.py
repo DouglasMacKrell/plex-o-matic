@@ -25,13 +25,17 @@ def is_thinking_section(text: str) -> bool:
         True if text contains thinking tags, False otherwise
     """
     thinking_patterns = [
-        "<thinking>", "</thinking>",
-        "<think>", "</think>",
-        "[thinking]", "[/thinking]",
-        "[think]", "[/think]",
-        "thinking:"
+        "<thinking>",
+        "</thinking>",
+        "<think>",
+        "</think>",
+        "[thinking]",
+        "[/thinking]",
+        "[think]",
+        "[/think]",
+        "thinking:",
     ]
-    
+
     return any(pattern.lower() in text.lower() for pattern in thinking_patterns)
 
 
@@ -65,7 +69,7 @@ def process_thinking_tags(text: str) -> str:
         while start_tag.lower() in cleaned_text.lower():
             try:
                 start_index = cleaned_text.lower().find(start_tag.lower())
-                
+
                 # If it's the "thinking:" pattern (no end tag), just find the end of the line
                 if not end_tag:
                     # Find the end of the line
@@ -75,11 +79,11 @@ def process_thinking_tags(text: str) -> str:
                 else:
                     # Look for the explicit end tag
                     end_index = cleaned_text.lower().find(end_tag.lower(), start_index)
-                    
+
                     # If end tag not found, break out of the loop
                     if end_index == -1:
                         break
-                    
+
                     # Include the length of the end tag
                     end_index += len(end_tag)
 
@@ -99,9 +103,11 @@ def process_thinking_tags(text: str) -> str:
         # Split by lines and remove any line with thinking tags
         lines = cleaned_text.split("\n")
         cleaned_lines = [
-            line 
-            for line in lines 
-            if not any(tag in line.lower() for tag in ["<thinking>", "<think>", "</thinking>", "</think>"])
+            line
+            for line in lines
+            if not any(
+                tag in line.lower() for tag in ["<thinking>", "<think>", "</thinking>", "</think>"]
+            )
         ]
         cleaned_text = "\n".join(cleaned_lines)
         logger.debug("Removed lines with thinking tags")
@@ -209,7 +215,7 @@ def detect_segments(transcript: str) -> List[str]:
     # If no segments found with patterns, try using the lines directly
     if not all_segments:
         logger.debug("No segments found with patterns, trying line-by-line analysis")
-        
+
         # Skip lines that are likely to be headers or explanatory text
         skip_patterns = [
             r"^the segment titles",
@@ -219,25 +225,25 @@ def detect_segments(transcript: str) -> List[str]:
             r"^episode segments",
             r"^segment titles",
         ]
-        
+
         for line in lines:
             should_skip = False
             for pattern in skip_patterns:
                 if re.search(pattern, line.lower()):
                     should_skip = True
                     break
-            
+
             # If it's not a header line and not too long, it might be a segment title
             if not should_skip and len(line) < 100 and ":" not in line:
                 all_segments.append(line)
 
     # Filter segments to remove artifacts
     filtered_segments = filter_segments(all_segments)
-    
+
     if filtered_segments:
         logger.debug(f"Detected {len(filtered_segments)} segments: {filtered_segments}")
         return filtered_segments
-    
+
     logger.debug("No segments detected after filtering, returning Unknown")
     return ["Unknown"]
 

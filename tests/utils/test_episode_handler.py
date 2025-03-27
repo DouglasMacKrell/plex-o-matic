@@ -1,35 +1,16 @@
 """Tests for the episode handling utilities."""
 
-import re
-import os
-import sys
 import pytest
 from pathlib import Path
-from typing import List, Dict, Any, Optional
 
 # Import from the new module structure
 from plexomatic.utils.episode import (
-    extract_show_info,
     detect_multi_episodes,
     parse_episode_range,
-    are_sequential,
     detect_special_episodes,
-    split_title_by_separators,
-    format_show_name,
-    format_episode_title,
-    sanitize_filename,
-    format_new_name,
-    format_episode_filename,
-    is_anthology_episode,
-    get_segment_count,
-    detect_season_finale,
-    detect_season_premiere,
-    is_multi_part_episode,
-    get_episode_type,
     process_anthology_episode,
     detect_segments_with_llm,
     match_episode_titles,
-    process_episode,
 )
 
 # These functions haven't been moved to the new structure yet

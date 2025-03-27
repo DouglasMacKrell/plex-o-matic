@@ -3,9 +3,8 @@
 import click
 import logging
 import sys
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 try:
     # Python 3.9+ has native support for these types
@@ -24,14 +23,15 @@ from plexomatic import cli_ui
 from plexomatic.utils.templates.template_manager import TemplateManager
 from plexomatic.core.constants import MediaType
 
-# Import command modules from the new structure
-from plexomatic.cli.commands import (
-    preview_command,
-    apply_command,
-    scan_command,
-    rollback_command,
-    configure_command,
-)
+# Remove imports that cause redefinition errors
+# We'll define these functions directly in this file
+# from plexomatic.cli.commands import (
+#    preview_command,
+#    apply_command,
+#    scan_command,
+#    rollback_command,
+#    configure_command,
+# )
 
 # Initialize configuration
 config = ConfigManager()

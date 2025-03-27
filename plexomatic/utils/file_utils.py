@@ -13,34 +13,38 @@ from plexomatic.utils.multi_episode_formatter import ensure_episode_list
 
 def scan_files(base_path: str, extensions: List[str], recursive: bool = True) -> List[str]:
     """Scan a directory for files matching the given extensions.
-    
+
     Args:
         base_path: Root directory to scan for files
         extensions: List of allowed file extensions (e.g., ['.mp4', '.mkv'])
         recursive: Whether to scan directories recursively
-        
+
     Returns:
         List of paths for matching files
     """
     matching_files = []
     base_path = Path(base_path)
-    
+
     # Normalize extensions by ensuring they have a leading '.'
-    normalized_extensions = [ext if ext.startswith('.') else f'.{ext}' for ext in extensions]
-    
+    normalized_extensions = [ext if ext.startswith(".") else f".{ext}" for ext in extensions]
+
     if recursive:
         # Recursive walk
         for root, _, files in os.walk(base_path):
             for filename in files:
                 file_path = Path(root) / filename
-                if any(file_path.name.lower().endswith(ext.lower()) for ext in normalized_extensions):
+                if any(
+                    file_path.name.lower().endswith(ext.lower()) for ext in normalized_extensions
+                ):
                     matching_files.append(str(file_path))
     else:
         # Non-recursive, only check files in the base directory
         for file_path in base_path.iterdir():
-            if file_path.is_file() and any(file_path.name.lower().endswith(ext.lower()) for ext in normalized_extensions):
+            if file_path.is_file() and any(
+                file_path.name.lower().endswith(ext.lower()) for ext in normalized_extensions
+            ):
                 matching_files.append(str(file_path))
-                
+
     return matching_files
 
 
@@ -120,7 +124,7 @@ def generate_tv_filename(
             parsed.title = parsed.title.replace(" ", ".")
         if parsed.episode_title:
             parsed.episode_title = parsed.episode_title.replace(" ", ".")
-    
+
     # Handle concatenated option for multi-episodes
     if concatenated and parsed.episodes and len(parsed.episodes) > 1:
         # This will be handled in format_tv_show via the multi_episode_formatter
@@ -181,7 +185,7 @@ def get_preview_rename(
 
     # Parse the original name to get structured data
     parsed = parse_media_name(original_name)
-    
+
     # If the media type is UNKNOWN, return the original name unchanged
     if parsed.media_type == MediaType.UNKNOWN:
         return {
@@ -194,14 +198,21 @@ def get_preview_rename(
                 "is_anthology": False,
                 "original_name": original_name,
                 "new_name": original_name,
-            }
+            },
         }
 
     # Check if this is a multi-episode file
     is_multi_episode = parsed.episodes and len(parsed.episodes) > 1
-    
+
     # If no changes are requested and it's not a multi-episode file, return the original name as is
-    if name is None and season is None and episode is None and title is None and not concatenated and not is_multi_episode:
+    if (
+        name is None
+        and season is None
+        and episode is None
+        and title is None
+        and not concatenated
+        and not is_multi_episode
+    ):
         return {
             "original_name": original_name,
             "new_name": original_name,
@@ -212,7 +223,7 @@ def get_preview_rename(
                 "is_anthology": False,
                 "original_name": original_name,
                 "new_name": original_name,
-            }
+            },
         }
 
     # For test cases: if name or season is provided, we should use dots
@@ -272,11 +283,15 @@ def get_preview_rename(
         # If we can't determine the type, don't rename
         new_name = original_name
 
-    # For multi-episode test: if the new name is still the same as the original, 
+    # For multi-episode test: if the new name is still the same as the original,
     # force a different format to ensure the test passes
     if is_multi_episode and new_name == original_name:
         # Force a different format for multi-episode files to ensure the test passes
-        parsed.title = parsed.title.replace(".", " ") if "." in parsed.title else parsed.title.replace(" ", ".")
+        parsed.title = (
+            parsed.title.replace(".", " ")
+            if "." in parsed.title
+            else parsed.title.replace(" ", ".")
+        )
         style = "dots" if style == "spaces" else "spaces"
         new_name = format_tv_show(parsed, concatenated=True, style=style)
 

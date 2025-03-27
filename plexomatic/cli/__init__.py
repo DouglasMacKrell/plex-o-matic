@@ -7,7 +7,7 @@ from plexomatic.cli.commands import (
     preview_command,
     apply_command,
     scan_command,
-    rollback_command, 
+    rollback_command,
     configure_command,
 )
 

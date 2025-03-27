@@ -323,88 +323,85 @@ def match_episode_titles(
 
 def split_title_by_separators(title: str) -> List[str]:
     """Split a title by common separators like '&', ',', '+', etc.
-    
+
     Args:
         title: The title to split
-        
+
     Returns:
         List of title segments
     """
-    import re
+
     # Define the separators to split on
     separators = [" & ", ", ", " + ", " - ", " and "]
-    
+
     # Check if any separators are in the title
     for sep in separators:
         if sep in title:
             return [segment.strip() for segment in title.split(sep)]
-    
+
     # If no separators found, return the title as a single segment
     return [title]
 
 
-def match_episode_titles_with_data(segments: List[str], api_data: List[Dict[str, Any]]) -> Dict[str, int]:
+def match_episode_titles_with_data(
+    segments: List[str], api_data: List[Dict[str, Any]]
+) -> Dict[str, int]:
     """Match episode titles with API data.
-    
+
     Args:
         segments: List of segment titles
         api_data: API data containing episode information
-        
+
     Returns:
         Dictionary mapping segment titles to episode numbers
     """
     matches = {}
-    
+
     # If either segments or API data is empty, return empty matches
     if not segments or not api_data:
         return matches
-    
+
     # Create a dictionary of API data episode titles
     api_episodes = {episode.get("name", ""): episode.get("episode_number") for episode in api_data}
-    
+
     # Try to match segments with API data
     for segment in segments:
         # Try exact match first
         if segment in api_episodes:
             matches[segment] = api_episodes[segment]
             continue
-        
+
         # Try partial match (segment is contained in API title)
         for api_title, episode_number in api_episodes.items():
             if segment.lower() in api_title.lower():
                 matches[segment] = episode_number
                 break
-    
+
     return matches
 
 
 def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
     """Organize files from a season pack into seasons.
-    
+
     Args:
         files: List of file paths
-        
+
     Returns:
         Dictionary mapping season names to lists of files
     """
-    result = {
-        "Season 1": [],
-        "Season 2": [],
-        "Specials": [],
-        "Unknown": []
-    }
-    
+    result = {"Season 1": [], "Season 2": [], "Specials": [], "Unknown": []}
+
     for file in files:
         filename = file.name
-        
+
         # Check for special episodes
         if detect_special_episodes(filename):
             result["Specials"].append(file)
             continue
-        
+
         # Extract show info
         info = extract_show_info(filename)
-        
+
         # Organize by season
         if "season" in info:
             season_key = f"Season {info['season']}"
@@ -414,5 +411,5 @@ def organize_season_pack(files: List[Path]) -> Dict[str, List[Path]]:
         else:
             # Unknown files
             result["Unknown"].append(file)
-    
+
     return result

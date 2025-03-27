@@ -3,7 +3,6 @@
 import click
 import logging
 import sys
-from pathlib import Path
 
 from plexomatic import __version__
 from plexomatic.core.backup_system import BackupSystem
@@ -33,6 +32,7 @@ logger = logging.getLogger("plexomatic")
 # Common command options
 verbose_option = click.option("--verbose", "-v", is_flag=True, help="Enable verbose output.")
 
+
 @click.group(help="Plex-o-matic: Media file organization tool for Plex")
 @click.version_option(version=__version__, message="plex-o-matic, version %(version)s")
 @verbose_option
@@ -54,6 +54,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
         logger.debug("Verbose mode enabled")
         # Also output to console for test capture
         cli_ui.print_status("Verbose mode enabled", status="info")
+
 
 # Register all commands
 cli.add_command(preview_command)

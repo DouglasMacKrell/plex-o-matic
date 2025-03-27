@@ -7,9 +7,6 @@ This helps diagnose CI failures related to imports.
 import sys
 import importlib
 from pathlib import Path
-import logging
-import os
-from typing import List, Optional
 
 from plexomatic.core.constants import MediaType
 

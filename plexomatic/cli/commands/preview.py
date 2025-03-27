@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -11,7 +11,6 @@ from rich.table import Table
 
 from plexomatic.core.file_scanner import FileScanner
 from plexomatic.utils.name_utils import preview_rename
-from plexomatic.utils.episode import is_anthology_episode, get_segment_count
 from plexomatic.utils.anthology_utils import preprocess_anthology_episodes
 from plexomatic.config.config_manager import ConfigManager
 
@@ -75,7 +74,7 @@ def preview_command(
     # Default to current directory if no path provided
     if not path:
         path = os.getcwd()
-    
+
     path_obj = Path(path)
 
     # Resolve extensions
@@ -83,13 +82,13 @@ def preview_command(
         extensions = config.get("video_extensions", ".mp4,.mkv,.avi,.mov,.m4v")
 
     extension_list = extensions.split(",")
-    
+
     # Ensure extensions have dots
-    extension_list = [ext if ext.startswith('.') else f'.{ext}' for ext in extension_list]
+    extension_list = [ext if ext.startswith(".") else f".{ext}" for ext in extension_list]
 
     # Scan files
     console.print("Previewing changes")
-    
+
     # Check if we have a single file or a directory
     if path_obj.is_file():
         logger.debug(f"Processing single file: {path}")
@@ -106,7 +105,9 @@ def preview_command(
         use_llm = not no_llm
         api_lookup = not no_api_lookup
         preprocessed_data = preprocess_anthology_episodes(files, use_llm, api_lookup)
-        logger.debug(f"Preprocessed {len(preprocessed_data)} files for anthology sequential numbering")
+        logger.debug(
+            f"Preprocessed {len(preprocessed_data)} files for anthology sequential numbering"
+        )
 
     # Process each file for preview
     rename_count = 0
@@ -124,7 +125,7 @@ def preview_command(
             anthology_mode=anthology_mode,
             use_llm=use_llm,
             api_lookup=api_lookup,
-            preprocessed_data=preprocessed_data
+            preprocessed_data=preprocessed_data,
         )
 
         if result:
@@ -133,9 +134,7 @@ def preview_command(
                 rename_count += 1
                 if verbose:
                     logger.debug(f"{result['original_basename']} → {result['new_basename']}")
-                    console.print(
-                        f"{result['original_basename']} → {result['new_basename']}"
-                    )
+                    console.print(f"{result['original_basename']} → {result['new_basename']}")
             else:
                 unchanged_count += 1
 
@@ -159,4 +158,4 @@ def preview_command(
         f"  Anthology mode: {anthology_mode}\n"
         f"  LLM assistance: {not no_llm}\n"
         f"  API lookup: {not no_api_lookup}"
-    ) 
+    )

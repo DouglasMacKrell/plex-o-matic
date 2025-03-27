@@ -1,8 +1,5 @@
 """Tests for the default media formatters."""
 
-import pytest
-from unittest.mock import patch
-
 from plexomatic.utils.name_parser import ParsedMediaName
 from plexomatic.core.constants import MediaType
 from plexomatic.utils.templates.template_types import TemplateType

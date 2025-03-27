@@ -1,12 +1,11 @@
 """Default formatters for various media types."""
 
-import os
-from typing import Dict, Optional, Callable, Any
+from typing import Dict, Optional, Callable
 import logging
 
 from plexomatic.utils.name_parser import ParsedMediaName
 from plexomatic.utils.templates.template_types import TemplateType
-from plexomatic.utils.multi_episode_formatter import get_formatted_episodes, ensure_episode_list
+from plexomatic.utils.multi_episode_formatter import ensure_episode_list
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +35,10 @@ def format_tv_show(parsed: ParsedMediaName, concatenated: bool = False, style: s
     if len(episodes) > 1:
         # Sort episodes
         episodes = sorted(episodes)
-        
+
         # Check if episodes are sequential
-        is_sequential = all(episodes[i] == episodes[i-1] + 1 for i in range(1, len(episodes)))
-        
+        is_sequential = all(episodes[i] == episodes[i - 1] + 1 for i in range(1, len(episodes)))
+
         # Always use range format for multi-episodes when more than one episode is present
         if is_sequential:
             # Format as E01-E03 for sequential episodes
@@ -50,7 +49,7 @@ def format_tv_show(parsed: ParsedMediaName, concatenated: bool = False, style: s
     else:
         # Single episode
         episode_str = f"E{episodes[0]:02d}"
-    
+
     # Apply style formatting to title and episode_title
     if style == "dots":
         title = title.replace(" ", ".")
@@ -62,15 +61,15 @@ def format_tv_show(parsed: ParsedMediaName, concatenated: bool = False, style: s
 
     # Build the final filename parts
     parts = [title, f"S{season:02d}{episode_str}"]
-    
+
     # Add episode title if available
     if episode_title:
         parts.append(episode_title)
-        
+
     # Add quality if available
     if quality:
         parts.append(quality)
-    
+
     # Join with the appropriate separator
     filename = separator.join(parts)
 
@@ -99,21 +98,21 @@ def format_movie(parsed: ParsedMediaName, style: str = "dots") -> str:
     year = str(parsed.year) if parsed.year is not None else ""
     quality = parsed.quality or ""
     extension = parsed.extension
-    
+
     if not extension.startswith("."):
         extension = f".{extension}"
-    
+
     # Apply style formatting
     if style == "dots":
         title = title.replace(" ", ".")
-        
+
         # Build the filename with dots
         parts = [title]
         if year:
             parts.append(year)
         if quality:
             parts.append(quality)
-        
+
         # Join with dots and add extension
         return ".".join(filter(None, parts)) + extension
     else:
@@ -122,10 +121,10 @@ def format_movie(parsed: ParsedMediaName, style: str = "dots") -> str:
             filename = f"{title} ({year})"
         else:
             filename = title
-        
+
         if quality:
             filename += f" [{quality}]"
-        
+
         return filename + extension
 
 
@@ -141,7 +140,7 @@ def format_anime(parsed: ParsedMediaName, style: str = "dots") -> str:
     """
     # Determine if this is a special
     is_special = parsed.media_type and "SPECIAL" in str(parsed.media_type)
-    
+
     # Format title based on style
     title = parsed.title
     if style == "dots":
@@ -208,4 +207,3 @@ def get_default_formatter(
         return format_tv_show
 
     return DEFAULT_FORMATTERS.get(template_type, format_tv_show)
-

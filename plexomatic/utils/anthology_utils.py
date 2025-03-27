@@ -1,8 +1,7 @@
 """Utilities for handling anthology episodes and segments."""
 
-import re
 import logging
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Any
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -26,10 +25,10 @@ def detect_segments(title: str, use_llm: bool = False, max_segments: int = 10) -
         from plexomatic.utils.episode.processor import detect_segments_with_llm
 
         # If the input is a filename, extract the title from it
-        if '.' in title and ('/' in title or '\\' in title):
+        if "." in title and ("/" in title or "\\" in title):
             info = extract_show_info(title)
-            if info and 'title' in info:
-                title = info['title']
+            if info and "title" in info:
+                title = info["title"]
 
         # Use LLM to detect segments
         return detect_segments_with_llm(title, max_segments)
@@ -87,4 +86,4 @@ def preprocess_anthology_episodes(
             "segments": [],  # Will be populated if needed
         }
 
-    return preprocessed_data 
+    return preprocessed_data

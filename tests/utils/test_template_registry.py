@@ -1,6 +1,5 @@
 """Tests for the template registry module."""
 
-import pytest
 from unittest.mock import patch, MagicMock
 from plexomatic.utils.templates.template_types import TemplateType
 from plexomatic.utils.templates.template_registry import (
