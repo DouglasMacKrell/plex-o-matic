@@ -6,8 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from plexomatic.metadata.manager import MetadataManager, MetadataMatchResult
 from plexomatic.core.constants import MediaType
-from plexomatic.utils.episode_detector import detect_special_episodes
-from plexomatic.utils.episode.detector import detect_multi_episodes
+from plexomatic.utils.episode.detector import detect_special_episodes, detect_multi_episodes
 from plexomatic.utils.episode.formatter import (
     format_multi_episode_filename,
     generate_filename_from_metadata,

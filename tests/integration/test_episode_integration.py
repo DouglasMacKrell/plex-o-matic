@@ -4,7 +4,7 @@ from pathlib import Path
 from plexomatic.utils.name_utils import generate_tv_filename
 from plexomatic.utils.file_utils import get_preview_rename
 from plexomatic.utils.episode.parser import extract_show_info
-from plexomatic.utils.episode_detector import (
+from plexomatic.utils.episode.detector import (
     detect_multi_episodes,
     detect_special_episodes,
 )
