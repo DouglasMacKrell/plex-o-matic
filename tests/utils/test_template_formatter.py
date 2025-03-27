@@ -6,7 +6,7 @@ from plexomatic.utils.templates.template_formatter import (
     get_field_value,
 )
 from plexomatic.utils.name_parser import ParsedMediaName
-from plexomatic.core.models import MediaType
+from plexomatic.core.constants import MediaType
 
 
 class TestTemplateFormatter:

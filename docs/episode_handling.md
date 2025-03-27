@@ -150,7 +150,7 @@ Each special type uses appropriate templates for file naming:
 
 ```python
 from plexomatic.utils.name_templates import get_template_for_media_type
-from plexomatic.core.models import MediaType
+from plexomatic.core.constants import MediaType
 
 # Get template for TV specials
 tv_special_template = get_template_for_media_type(MediaType.TV_SPECIAL)

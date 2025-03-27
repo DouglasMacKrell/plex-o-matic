@@ -1,58 +1,15 @@
 """Database models for the backup system."""
 
 from datetime import datetime, timezone
-from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
 from typing import Any, TypeVar
-import warnings
-
-# Import the consolidated MediaType
-from plexomatic.core.constants import MediaType as ConsolidatedMediaType
 
 # Create the declarative base
 Base = declarative_base()
 
 # Type variable for SQLAlchemy models
 T = TypeVar("T", bound=Any)
-
-
-# Deprecated - kept for backward compatibility
-class MediaType(Enum):
-    """Enum representing types of media.
-
-    DEPRECATED: Use plexomatic.core.constants.MediaType instead.
-    This class is kept for database backward compatibility.
-    """
-
-    TV_SHOW = auto()
-    MOVIE = auto()
-    ANIME = auto()
-    TV_SPECIAL = auto()
-    ANIME_SPECIAL = auto()
-    UNKNOWN = auto()
-
-    @classmethod
-    def from_string(cls, value: str) -> "MediaType":
-        """Convert a string value to a MediaType enum value.
-
-        This is used for compatibility between different enum implementations.
-        """
-        warnings.warn(
-            "models.MediaType is deprecated. Use constants.MediaType instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        value = value.upper()
-        for member in cls:
-            if member.name == value:
-                return member
-        return cls.UNKNOWN
-
-    def to_consolidated(self) -> ConsolidatedMediaType:
-        """Convert to the consolidated MediaType."""
-        return ConsolidatedMediaType.from_legacy_value(self.value, "core")
 
 
 # Type to help with type checking

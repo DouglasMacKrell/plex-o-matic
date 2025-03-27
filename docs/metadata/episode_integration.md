@@ -16,7 +16,7 @@ The `MetadataManager.match()` method has been enhanced to detect special episode
 
 ```python
 from plexomatic.metadata.manager import MetadataManager
-from plexomatic.metadata.fetcher import MediaType
+from plexomatic.core.constants import MediaType
 
 manager = MetadataManager()
 

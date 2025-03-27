@@ -7,9 +7,7 @@ import logging
 import re
 import os
 import sys
-from enum import Enum, auto
 from functools import lru_cache
-import warnings
 
 # Import standard library dependencies
 from plexomatic.api.tvdb_client import TVDBClient
@@ -18,7 +16,7 @@ from plexomatic.api.anidb_client import AniDBClient
 from plexomatic.api.tvmaze_client import TVMazeClient
 
 # Import consolidated MediaType
-from plexomatic.core.constants import MediaType as ConsolidatedMediaType
+from plexomatic.core.constants import MediaType
 
 # Define Python version
 PY_VERSION = sys.version_info[:2]
@@ -81,44 +79,6 @@ def extract_dict_list(data: Any) -> List[Dict[str, Any]]:
                 result.append(item_dict)
 
     return result
-
-
-# Deprecated - kept for backward compatibility
-class MediaType(Enum):
-    """Enum representing different types of media.
-
-    DEPRECATED: Use plexomatic.core.constants.MediaType instead.
-    This class is kept for database backward compatibility.
-    """
-
-    TV_SHOW = auto()
-    MOVIE = auto()
-    ANIME = auto()
-    MUSIC = auto()
-    UNKNOWN = auto()
-
-    def to_consolidated(self) -> ConsolidatedMediaType:
-        """Convert to the consolidated MediaType."""
-        warnings.warn(
-            "fetcher.MediaType is deprecated. Use constants.MediaType instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return ConsolidatedMediaType.from_legacy_value(self.value, "fetcher")
-
-
-# For backward compatibility
-def __getattr__(name: str) -> Any:
-    """Handle deprecated attributes."""
-    if name == "MediaType":
-        warnings.warn(
-            "Importing MediaType from fetcher is deprecated. "
-            "Use 'from plexomatic.core.constants import MediaType' instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return ConsolidatedMediaType
-    raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 class MetadataResult:
