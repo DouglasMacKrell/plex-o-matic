@@ -70,3 +70,7 @@ site/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Cursor rules
+.cursor/
+.cursor/rules/
