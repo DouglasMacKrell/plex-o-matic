@@ -516,125 +516,46 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
 - Ensure compliance with Plex naming conventions
 - Create test suite for various edge cases
 
-### Future Planned Features
+## Code Cleanup Phase (Before API Integration)
 
-## Multi-Episode Detection
+### 1. Resolve Code Duplication
+- Remove duplicate episode_detector.py implementation
+  - Compare functionality between utils/episode_detector.py and utils/episode/episode_detector.py
+  - Consolidate into a single implementation with complete test coverage
+  - Update all imports to use the canonical path
+  - Add deprecation warnings to maintain backward compatibility
+- Clean up deprecated MediaType compatibility layers
+  - Identify all instances of MediaType enums across the codebase
+  - Ensure all usages reference the consolidated version from core.constants
+  - Add tests to verify compatibility layer functionality
 
-COMPLETED: Enhanced the multi-episode detection functionality to handle additional formats:
-- Added support for episodes with spaces between season and episode numbers (e.g., "S01 E01 E02")
-- Improved detection of episodes with various separators (e.g., "S01E01-E03", "S01E01 to E03")
-- Added support for additional separator formats: ampersand (&), plus (+), comma (,)
-- Fixed handling of episodes with mixed formats (e.g., "S01E01-E03E05E07-E09")
+### 2. Refactor Large Files
+- Split fetcher.py into modules by metadata source
+  - Create dedicated modules for each metadata fetcher
+  - Maintain backward compatibility with the original API
+  - Improve test coverage for each component
+- Refactor name_parser.py into focused sub-modules
+  - Separate media type detection, TV parsing, movie parsing, anime parsing
+  - Create a clean public API that maintains backward compatibility
+  - Improve type annotations and error handling
+- Break down preview_system.py into component modules
+  - Separate preview generation, diff display, and user interaction
+  - Create modular components with clean interfaces
+  - Enhance test coverage for each component
 
-All tests for multi-episode detection are now passing successfully.
+### 3. Documentation Updates
+- Document refactored episode handling modules
+  - Update API documentation for all public functions
+  - Add usage examples for common scenarios
+  - Create diagrams to illustrate component relationships
+- Complete missing documentation in docs/ directory
+  - Fill in placeholder README.md files
+  - Add detailed guides for each major feature
+  - Create troubleshooting sections for common issues
+- Update template system documentation for modular structure
+  - Document the new template components and their relationships
+  - Add examples of custom template creation
+  - Create a quick reference for template syntax
 
-## Standardize Testing (COMPLETED)
-
-The project now uses pytest for all tests, providing a more modern testing approach with:
-
-- Simpler test syntax (no classes required)
-- Powerful fixture system for test setup
-- Better parameterization support
-- Extensive plugin ecosystem
-
-**Migration Plan:**
-- ✅ Convert unittest-style tests to pytest
-- ✅ Move tests to appropriate directories based on structure
-- ✅ Update test fixtures
-- ✅ Ensure consistent patterns
-- ✅ Clean up problematic tests to maintain codebase quality
-
-**Completed migrations:**
-- ✅ Migrated TVDB client tests from unittest to pytest
-- ✅ Created pytest-style episode detector tests
-- ✅ Created migration plan document (pytest_migration_plan.md)
-- ✅ Migrated episode parser, formatter, and consolidated media type tests to pytest
-- ✅ Migrated episode handler tests to pytest
-- ✅ Enhanced multi-episode detection with support for:
-  - Multiple episode formats with spaces (e.g., "S01E01 E02 E03")
-  - Complex mixed episode ranges (e.g., "S01E01-E03E05E07-E09")
-  - Various separator formats (space, hyphen, "to", "&", "+", comma)
-- ✅ Cleaned up problematic tests to maintain codebase quality
-
-**Benefits**:
-- Consistent testing approach across the codebase
-- Easier to write and maintain tests
-- Better test readability and organization
-- Improved test coverage
-- Enhanced multi-episode detection for various filename formats
-
-**Current Test Status**:
-- 509 passing tests
-- 24 failing tests
-- 51 skipped tests
-
-**Next Steps**:
-1. Fix `process_anthology_episode()` parameter mismatch issues
-2. Update file operation tests to work with temporary files
-3. Fix integration tests that expect dots instead of spaces
-4. Address the missing `detect_segments_with_llm` function
-5. Fix the preview generator directory test mismatch
-
-These issues will be addressed in a follow-up PR to maintain a clean and focused approach to the migration.
-
-## Recovery Plan for Current Branch
-
-After fixing specific test failures related to filename formatting and preview systems, we've encountered cascading test failures in other areas. This section outlines a plan to systematically address these issues and get back on track with our roadmap.
-
-### Current Status Assessment
-1. We have successfully fixed specific tests:
-   - `test_tv_show_with_changes` in name_utils.py
-   - `test_format_multi_episode_filename` in episode_handler.py
-   - `test_format_tv_show_multi_episode` in default_formatters.py
-
-2. However, these changes have introduced new failures in other areas:
-   - `sanitize_filename` function now replaces special characters with underscores, breaking tests that expected removal
-   - Format style tests expect different behavior than what our changes implemented
-   - Template formatting tests are failing due to inconsistent special character handling
-   - Episode info extraction tests expect dots and dashes to be converted to spaces
-
-### Systematic Recovery Approach
-
-#### 1. Create a Clean Branch Structure
-```
-git checkout -b bugfix/test-fixes-rebase
-git checkout -b temp-backup  # Backup current changes if needed
-```
-
-#### 2. Follow Focused Test-Driven Development
-For each issue:
-1. Write a test that clearly demonstrates the issue
-2. Make the minimal change needed to fix that test
-3. Verify the fix doesn't break other tests
-4. Commit the change with a clear message
-
-#### 3. Targeted Fixes for Current Issues
-- For `sanitize_filename`:
-  - Create a new test specifically for the colon case
-  - Add a specific fix that preserves backward compatibility
-  - Consider adding a parameter to control replacement behavior
-
-- For format style issues:
-  - Review test expectations to match intended behavior
-  - Focus on fixing one formatter at a time
-  - Use feature flags for incompatible changes
-
-#### 4. Incremental Testing
-After each fix:
-- Run affected tests first
-- Run full test suite before committing
-- Document any test adjustments made
-
-#### 5. Return to Roadmap Tasks
-Once tests are stable, continue with the planned tasks:
-- Fix parameter mismatches in anthology processing
-- Update file operation tests
-- Fix integration tests with formatting expectations
-- Address missing functions
-- Fix directory test mismatches
-
-### Estimated Timeline
-- Test stabilization: 1-2 days
-- Return to roadmap implementation: 3-5 days
-
-This approach ensures we maintain code quality while making progress on our planned features, following proper test-driven development practices throughout.
+## API Integration Verification
+- Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
