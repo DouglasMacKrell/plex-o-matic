@@ -75,11 +75,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed `preview_rename` function to correctly handle the 's1e01' pattern format
   - Improved `format_multi_episode_filename` to strictly adhere to Plex naming conventions for sequential episodes
   - Enhanced `sanitize_filename` to properly handle special characters, particularly colons
-  - Updated `format_show_name` and `format_episode_title` to replace colons with underscores
+  - Updated `format_show_name` and `format_episode_title` to replace colons with underscores in dots and spaces styles
   - Improved format handling for show names and episode titles with special characters
   - Added validation to ensure multi-episode files only contain sequential episodes
   - Fixed inconsistencies in preview result format and type compatibility
   - Added proper error handling for invalid episode number inputs
+  - Fixed `format_episode_title` to correctly handle colons based on the formatting style
+  - Set default value of `concatenated` parameter to `True` in `format_multi_episode_filename`
+  - Fixed `extract_show_info` to return an empty dictionary instead of `None` when no patterns match
 
 ### Security
 - None
