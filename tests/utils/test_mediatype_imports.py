@@ -23,7 +23,7 @@ def test_direct_import_from_constants():
 def test_mediatype_not_in_models():
     """Test that MediaType no longer exists in models."""
     with pytest.raises(ImportError):
-        pass
+        from plexomatic.core.models import MediaType  # noqa
 
 
 def test_direct_import_from_fetcher():
@@ -38,4 +38,4 @@ def test_direct_import_from_fetcher():
 def test_mediatype_compat_module_removed():
     """Test that the mediatype_compat module has been removed."""
     with pytest.raises(ImportError):
-        pass
+        import plexomatic.utils.media_type_compat  # noqa
