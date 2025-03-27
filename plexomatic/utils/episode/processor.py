@@ -8,8 +8,11 @@ from pathlib import Path
 
 # Import functions from other modules
 from plexomatic.utils.episode.parser import extract_show_info
-from plexomatic.utils.episode.detector import filter_segments, detect_segments_from_file
-from plexomatic.utils.episode_detector import detect_special_episodes
+from plexomatic.utils.episode.detector import (
+    filter_segments,
+    detect_segments_from_file,
+    detect_special_episodes,
+)
 
 
 class EpisodeType(Enum):
