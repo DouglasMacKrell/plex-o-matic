@@ -571,21 +571,23 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
 
 ### 4. API Integration Tasks
    a. API Client Testing (feature/api-client-testing)
-      - Test all existing API clients (TVDB, TMDB, AniDB, ✅ TVMaze, LLM)
+      - ✅ Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
       - ✅ Create comprehensive test suite for TVMaze client
       - ✅ Implement modular test structure for TVMaze:
-        - Core client functionality and error handling tests
-        - Search functionality tests (shows and people)
-        - Show and episode details retrieval tests
-        - Mocking patterns for use in integration tests
+        - ✅ Core client functionality and error handling tests
+        - ✅ Search functionality tests (shows and people)
+        - ✅ Show and episode details retrieval tests
+        - ✅ Mocking patterns for use in integration tests
       - ✅ Achieve >95% test coverage for TVMaze client (currently 98%)
       - ✅ Document TVMaze API client usage patterns
       - ✅ Add proper error handling and logging for TVMaze client
-      - Document any issues found
-      - Add proper error handling and logging
-      - Follow TDD approach for all new tests
-      - Ensure backward compatibility
-      - Add integration tests for each client
+      - ✅ Standardize tests on pytest instead of unittest
+      - ✅ Organize test files into structured directories
+      - ✅ Document any issues found
+      - ✅ Add proper error handling and logging
+      - ✅ Follow TDD approach for all new tests
+      - ✅ Ensure backward compatibility
+      - ✅ Add integration tests for each client
 
    b. MusicBrainz Integration (feature/musicbrainz-integration)
       - Create plexomatic/api/musicbrainz_client.py

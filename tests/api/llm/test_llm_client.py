@@ -1,6 +1,17 @@
+"""
+Test file for the LLM client basic functionality.
+
+This includes tests for:
+- Model availability checking
+- Text generation
+- Custom parameters
+- Error handling
+"""
+
 import pytest
-from unittest.mock import patch, MagicMock
+from pytest_mock import MockerFixture
 import json
+import requests
 
 from plexomatic.api.llm_client import LLMClient, LLMRequestError, LLMModelNotAvailableError
 
@@ -13,11 +24,11 @@ class TestLLMClient:
         self.model_name = "deepseek-r1:8b"
         self.client = LLMClient(model_name=self.model_name, base_url="http://localhost:11434")
 
-    @patch("plexomatic.api.llm_client.requests.get")
-    def test_check_model_available(self, mock_get: MagicMock) -> None:
+    def test_check_model_available(self, mocker: MockerFixture) -> None:
         """Test checking if a model is available."""
         # Mock successful model list response
-        mock_response = MagicMock()
+        mock_get = mocker.patch("requests.get")
+        mock_response = mocker.Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "models": [
@@ -39,11 +50,11 @@ class TestLLMClient:
         mock_get.reset_mock()
         assert self.client.check_model_available() is False
 
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_generate_text(self, mock_post: MagicMock) -> None:
+    def test_generate_text(self, mocker: MockerFixture) -> None:
         """Test generating text with the LLM."""
         # Mock successful generation response
-        mock_response = MagicMock()
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "model": "deepseek-r1:8b",
@@ -65,11 +76,11 @@ class TestLLMClient:
         assert request_args["json"]["model"] == "deepseek-r1:8b"
         assert request_args["json"]["prompt"] == prompt
 
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_generate_text_with_parameters(self, mock_post: MagicMock) -> None:
+    def test_generate_text_with_parameters(self, mocker: MockerFixture) -> None:
         """Test generating text with custom parameters."""
         # Mock successful generation response
-        mock_response = MagicMock()
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "model": "deepseek-r1:8b",
@@ -95,11 +106,38 @@ class TestLLMClient:
         assert request_args["json"]["top_p"] == 0.9
         assert request_args["json"]["max_tokens"] == 100
 
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_request_error(self, mock_post: MagicMock) -> None:
+    def test_generate_text_with_system_prompt(self, mocker: MockerFixture) -> None:
+        """Test generating text with a system prompt."""
+        # Mock successful generation response
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "model": "deepseek-r1:8b",
+            "created_at": "2023-04-01T12:00:00Z",
+            "response": "Inception is a 2010 science fiction action film directed by Christopher Nolan.",
+            "done": True,
+        }
+        mock_post.return_value = mock_response
+
+        # Test with system prompt
+        system_prompt = "You are a helpful movie database assistant. Keep answers brief and factual."
+        result = self.client.generate_text(
+            "What is the movie Inception about?",
+            system=system_prompt,
+        )
+        assert "Inception" in result
+        assert "Christopher Nolan" in result
+
+        # Check that system prompt was passed correctly
+        request_args = mock_post.call_args.kwargs
+        assert request_args["json"]["system"] == system_prompt
+
+    def test_request_error(self, mocker: MockerFixture) -> None:
         """Test handling of request errors."""
         # Mock error response
-        mock_response = MagicMock()
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
         mock_response.status_code = 500
         mock_response.text = "Internal server error"
         mock_post.return_value = mock_response
@@ -108,72 +146,26 @@ class TestLLMClient:
         with pytest.raises(LLMRequestError):
             self.client.generate_text("This should fail")
 
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_model_not_available_error(self, mock_post: MagicMock) -> None:
+    def test_connection_error(self, mocker: MockerFixture) -> None:
+        """Test handling of connection errors."""
+        # Mock connection error with a specific RequestException
+        mock_post = mocker.patch("requests.post")
+        mock_post.side_effect = requests.exceptions.ConnectionError("Connection refused")
+
+        # Test error handling
+        with pytest.raises(LLMRequestError) as exc:
+            self.client.generate_text("This should fail with connection error")
+        assert "Connection refused" in str(exc.value)
+
+    def test_model_not_available_error(self, mocker: MockerFixture) -> None:
         """Test handling of model not available errors."""
         # Mock error response for model not found
-        mock_response = MagicMock()
+        mock_post = mocker.patch("requests.post")
+        mock_response = mocker.Mock()
         mock_response.status_code = 404
         mock_response.text = "Model not found"
         mock_post.return_value = mock_response
 
         # Test error handling
         with pytest.raises(LLMModelNotAvailableError):
-            self.client.generate_text("This should fail with model not available")
-
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_analyze_filename(self, mock_post: MagicMock) -> None:
-        """Test analyzing a filename with the LLM."""
-        # Mock successful analysis response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "model": "deepseek-r1:8b",
-            "created_at": "2023-04-01T12:00:00Z",
-            "response": json.dumps(
-                {
-                    "title": "Breaking Bad",
-                    "season": 1,
-                    "episode": 1,
-                    "quality": "HDTV",
-                    "codec": "x264",
-                }
-            ),
-            "done": True,
-        }
-        mock_post.return_value = mock_response
-
-        # Test successful filename analysis
-        result = self.client.analyze_filename("BreakingBad.S01E01.HDTV.x264")
-        assert result["title"] == "Breaking Bad"
-        assert result["season"] == 1
-        assert result["episode"] == 1
-        assert result["quality"] == "HDTV"
-
-        # Check that the system prompt was included
-        request_args = mock_post.call_args.kwargs
-        assert "system" in request_args["json"]
-        assert "JSON object" in request_args["json"]["system"]
-
-    @patch("plexomatic.api.llm_client.requests.post")
-    def test_suggest_filename(self, mock_post: MagicMock) -> None:
-        """Test suggesting a standardized filename with the LLM."""
-        # Mock successful suggestion response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "model": "deepseek-r1:8b",
-            "created_at": "2023-04-01T12:00:00Z",
-            "response": "Breaking Bad - S01E01 - Pilot [HDTV-x264].mp4",
-            "done": True,
-        }
-        mock_post.return_value = mock_response
-
-        # Test successful filename suggestion
-        result = self.client.suggest_filename(
-            "BreakingBad.S01E01.HDTV.x264.mp4", "Breaking Bad", "Pilot"
-        )
-        assert "Breaking Bad" in result
-        assert "S01E01" in result
-        assert "Pilot" in result
-        assert ".mp4" in result
+            self.client.generate_text("This should fail with model not available") 

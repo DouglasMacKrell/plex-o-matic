@@ -65,6 +65,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Standardized on pytest fixtures and mocking patterns
   - Added comprehensive mocking examples for each client
   - Eliminated duplicated test code
+  - Refactored TVMaze client tests:
+    - Created dedicated test directory at tests/api/tvmaze
+    - Split monolithic test file into focused modules:
+      - test_tvmaze_client.py: Core client functionality and error handling
+      - test_tvmaze_search.py: Search functionality for shows and people
+      - test_tvmaze_shows.py: Show details, episodes, and cast information
+      - test_tvmaze_mock.py: Examples of different mocking approaches
+    - Standardized tests to use pytest fixtures instead of unittest.mock
+    - Improved error coverage for API failures and edge cases
+    - Added clear examples of how to mock the client for other components
+    - Achieved 98% test coverage for the TVMaze client
 
 ### Deprecated
 - None
