@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented Plex-compatible subtitle renaming
   - Added comprehensive test suite for subtitle functionality
   - Created detailed documentation for subtitle support
+- Standardized API error handling system:
+  - Created a unified error hierarchy for consistent error handling across all API clients
+  - Implemented API-specific error classes for all API clients (TVDB, TMDB, AniDB, TVMaze, LLM, MusicBrainz)
+  - Added specialized error classes for protocol-specific errors (UDP for AniDB, model-specific for LLM)
+  - Created comprehensive test suite for all error classes with 100% coverage
+  - Implemented proper error inheritance for type-safe exception catching
+  - Enhanced BaseAPIClient with improved error propagation and auto-retry logic
 
 ### Changed
 - Completed template system refactoring:
@@ -117,6 +124,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - test_musicbrainz_detail.py: Detailed album and track information
       - test_musicbrainz_search.py: Search functionality
       - test_musicbrainz_mock.py: Mocking approaches
+- Enhanced API client error handling:
+  - Rewritten BaseAPIClient's error handling for better consistency and clarity
+  - Fixed error propagation to properly preserve specific error types
+  - Improved auto-retry logic for rate-limited requests
+  - Restructured API error classes into a clear hierarchy
+  - Created dedicated error modules for API-specific errors
+  - Standardized error messages and attributes across all API clients
+  - Added comprehensive testing for error handling edge cases
 
 ### Deprecated
 - None
