@@ -1,0 +1,1 @@
+"""TVMaze API client tests."""

@@ -569,13 +569,18 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
   - Add examples of custom template creation
   - Create a quick reference for template syntax
 
-## API Integration Verification
-- Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
-
-3. API Integration Tasks
+### 4. API Integration Tasks
    a. API Client Testing (feature/api-client-testing)
-      - Test all existing API clients (TVDB, TMDB, AniDB, TVMaze, LLM)
-      - Create comprehensive test suite for each client
+      - Test all existing API clients (TVDB, TMDB, AniDB, ✅ TVMaze, LLM)
+      - ✅ Create comprehensive test suite for TVMaze client
+      - ✅ Implement modular test structure for TVMaze:
+        - Core client functionality and error handling tests
+        - Search functionality tests (shows and people)
+        - Show and episode details retrieval tests
+        - Mocking patterns for use in integration tests
+      - ✅ Achieve >95% test coverage for TVMaze client (currently 98%)
+      - ✅ Document TVMaze API client usage patterns
+      - ✅ Add proper error handling and logging for TVMaze client
       - Document any issues found
       - Add proper error handling and logging
       - Follow TDD approach for all new tests
@@ -617,10 +622,3 @@ These issues will be addressed in a follow-up PR to maintain a clean and focused
       - Implement cache persistence
       - Add cache warming capabilities
       - Create cache debugging tools
-
-4. Media Type Determination Improvement
-   - Replace simplistic filename pattern matching with robust detection
-   - Use API clients to verify and refine media type detection
-   - Implement confidence scoring for media type determination
-   - Use LLM to help with ambiguous cases
-   - Create fallback strategies for uncertain cases

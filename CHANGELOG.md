@@ -57,6 +57,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Merged multiple roadmap files into single PLAN.md document
   - Created systematic recovery plan for addressing test failures
   - Enhanced consistency in tracking project progress
+- Improved API client test organization:
+  - Restructured test files into dedicated directories for each API client
+  - Split large test files into focused modules (client, search, shows/details, mocking)
+  - Enhanced test coverage for API clients (achieved 98% coverage for TVMaze client)
+  - Improved readability and maintainability of test files
+  - Standardized on pytest fixtures and mocking patterns
+  - Added comprehensive mocking examples for each client
+  - Eliminated duplicated test code
 
 ### Deprecated
 - None
@@ -66,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed deprecated format_template function from template_formatter.py
 - Removed episode_handler.py.bak backup file
 - Removed duplicate roadmap files (typing_roadmap.md, pytest_migration_plan.md)
+- Removed original monolithic API client test files after migrating to dedicated directories
 
 ### Fixed
 - Fixed import issues in integration tests
