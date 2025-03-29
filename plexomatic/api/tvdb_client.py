@@ -124,7 +124,7 @@ class TVDBClient:
                 f"{BASE_URL}/{cache_key}", headers={"Authorization": f"Bearer {self._token}"}
             )
             response.raise_for_status()
-            result = response.json()
+            result = cast(Dict[str, Any], response.json())
             self._cache[cache_key] = result
             if len(self._cache) > self._cache_size_limit:
                 self._cache.popitem()
@@ -142,6 +142,7 @@ class TVDBClient:
                     self.authenticate()
                     return self._get_cached_key(cache_key)
             if "search" in cache_key:
+                # Return empty data array for search queries when API fails
                 return cast(Dict[str, Any], {"data": []})
             raise
 
