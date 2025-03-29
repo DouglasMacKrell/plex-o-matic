@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, Mock
 
 from plexomatic.api.tvdb_client import TVDBClient
 
@@ -12,10 +11,10 @@ class TestTVDBSearch:
         # Create a client for each test
         self.client = TVDBClient(api_key="test_key")
         self.client._token = "test_token"  # Manually set token to avoid authentication calls
-        
+
         # Create a mock session for each test
         self.mock_session = Mock()
-        
+
         # Replace the client's session with our mock
         self.client._session = self.mock_session
 
@@ -37,7 +36,7 @@ class TestTVDBSearch:
                 }
             ]
         }
-        
+
         # Set up the mock session to return our mock response
         self.client._session.get.return_value = mock_response
 
@@ -79,7 +78,7 @@ class TestTVDBSearch:
                 },
             ]
         }
-        
+
         # Set up the mock session to return our mock response
         self.client._session.get.return_value = mock_response
 
@@ -99,13 +98,13 @@ class TestTVDBSearch:
         mock_response.status_code = 200
         mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {"data": []}
-        
+
         # Set up the mock session to return our mock response
         self.client._session.get.return_value = mock_response
 
         # Test search with no results
         result = self.client.get_series_by_name("Nonexistent Show")
-        
+
         # Verify empty results
         assert result == []
 
@@ -122,16 +121,14 @@ class TestTVDBSearch:
         mock_success_response = Mock()
         mock_success_response.status_code = 200
         mock_success_response.raise_for_status.return_value = None
-        mock_success_response.json.return_value = {
-            "data": [{"id": 1, "name": "Test Show"}]
-        }
+        mock_success_response.json.return_value = {"data": [{"id": 1, "name": "Test Show"}]}
 
         # Set up the mock session to return empty then success
         self.client._session.get.side_effect = [mock_empty_response, mock_success_response]
 
         # Test search with colon in title
         result = self.client.get_series_by_name("Test Show: The Sequel")
-        
+
         # Verify result
         assert result[0]["id"] == 1
         assert result[0]["name"] == "Test Show"
@@ -160,16 +157,16 @@ class TestTVDBSearch:
                 }
             ]
         }
-        
+
         # Set up the mock session to return our mock response
         self.client._session.get.return_value = mock_response
 
         # Test that missing data is handled gracefully
         result = self.client.get_series_by_name("Test Show")
-        
+
         # Verify result
         assert len(result) == 1
         assert result[0]["id"] == 12345
         assert "name" not in result[0]  # Field should be missing
         assert "firstAired" not in result[0]  # Field should be missing
-        assert result[0]["network"] == "Test Network" 
+        assert result[0]["network"] == "Test Network"
