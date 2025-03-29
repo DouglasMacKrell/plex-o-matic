@@ -3,6 +3,8 @@
 import requests
 import logging
 from urllib.parse import quote
+import time
+from requests.exceptions import RequestException
 
 try:
     # Python 3.9+ has native support for these types
@@ -10,7 +12,6 @@ try:
 except ImportError:
     # For Python 3.8 support
     from typing_extensions import Dict, List, Optional, Any, cast
-from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
 logger = logging.getLogger(__name__)
@@ -74,43 +75,25 @@ class TVDBClient:
 
         self.api_key = api_key
         self.pin = pin
-        self.token: Optional[str] = None
-        self.token_expires_at: Optional[datetime] = None
         self.auto_retry = auto_retry
         self.cache_size = cache_size
+        self._token: Optional[str] = None
+        self._session = requests.Session()
+        self._cache: Dict[str, Dict[str, Any]] = {}
+        self._cache_size_limit = cache_size
 
     def authenticate(self) -> None:
         """Authenticate with the TVDB API v4 and get an access token."""
-        # Prepare authentication payload
-        payload = {"apikey": self.api_key}
-
-        # Include PIN if provided (for subscriber model)
-        if self.pin:
-            payload["pin"] = self.pin
-
-        headers = {"Content-Type": "application/json"}
-
-        # Make auth request
         try:
-            response = requests.post(AUTH_URL, json=payload, headers=headers)
+            headers = {"apikey": self.api_key}
+            if self.pin:
+                headers["pin"] = self.pin
+
+            response = self._session.post(AUTH_URL, headers=headers)
             response.raise_for_status()
-
-            # Parse response
-            data = response.json()
-
-            # Extract token
-            token_data = data.get("data", {})
-            token = token_data.get("token")
-
-            if not token:
-                raise TVDBAuthenticationError("No token in authentication response")
-
-            # Calculate token expiration (24 hours from now)
-            self.token = token
-            self.token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
-
+            self._token = response.json()["data"]["token"]
             logger.info("Successfully authenticated with TVDB API v4")
-        except requests.RequestException as e:
+        except RequestException as e:
             logger.error(f"TVDB authentication failed: {e}")
             raise TVDBAuthenticationError(f"Authentication failed: {e}")
 
@@ -120,11 +103,7 @@ class TVDBClient:
         Returns:
             True if the client has a valid token, False otherwise.
         """
-        if not self.token or not self.token_expires_at:
-            return False
-
-        # Check if token is expired
-        return datetime.now(timezone.utc) < self.token_expires_at
+        return self._token is not None
 
     def _ensure_authenticated(self) -> None:
         """Ensure client is authenticated, authenticating if needed."""
@@ -132,54 +111,39 @@ class TVDBClient:
             self.authenticate()
 
     @lru_cache(maxsize=100)
-    def _get_cached_key(self, url: str) -> Dict[str, Any]:
-        """Get a cached response for a URL, fetching if not cached.
+    def _get_cached_key(self, cache_key: str) -> Dict[str, Any]:
+        """Get a cached response or make a new request."""
+        if cache_key in self._cache:
+            return self._cache[cache_key]
 
-        Args:
-            url: The URL to fetch.
+        if not self.is_authenticated():
+            self.authenticate()
 
-        Returns:
-            The response JSON.
-        """
-        self._ensure_authenticated()
-
-        headers = {"Authorization": f"Bearer {self.token}"}
         try:
-            response = requests.get(url, headers=headers)
+            response = self._session.get(
+                f"{BASE_URL}/{cache_key}", headers={"Authorization": f"Bearer {self._token}"}
+            )
             response.raise_for_status()
-            return cast(Dict[str, Any], response.json())
-        except requests.exceptions.HTTPError as e:
-            logger.error(f"TVDB request failed: {e.response.status_code} - {e.response.text}")
-
-            # Handle token expiration (401) or rate limiting (429)
-            if e.response.status_code in (401, 429) and self.auto_retry:
-                if e.response.status_code == 401:
-                    logger.info("Token expired, re-authenticating")
+            result = response.json()
+            self._cache[cache_key] = result
+            if len(self._cache) > self._cache_size_limit:
+                self._cache.popitem()
+            return result
+        except RequestException as e:
+            if hasattr(e, "response") and e.response is not None:
+                if e.response.status_code == 429 and self.auto_retry:
+                    retry_after = int(e.response.headers.get("Retry-After", "1"))
+                    logger.info(f"Rate limited. Waiting {retry_after} seconds...")
+                    time.sleep(retry_after)
+                    return self._get_cached_key(cache_key)
+                elif e.response.status_code == 401:
+                    logger.info("Token expired, re-authenticating...")
+                    self._token = None
                     self.authenticate()
-                elif e.response.status_code == 429:
-                    logger.info("Rate limited, retrying with new request")
-
-                # Retry the request
-                headers = {"Authorization": f"Bearer {self.token}"}
-                try:
-                    response = requests.get(url, headers=headers)
-                    response.raise_for_status()
-                    return cast(Dict[str, Any], response.json())
-                except Exception as retry_error:
-                    logger.error(f"Retry failed: {retry_error}")
-
-            # Return empty result based on URL type
-            if "search" in url:
-                return cast(Dict[str, Any], {"data": []})  # For search endpoints return empty list
-            else:
-                return cast(Dict[str, Any], {"status": "error", "message": str(e), "data": {}})
-        except Exception as e:
-            logger.error(f"TVDB request error: {e}")
-            # Return empty result based on URL type
-            if "search" in url:
-                return cast(Dict[str, Any], {"data": []})  # For search endpoints return empty list
-            else:
-                return cast(Dict[str, Any], {"status": "error", "message": str(e), "data": {}})
+                    return self._get_cached_key(cache_key)
+            if "search" in cache_key:
+                return cast(Dict[str, Any], {"data": []})
+            raise
 
     def _normalize_id(self, series_id: Any) -> int:
         """Normalize a series ID by removing any 'series-' prefix.

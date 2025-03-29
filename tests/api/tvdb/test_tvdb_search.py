@@ -1,5 +1,5 @@
 import pytest
-# Removed unittest.mock imports: patch, MagicMock, Mock
+from unittest.mock import patch, MagicMock, Mock
 
 from plexomatic.api.tvdb_client import TVDBClient
 
@@ -9,46 +9,23 @@ class TestTVDBSearch:
 
     def setup_method(self) -> None:
         """Set up test fixtures before each test method."""
+        # Create a client for each test
         self.client = TVDBClient(api_key="test_key")
-        self.client.token = "test_token"
+        self.client._token = "test_token"  # Manually set token to avoid authentication calls
         
-        # Mock authentication response
-        auth_response = Mock()
-        auth_response.status_code = 200
-        auth_response.json.return_value = {"data": {"token": "test_token"}}
+        # Create a mock session for each test
+        self.mock_session = Mock()
         
-        # Mock search data
-        self.search_data = {
-            "data": [
-                {
-                    "id": 1,
-                    "name": "Test Show",
-                    "status": "Continuing",
-                    "type": "Scripted",
-                    "year": 2020
-                }
-            ]
-        }
-        
-        search_response = Mock()
-        search_response.status_code = 200
-        search_response.json.return_value = self.search_data
-        
-        # Set up the mock for requests
-        self.mock_patcher = patch('plexomatic.api.tvdb_client.requests')
-        self.mock_requests = self.mock_patcher.start()
-        self.mock_requests.post.return_value = auth_response
-        self.mock_requests.get.return_value = search_response
+        # Replace the client's session with our mock
+        self.client._session = self.mock_session
 
-    def teardown_method(self):
-        self.mock_patcher.stop()
-
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_search_with_special_characters(self, mock_get: MagicMock) -> None:
+    @patch("requests.Session")
+    def test_search_with_special_characters(self, mock_session_class) -> None:
         """Test search with special characters in the query."""
-        # Mock successful search response
-        mock_response = MagicMock()
+        # Configure mock response
+        mock_response = Mock()
         mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
             "data": [
                 {
@@ -60,25 +37,30 @@ class TestTVDBSearch:
                 }
             ]
         }
-        mock_get.return_value = mock_response
+        
+        # Set up the mock session to return our mock response
+        self.client._session.get.return_value = mock_response
 
         # Test search with special characters
         result = self.client.get_series_by_name("Test Show: The Sequel")
 
+        # Verify the result
+        assert len(result) == 1
         assert result[0]["id"] == 12345
         assert result[0]["name"] == "Test Show: The Sequel"
 
-        # Verify URL encoding
-        mock_get.assert_called_once()
-        args, _ = mock_get.call_args
+        # Verify URL encoding in the API call
+        self.client._session.get.assert_called_once()
+        args, _ = self.client._session.get.call_args
         assert "Test%20Show%3A%20The%20Sequel" in args[0]
 
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_search_with_partial_matches(self, mock_get: MagicMock) -> None:
+    @patch("requests.Session")
+    def test_search_with_partial_matches(self, mock_session_class) -> None:
         """Test search with partial matches."""
-        # Mock successful search response with multiple matches
-        mock_response = MagicMock()
+        # Configure mock response with multiple results
+        mock_response = Mock()
         mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
             "data": [
                 {
@@ -97,80 +79,97 @@ class TestTVDBSearch:
                 },
             ]
         }
-        mock_get.return_value = mock_response
+        
+        # Set up the mock session to return our mock response
+        self.client._session.get.return_value = mock_response
 
         # Test search with partial match
         result = self.client.get_series_by_name("Test")
 
+        # Verify the results
         assert len(result) == 2
         assert any(show["id"] == 12345 for show in result)
         assert any(show["id"] == 12346 for show in result)
 
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_search_with_empty_results(self, mock_get: MagicMock) -> None:
+    @patch("requests.Session")
+    def test_search_with_empty_results(self, mock_session_class) -> None:
         """Test search with no results found."""
-        # Mock empty search response
-        mock_response = MagicMock()
+        # Configure mock empty response
+        mock_response = Mock()
         mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {"data": []}
-        mock_get.return_value = mock_response
+        
+        # Set up the mock session to return our mock response
+        self.client._session.get.return_value = mock_response
 
         # Test search with no results
         result = self.client.get_series_by_name("Nonexistent Show")
+        
+        # Verify empty results
         assert result == []
 
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_search_with_alternative_patterns(self, mock_get: MagicMock) -> None:
+    @patch("requests.Session")
+    def test_search_with_alternative_patterns(self, mock_session_class) -> None:
         """Test search with alternative patterns when no results found."""
-        # Mock first response with no results
-        mock_empty_response = MagicMock()
+        # Configure first mock response with no results
+        mock_empty_response = Mock()
         mock_empty_response.status_code = 200
+        mock_empty_response.raise_for_status.return_value = None
         mock_empty_response.json.return_value = {"data": []}
 
-        # Mock second response with results for main title
-        mock_success_response = MagicMock()
+        # Configure second mock response with results
+        mock_success_response = Mock()
         mock_success_response.status_code = 200
+        mock_success_response.raise_for_status.return_value = None
         mock_success_response.json.return_value = {
             "data": [{"id": 1, "name": "Test Show"}]
         }
 
-        # Configure mock to return empty then success
-        mock_get.side_effect = [mock_empty_response, mock_success_response]
+        # Set up the mock session to return empty then success
+        self.client._session.get.side_effect = [mock_empty_response, mock_success_response]
 
         # Test search with colon in title
         result = self.client.get_series_by_name("Test Show: The Sequel")
+        
+        # Verify result
         assert result[0]["id"] == 1
         assert result[0]["name"] == "Test Show"
 
-        # Verify both URLs were tried
-        assert mock_get.call_count == 2
-        urls = [call[0][0] for call in mock_get.call_args_list]
+        # Verify both queries were attempted
+        assert self.client._session.get.call_count == 2
+        urls = [call[0][0] for call in self.client._session.get.call_args_list]
         assert any("Test%20Show%3A%20The%20Sequel" in url for url in urls)
         assert any("Test%20Show" in url for url in urls)
 
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.get")
-    def test_search_with_missing_data(self, mock_get: MagicMock) -> None:
+    @patch("requests.Session")
+    def test_search_with_missing_data(self, mock_session_class) -> None:
         """Test handling of missing or incomplete data in search results."""
-        # Mock response with missing fields
-        mock_response = MagicMock()
+        # Configure mock response with incomplete data
+        mock_response = Mock()
         mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {
             "data": [
                 {
                     "id": 12345,
-                    # Missing seriesName
+                    # Missing 'name' field
                     "status": "Continuing",
-                    # Missing firstAired
+                    # Missing 'firstAired' field
                     "network": "Test Network",
                 }
             ]
         }
-        mock_get.return_value = mock_response
+        
+        # Set up the mock session to return our mock response
+        self.client._session.get.return_value = mock_response
 
         # Test that missing data is handled gracefully
         result = self.client.get_series_by_name("Test Show")
+        
+        # Verify result
         assert len(result) == 1
         assert result[0]["id"] == 12345
-        assert "seriesName" not in result[0]
-        assert "firstAired" not in result[0]
+        assert "name" not in result[0]  # Field should be missing
+        assert "firstAired" not in result[0]  # Field should be missing
         assert result[0]["network"] == "Test Network" 

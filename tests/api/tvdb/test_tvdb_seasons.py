@@ -1,5 +1,5 @@
 import pytest
-# Removed unittest.mock imports: Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 from plexomatic.api.tvdb_client import TVDBClient
 
@@ -9,12 +9,17 @@ class TestTVDBSeasons:
 
     def setup_method(self):
         """Set up test fixtures."""
-        # Set up the client with authentication patched
-        with patch('plexomatic.api.tvdb_client.requests.Session'):
-            self.client = TVDBClient(api_key="test_key")
-            self.client._token = "test_token"
+        # Create client with authentication already set
+        self.client = TVDBClient(api_key="test_key")
+        self.client._token = "test_token"  # Set token directly to avoid auth
         
-        # Mock responses for season data
+        # Create mock session that we'll use in each test
+        self.mock_session = Mock()
+        
+        # Replace the client's session with our mock
+        self.client._session = self.mock_session
+        
+        # Create standard test data for seasons
         self.season_data = {
             "data": {
                 "id": 2001,
@@ -28,7 +33,7 @@ class TestTVDBSeasons:
             }
         }
         
-        # Mock responses for season episodes
+        # Create standard test data for episodes
         self.season_episodes_data = {
             "data": [
                 {
@@ -46,92 +51,84 @@ class TestTVDBSeasons:
             ]
         }
         
-        # Create mock responses
-        self.mock_season_response = Mock()
-        self.mock_season_response.json.return_value = self.season_data
-        
-        self.mock_episodes_response = Mock()
-        self.mock_episodes_response.json.return_value = self.season_episodes_data
-        
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.Session")
-    def test_get_season_by_id(self, mock_session_class: MagicMock) -> None:
+    def test_get_season_by_id(self) -> None:
         """Test retrieving a season by ID."""
-        # Setup session mock
-        mock_session = Mock()
-        mock_session.get.return_value = self.mock_season_response
-        mock_session_class.return_value = mock_session
-        
-        # Patch authenticate to avoid real API calls
-        with patch.object(self.client, 'authenticate'):
-            # Make the API call
-            season = self.client.get_season_by_id(2001)
-            
-            # Verify the result
-            assert season["id"] == 2001
-            assert season["number"] == 1
-            assert season["name"] == "Season 1"
-            assert season["type"]["name"] == "Aired Order"
-            
-            # Verify API call
-            mock_session.get.assert_called_once_with(
-                "https://api4.thetvdb.com/v4/seasons/2001",
-                headers={"Authorization": "Bearer test_token"}
-            )
-        
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.Session")
-    def test_get_episodes_by_season(self, mock_session_class: MagicMock) -> None:
-        """Test retrieving episodes by season ID."""
-        # Setup session mock
-        mock_session = Mock()
-        mock_session.get.return_value = self.mock_episodes_response
-        mock_session_class.return_value = mock_session
-        
-        # Patch authenticate to avoid real API calls
-        with patch.object(self.client, 'authenticate'):
-            # Make the API call
-            episodes = self.client.get_episodes_by_season(2001)
-            
-            # Verify the result
-            assert len(episodes) == 2
-            assert episodes[0]["name"] == "Episode 1"
-            assert episodes[1]["name"] == "Episode 2"
-            
-            # Verify API call
-            mock_session.get.assert_called_once_with(
-                "https://api4.thetvdb.com/v4/seasons/2001/episodes",
-                headers={"Authorization": "Bearer test_token"}
-            )
-        
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.Session")
-    def test_get_episodes_by_season_empty(self, mock_session_class: MagicMock) -> None:
-        """Test retrieving episodes when none are found."""
-        # Setup session mock
-        mock_session = Mock()
+        # Create mock response
         mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = self.season_data
+        
+        # Configure the session mock to return our response
+        self.client._session.get.return_value = mock_response
+        
+        # Make the API call
+        season = self.client.get_season_by_id(2001)
+        
+        # Verify the result
+        assert season["id"] == 2001
+        assert season["number"] == 1
+        assert season["name"] == "Season 1"
+        assert season["type"]["name"] == "Aired Order"
+        
+        # Verify API call was made with correct parameters
+        self.client._session.get.assert_called_once()
+        url_arg = self.client._session.get.call_args[0][0]
+        assert "seasons/2001" in url_arg
+        
+    def test_get_episodes_by_season(self) -> None:
+        """Test retrieving episodes by season ID."""
+        # Create mock response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = self.season_episodes_data
+        
+        # Configure the session mock to return our response
+        self.client._session.get.return_value = mock_response
+        
+        # Make the API call
+        episodes = self.client.get_episodes_by_season(2001)
+        
+        # Verify the result
+        assert len(episodes) == 2
+        assert episodes[0]["name"] == "Episode 1"
+        assert episodes[1]["name"] == "Episode 2"
+        
+        # Verify API call was made with correct parameters
+        self.client._session.get.assert_called_once()
+        url_arg = self.client._session.get.call_args[0][0]
+        assert "seasons/2001/episodes" in url_arg
+        
+    def test_get_episodes_by_season_empty(self) -> None:
+        """Test retrieving episodes when none are found."""
+        # Create mock response with empty data
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.raise_for_status.return_value = None
         mock_response.json.return_value = {"data": []}
-        mock_session.get.return_value = mock_response
-        mock_session_class.return_value = mock_session
         
-        # Patch authenticate to avoid real API calls
-        with patch.object(self.client, 'authenticate'):
-            # Make the API call
-            episodes = self.client.get_episodes_by_season(9999)
-            
-            # Verify the result is an empty list
-            assert episodes == []
+        # Configure the session mock to return our response
+        self.client._session.get.return_value = mock_response
         
-    # Converted from @patch("plexomatic.api.tvdb_client.requests.Session")
-    def test_get_episodes_by_season_error(self, mock_session_class: MagicMock) -> None:
+        # Make the API call
+        episodes = self.client.get_episodes_by_season(9999)
+        
+        # Verify the result is an empty list
+        assert episodes == []
+        
+    def test_get_episodes_by_season_error(self) -> None:
         """Test error handling when retrieving episodes by season ID."""
-        # Setup session mock
-        mock_session = Mock()
-        mock_session.get.side_effect = Exception("API error")
-        mock_session_class.return_value = mock_session
+        # Configure the session mock to raise an exception
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.raise_for_status.side_effect = Exception("API error")
         
-        # Patch authenticate to avoid real API calls
-        with patch.object(self.client, 'authenticate'):
-            # Make the API call - should handle the exception gracefully
-            episodes = self.client.get_episodes_by_season(2001)
-            
-            # Verify the result is an empty list on error
-            assert episodes == [] 
+        # Configure the session mock to return our error response
+        self.client._session.get.return_value = mock_response
+        
+        # Make the API call - should handle the exception gracefully
+        episodes = self.client.get_episodes_by_season(2001)
+        
+        # Verify the result is an empty list on error
+        assert episodes == [] 
